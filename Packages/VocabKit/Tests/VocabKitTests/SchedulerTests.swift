@@ -126,3 +126,15 @@ final class SchedulerSwitchingTests: XCTestCase {
         XCTAssertEqual(viaScheduler.nextPlannedAt, viaLegacy.nextPlannedAt)
     }
 }
+
+final class SeedDataTests: XCTestCase {
+    /// The embedded starter list must parse — this is what first-launch
+    /// seeding (and the UI-test walkthrough) depends on.
+    func testEmbeddedSATListParses() throws {
+        let rows = try CSVImport.parse(SeedData.satRWVocabCSV)
+        XCTAssertEqual(rows.count, 562)
+        XCTAssertEqual(rows.first?.word, "some")
+        XCTAssertTrue(rows.first?.note.contains("certain") ?? false)
+        XCTAssertEqual(rows.last?.word, "zealous")
+    }
+}

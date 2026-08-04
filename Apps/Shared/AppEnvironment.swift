@@ -47,15 +47,13 @@ final class AppEnvironment: ObservableObject {
         dataVersion += 1
     }
 
-    /// First launch: create the bundled "SAT RW Vocab" starter list.
+    /// First launch: create the embedded "SAT RW Vocab" starter list.
     private func seedInitialContentIfNeeded() {
         let marker = "seed.satListInstalled"
         guard !UserDefaults.standard.bool(forKey: marker) || Self.isUITest else { return }
-        guard let url = Bundle.main.url(forResource: "sat_rw_vocab", withExtension: "csv"),
-              let text = try? String(contentsOf: url, encoding: .utf8),
-              let rows = try? CSVImport.parse(text) else { return }
-        if !userStore.lists().contains(where: { $0.name == "SAT RW Vocab" }) {
-            CSVImport.importRows(rows, listName: "SAT RW Vocab", userStore: userStore)
+        guard let rows = try? CSVImport.parse(SeedData.satRWVocabCSV) else { return }
+        if !userStore.lists().contains(where: { $0.name == SeedData.satListName }) {
+            CSVImport.importRows(rows, listName: SeedData.satListName, userStore: userStore)
         }
         UserDefaults.standard.set(true, forKey: marker)
     }
