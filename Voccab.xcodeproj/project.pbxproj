@@ -1,0 +1,835 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0AB21D710E3BB436ABCD9364 /* PromoCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */; };
+		0D30B572751D5FF896374C2A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6CD4DCE15F6990064326553C /* Assets.xcassets */; };
+		1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DFA034A4C4765AD7697D786 /* NeoSettingsView.swift */; };
+		232FF4B3386D1556BA0003CB /* RedesignApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3033400849322EE17506565 /* RedesignApp.swift */; };
+		258FD4FDE479337CC0394788 /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B09A07489A23C06DCABDAFB1 /* ClassicTheme.swift */; };
+		316405FDF224695C9CDE6CFF /* CameraLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7583571466DE107FC55B425 /* CameraLookup.swift */; };
+		34C4E9CA1727496A0EE92D0C /* RedesignScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */; };
+		38DF09E152DA33150577826A /* PromoCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */; };
+		3B7652494C4F6A5D419BEDAA /* PageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */; };
+		3CF2E9A85C947E76A5AAAB2F /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */; };
+		3EB3998B5D4A449B41F43D46 /* ClassicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BC0A11BDB85117219755A6 /* ClassicApp.swift */; };
+		417D3863F780A8AC4D6AC18F /* SearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A586786E5153D45B7344D6 /* SearchOverlay.swift */; };
+		504E8CCBEE6D953007C91BA8 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207DB7AE943E677C21167D87 /* SharedComponents.swift */; };
+		59354C77DBE648756B0FEC7C /* WordListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27AB72A271F976F0ADF1817B /* WordListView.swift */; };
+		5C805D9036D3E161567CD72A /* ClassicScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F8E2C1C586A369D8CD3F3D9 /* ClassicScreenshotTests.swift */; };
+		606BB16B2D82C8C1F3F658BA /* voccab-dict.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */; };
+		675C4CA54FA8A166D1CE599D /* ScreenshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D453E5031921E9864229EE2 /* ScreenshotHelper.swift */; };
+		68F8B3082DB5455252D519A2 /* ScreenshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D453E5031921E9864229EE2 /* ScreenshotHelper.swift */; };
+		6A32362F6BC3D3683CEFF89B /* StudyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD92682A89AE8D8E98C7EE02 /* StudyViews.swift */; };
+		6E56A8105CB9BE725B35C06C /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3C3C371AD56F164772C89B /* SpeechService.swift */; };
+		6F542ED6B8D80E9AF6DEB7FD /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = A02AB383CE18DDD2FE6EF544 /* VocabKit */; };
+		840180061A8F2454D4A78466 /* NeoStudyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */; };
+		8A58B93ADA92E81A99376DD9 /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D284B7596E89C58ECC5284E /* Routes.swift */; };
+		8B798228919395568B524658 /* NeoHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA95486A578F7AA6F6355BF /* NeoHomeView.swift */; };
+		8E73B10858A7BC604CFC34FC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB602BB69CE1BA53DD7CDB33 /* SettingsView.swift */; };
+		8FD4ACD352AB136280F2B67E /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
+		908E3489DEFABD8B711906DC /* CameraLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7583571466DE107FC55B425 /* CameraLookup.swift */; };
+		979D11F5C221EE808B626745 /* WordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6A1557088B6FF576EDCA8E /* WordDetailView.swift */; };
+		A00058E3386B6BDD01EA8FDC /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3C3C371AD56F164772C89B /* SpeechService.swift */; };
+		A35263C7302D5F0AAA9C5023 /* NeoWordListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB523406FE50F7D5929C0DB /* NeoWordListView.swift */; };
+		AB4AA0CEA5861FB4D6F8854F /* NeoTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223FB3FADBBBE0562BB97181 /* NeoTheme.swift */; };
+		B0606B2267121371E306FF2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */; };
+		B17E25EBECA1D54E156610CB /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D284B7596E89C58ECC5284E /* Routes.swift */; };
+		BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */; };
+		BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
+		D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE9A2571DD20459B5C9B8CA1 /* NeoWordDetailView.swift */; };
+		D69FB15DF56B49C0D88CDA84 /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0AE9BEB2FE1101D996F12F4 /* VocabKit */; };
+		DC397606F9BA49B455C41206 /* PageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */; };
+		DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CF31D3814A1989115A3077 /* HomeView.swift */; };
+		DE9A63535FF802FED31CFA19 /* voccab-dict.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */; };
+		E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */; };
+		F1BD950D4CAF0DC2DFE82690 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207DB7AE943E677C21167D87 /* SharedComponents.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C144B50B81CCF2F69E96D3BA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 05BC265C4997FF0BDC1ABF8B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 422F7A763F06E9DEFD5D9DBA;
+			remoteInfo = VoccabClassic;
+		};
+		F4AE24A6908FAB9CAE4AE598 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 05BC265C4997FF0BDC1ABF8B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B6F3AEA90FAF4D8A407DA808;
+			remoteInfo = VoccabRedesign;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0D2B56475AF4117F967B717F /* VoccabRedesignUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VoccabRedesignUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1EB523406FE50F7D5929C0DB /* NeoWordListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoWordListView.swift; sourceTree = "<group>"; };
+		207DB7AE943E677C21167D87 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		223FB3FADBBBE0562BB97181 /* NeoTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoTheme.swift; sourceTree = "<group>"; };
+		27AB72A271F976F0ADF1817B /* WordListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordListView.swift; sourceTree = "<group>"; };
+		2F8E2C1C586A369D8CD3F3D9 /* ClassicScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicScreenshotTests.swift; sourceTree = "<group>"; };
+		36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModels.swift; sourceTree = "<group>"; };
+		3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */ = {isa = PBXFileReference; path = sat_rw_vocab.csv; sourceTree = "<group>"; };
+		3EA95486A578F7AA6F6355BF /* NeoHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoHomeView.swift; sourceTree = "<group>"; };
+		4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoSearchOverlay.swift; sourceTree = "<group>"; };
+		4D284B7596E89C58ECC5284E /* Routes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
+		5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignScreenshotTests.swift; sourceTree = "<group>"; };
+		63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		6C1CD147D93A43C371B04537 /* VoccabClassic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoccabClassic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6CD4DCE15F6990064326553C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6DFA034A4C4765AD7697D786 /* NeoSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoSettingsView.swift; sourceTree = "<group>"; };
+		7D453E5031921E9864229EE2 /* ScreenshotHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotHelper.swift; sourceTree = "<group>"; };
+		80ACC6087B4C2F37A838D584 /* VoccabRedesign.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoccabRedesign.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F6A1557088B6FF576EDCA8E /* WordDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDetailView.swift; sourceTree = "<group>"; };
+		913A4CD47ABD44F5B0A0C47B /* VoccabClassicUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VoccabClassicUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		91CF31D3814A1989115A3077 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		AB1F6F50128D2F1B211E0CDE /* VocabKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = VocabKit; path = Packages/VocabKit; sourceTree = SOURCE_ROOT; };
+		AD92682A89AE8D8E98C7EE02 /* StudyViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyViews.swift; sourceTree = "<group>"; };
+		AE9A2571DD20459B5C9B8CA1 /* NeoWordDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoWordDetailView.swift; sourceTree = "<group>"; };
+		B09A07489A23C06DCABDAFB1 /* ClassicTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicTheme.swift; sourceTree = "<group>"; };
+		C0A586786E5153D45B7344D6 /* SearchOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchOverlay.swift; sourceTree = "<group>"; };
+		C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromoCarousel.swift; sourceTree = "<group>"; };
+		C7583571466DE107FC55B425 /* CameraLookup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraLookup.swift; sourceTree = "<group>"; };
+		D5BC0A11BDB85117219755A6 /* ClassicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicApp.swift; sourceTree = "<group>"; };
+		D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoStudyViews.swift; sourceTree = "<group>"; };
+		D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "voccab-dict.sqlite"; sourceTree = "<group>"; };
+		DB602BB69CE1BA53DD7CDB33 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F3033400849322EE17506565 /* RedesignApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignApp.swift; sourceTree = "<group>"; };
+		FE3C3C371AD56F164772C89B /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5C3019D688270D14D7F32B7E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D69FB15DF56B49C0D88CDA84 /* VocabKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6C33CF6D637E479672D0AF39 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6F542ED6B8D80E9AF6DEB7FD /* VocabKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		04B1CFF9792C8E5DC64D0E85 /* Classic */ = {
+			isa = PBXGroup;
+			children = (
+				6CD4DCE15F6990064326553C /* Assets.xcassets */,
+				D5BC0A11BDB85117219755A6 /* ClassicApp.swift */,
+				B09A07489A23C06DCABDAFB1 /* ClassicTheme.swift */,
+				91CF31D3814A1989115A3077 /* HomeView.swift */,
+				C0A586786E5153D45B7344D6 /* SearchOverlay.swift */,
+				DB602BB69CE1BA53DD7CDB33 /* SettingsView.swift */,
+				AD92682A89AE8D8E98C7EE02 /* StudyViews.swift */,
+				8F6A1557088B6FF576EDCA8E /* WordDetailView.swift */,
+				27AB72A271F976F0ADF1817B /* WordListView.swift */,
+			);
+			path = Classic;
+			sourceTree = "<group>";
+		};
+		0DE538AE8167C3EDAC65120A = {
+			isa = PBXGroup;
+			children = (
+				1C8A79109D95ABE2026FD618 /* Apps */,
+				C5B7C951DF2443D744D820DC /* Data */,
+				B2444DA78B08C5D1EB6612A9 /* Packages */,
+				2A124B7DB90F7192A0E4227F /* UITests */,
+				3A187888B82A23C5C0C0CC19 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1C8A79109D95ABE2026FD618 /* Apps */ = {
+			isa = PBXGroup;
+			children = (
+				04B1CFF9792C8E5DC64D0E85 /* Classic */,
+				3AC9616B823A8D78CC2AB9CB /* Redesign */,
+				55CED8D1D6F08BF250F8125C /* Shared */,
+			);
+			path = Apps;
+			sourceTree = "<group>";
+		};
+		2A124B7DB90F7192A0E4227F /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				DEDB0395FA0CD37ABE13E137 /* Classic */,
+				8C600591775AFDA54D8E447A /* Redesign */,
+				9E146133C6F8B9DFDAA5121B /* Shared */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		3A187888B82A23C5C0C0CC19 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6C1CD147D93A43C371B04537 /* VoccabClassic.app */,
+				913A4CD47ABD44F5B0A0C47B /* VoccabClassicUITests.xctest */,
+				80ACC6087B4C2F37A838D584 /* VoccabRedesign.app */,
+				0D2B56475AF4117F967B717F /* VoccabRedesignUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3AA62595317366C9F0161A72 /* dict */ = {
+			isa = PBXGroup;
+			children = (
+				D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */,
+			);
+			path = dict;
+			sourceTree = "<group>";
+		};
+		3AC9616B823A8D78CC2AB9CB /* Redesign */ = {
+			isa = PBXGroup;
+			children = (
+				1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */,
+				3EA95486A578F7AA6F6355BF /* NeoHomeView.swift */,
+				4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */,
+				6DFA034A4C4765AD7697D786 /* NeoSettingsView.swift */,
+				D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */,
+				223FB3FADBBBE0562BB97181 /* NeoTheme.swift */,
+				AE9A2571DD20459B5C9B8CA1 /* NeoWordDetailView.swift */,
+				1EB523406FE50F7D5929C0DB /* NeoWordListView.swift */,
+				F3033400849322EE17506565 /* RedesignApp.swift */,
+			);
+			path = Redesign;
+			sourceTree = "<group>";
+		};
+		55CED8D1D6F08BF250F8125C /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */,
+				C7583571466DE107FC55B425 /* CameraLookup.swift */,
+				36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */,
+				C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */,
+				4D284B7596E89C58ECC5284E /* Routes.swift */,
+				207DB7AE943E677C21167D87 /* SharedComponents.swift */,
+				FE3C3C371AD56F164772C89B /* SpeechService.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		8C600591775AFDA54D8E447A /* Redesign */ = {
+			isa = PBXGroup;
+			children = (
+				5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */,
+			);
+			path = Redesign;
+			sourceTree = "<group>";
+		};
+		9E146133C6F8B9DFDAA5121B /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				7D453E5031921E9864229EE2 /* ScreenshotHelper.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		B2444DA78B08C5D1EB6612A9 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				AB1F6F50128D2F1B211E0CDE /* VocabKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		C5B7C951DF2443D744D820DC /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				3AA62595317366C9F0161A72 /* dict */,
+				C899E630DA23B6E80FFD2AC7 /* seed */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		C899E630DA23B6E80FFD2AC7 /* seed */ = {
+			isa = PBXGroup;
+			children = (
+				3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */,
+			);
+			path = seed;
+			sourceTree = "<group>";
+		};
+		DEDB0395FA0CD37ABE13E137 /* Classic */ = {
+			isa = PBXGroup;
+			children = (
+				2F8E2C1C586A369D8CD3F3D9 /* ClassicScreenshotTests.swift */,
+			);
+			path = Classic;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		422F7A763F06E9DEFD5D9DBA /* VoccabClassic */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A5B45CF2E9D6904E4C52D6AD /* Build configuration list for PBXNativeTarget "VoccabClassic" */;
+			buildPhases = (
+				88579B28373FFF8D910120E9 /* Sources */,
+				A38E5481771551AD90E2D5D6 /* Resources */,
+				5C3019D688270D14D7F32B7E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VoccabClassic;
+			packageProductDependencies = (
+				C0AE9BEB2FE1101D996F12F4 /* VocabKit */,
+			);
+			productName = VoccabClassic;
+			productReference = 6C1CD147D93A43C371B04537 /* VoccabClassic.app */;
+			productType = "com.apple.product-type.application";
+		};
+		97A9C8108C8DEF4980C57A47 /* VoccabClassicUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 392BCDD5BDFD17F69CB450DD /* Build configuration list for PBXNativeTarget "VoccabClassicUITests" */;
+			buildPhases = (
+				DF6F880C3C2A0BB4F877C740 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC738C42319EF5125158BA86 /* PBXTargetDependency */,
+			);
+			name = VoccabClassicUITests;
+			packageProductDependencies = (
+			);
+			productName = VoccabClassicUITests;
+			productReference = 913A4CD47ABD44F5B0A0C47B /* VoccabClassicUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		B6F3AEA90FAF4D8A407DA808 /* VoccabRedesign */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E8194623D9E11DE287EFF9CE /* Build configuration list for PBXNativeTarget "VoccabRedesign" */;
+			buildPhases = (
+				7DD0EFF0016082DFEDECAE07 /* Sources */,
+				956B54795F7C17A066D3E77A /* Resources */,
+				6C33CF6D637E479672D0AF39 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VoccabRedesign;
+			packageProductDependencies = (
+				A02AB383CE18DDD2FE6EF544 /* VocabKit */,
+			);
+			productName = VoccabRedesign;
+			productReference = 80ACC6087B4C2F37A838D584 /* VoccabRedesign.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F8299203898A6434202C12E1 /* VoccabRedesignUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2D0CFEDBD7FB310F88E06F09 /* Build configuration list for PBXNativeTarget "VoccabRedesignUITests" */;
+			buildPhases = (
+				172D6D95BA83E29BD5FF39F0 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				500D3EF55A39E610D154F1DC /* PBXTargetDependency */,
+			);
+			name = VoccabRedesignUITests;
+			packageProductDependencies = (
+			);
+			productName = VoccabRedesignUITests;
+			productReference = 0D2B56475AF4117F967B717F /* VoccabRedesignUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		05BC265C4997FF0BDC1ABF8B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					422F7A763F06E9DEFD5D9DBA = {
+						DevelopmentTeam = "";
+					};
+					97A9C8108C8DEF4980C57A47 = {
+						DevelopmentTeam = "";
+						TestTargetID = 422F7A763F06E9DEFD5D9DBA;
+					};
+					B6F3AEA90FAF4D8A407DA808 = {
+						DevelopmentTeam = "";
+					};
+					F8299203898A6434202C12E1 = {
+						DevelopmentTeam = "";
+						TestTargetID = B6F3AEA90FAF4D8A407DA808;
+					};
+				};
+			};
+			buildConfigurationList = 818B697D996A910EADB611F6 /* Build configuration list for PBXProject "Voccab" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 0DE538AE8167C3EDAC65120A;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8FF564A1828142031946A3D8 /* XCLocalSwiftPackageReference "Packages/VocabKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3A187888B82A23C5C0C0CC19 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				422F7A763F06E9DEFD5D9DBA /* VoccabClassic */,
+				B6F3AEA90FAF4D8A407DA808 /* VoccabRedesign */,
+				97A9C8108C8DEF4980C57A47 /* VoccabClassicUITests */,
+				F8299203898A6434202C12E1 /* VoccabRedesignUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		956B54795F7C17A066D3E77A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B0606B2267121371E306FF2F /* Assets.xcassets in Resources */,
+				8FD4ACD352AB136280F2B67E /* sat_rw_vocab.csv in Resources */,
+				606BB16B2D82C8C1F3F658BA /* voccab-dict.sqlite in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A38E5481771551AD90E2D5D6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D30B572751D5FF896374C2A /* Assets.xcassets in Resources */,
+				BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */,
+				DE9A63535FF802FED31CFA19 /* voccab-dict.sqlite in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		172D6D95BA83E29BD5FF39F0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				34C4E9CA1727496A0EE92D0C /* RedesignScreenshotTests.swift in Sources */,
+				68F8B3082DB5455252D519A2 /* ScreenshotHelper.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7DD0EFF0016082DFEDECAE07 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */,
+				908E3489DEFABD8B711906DC /* CameraLookup.swift in Sources */,
+				8B798228919395568B524658 /* NeoHomeView.swift in Sources */,
+				BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */,
+				1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */,
+				840180061A8F2454D4A78466 /* NeoStudyViews.swift in Sources */,
+				AB4AA0CEA5861FB4D6F8854F /* NeoTheme.swift in Sources */,
+				D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */,
+				A35263C7302D5F0AAA9C5023 /* NeoWordListView.swift in Sources */,
+				3B7652494C4F6A5D419BEDAA /* PageModels.swift in Sources */,
+				0AB21D710E3BB436ABCD9364 /* PromoCarousel.swift in Sources */,
+				232FF4B3386D1556BA0003CB /* RedesignApp.swift in Sources */,
+				B17E25EBECA1D54E156610CB /* Routes.swift in Sources */,
+				F1BD950D4CAF0DC2DFE82690 /* SharedComponents.swift in Sources */,
+				6E56A8105CB9BE725B35C06C /* SpeechService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		88579B28373FFF8D910120E9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3CF2E9A85C947E76A5AAAB2F /* AppEnvironment.swift in Sources */,
+				316405FDF224695C9CDE6CFF /* CameraLookup.swift in Sources */,
+				3EB3998B5D4A449B41F43D46 /* ClassicApp.swift in Sources */,
+				258FD4FDE479337CC0394788 /* ClassicTheme.swift in Sources */,
+				DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */,
+				DC397606F9BA49B455C41206 /* PageModels.swift in Sources */,
+				38DF09E152DA33150577826A /* PromoCarousel.swift in Sources */,
+				8A58B93ADA92E81A99376DD9 /* Routes.swift in Sources */,
+				417D3863F780A8AC4D6AC18F /* SearchOverlay.swift in Sources */,
+				8E73B10858A7BC604CFC34FC /* SettingsView.swift in Sources */,
+				504E8CCBEE6D953007C91BA8 /* SharedComponents.swift in Sources */,
+				A00058E3386B6BDD01EA8FDC /* SpeechService.swift in Sources */,
+				6A32362F6BC3D3683CEFF89B /* StudyViews.swift in Sources */,
+				979D11F5C221EE808B626745 /* WordDetailView.swift in Sources */,
+				59354C77DBE648756B0FEC7C /* WordListView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DF6F880C3C2A0BB4F877C740 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C805D9036D3E161567CD72A /* ClassicScreenshotTests.swift in Sources */,
+				675C4CA54FA8A166D1CE599D /* ScreenshotHelper.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		500D3EF55A39E610D154F1DC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B6F3AEA90FAF4D8A407DA808 /* VoccabRedesign */;
+			targetProxy = F4AE24A6908FAB9CAE4AE598 /* PBXContainerItemProxy */;
+		};
+		CC738C42319EF5125158BA86 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 422F7A763F06E9DEFD5D9DBA /* VoccabClassic */;
+			targetProxy = C144B50B81CCF2F69E96D3BA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3D0EC4279FC05DB9E2DF8FEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_IDENTITY = "";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		4287133630036FDA5F5AA82B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.neo.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VoccabRedesign;
+			};
+			name = Release;
+		};
+		42D4C9712C26C2B44A4C443E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.classic.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VoccabClassic;
+			};
+			name = Release;
+		};
+		717153172272EAC467C70CF6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "VoccabRedesign-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Voccab Neo";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.neo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		787D9ED4FDD6D4C4127AB07B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_IDENTITY = "";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		A4684068FBEE11D985E13879 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.classic.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VoccabClassic;
+			};
+			name = Debug;
+		};
+		BF4E6C5026CF8594C895F6D5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "VoccabRedesign-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Voccab Neo";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.neo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E4D050B8D3FEC6F4BC7E75FE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "VoccabClassic-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Voccab;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.classic;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E988AF16286197DD831AD940 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "VoccabClassic-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Voccab;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.classic;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F558C90A802E753D96700CC5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yywq.voccab.neo.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VoccabRedesign;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2D0CFEDBD7FB310F88E06F09 /* Build configuration list for PBXNativeTarget "VoccabRedesignUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F558C90A802E753D96700CC5 /* Debug */,
+				4287133630036FDA5F5AA82B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		392BCDD5BDFD17F69CB450DD /* Build configuration list for PBXNativeTarget "VoccabClassicUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A4684068FBEE11D985E13879 /* Debug */,
+				42D4C9712C26C2B44A4C443E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		818B697D996A910EADB611F6 /* Build configuration list for PBXProject "Voccab" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				787D9ED4FDD6D4C4127AB07B /* Debug */,
+				3D0EC4279FC05DB9E2DF8FEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A5B45CF2E9D6904E4C52D6AD /* Build configuration list for PBXNativeTarget "VoccabClassic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E4D050B8D3FEC6F4BC7E75FE /* Debug */,
+				E988AF16286197DD831AD940 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E8194623D9E11DE287EFF9CE /* Build configuration list for PBXNativeTarget "VoccabRedesign" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BF4E6C5026CF8594C895F6D5 /* Debug */,
+				717153172272EAC467C70CF6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		8FF564A1828142031946A3D8 /* XCLocalSwiftPackageReference "Packages/VocabKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/VocabKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A02AB383CE18DDD2FE6EF544 /* VocabKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VocabKit;
+		};
+		C0AE9BEB2FE1101D996F12F4 /* VocabKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = VocabKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 05BC265C4997FF0BDC1ABF8B /* Project object */;
+}
