@@ -1,0 +1,8 @@
+.DS_Store
+Voccab.xcodeproj
+*.xcresult
+artifacts/
+shots/
+Packages/VocabKit/.build/
+Packages/VocabKit/.swiftpm/
+DerivedData/
