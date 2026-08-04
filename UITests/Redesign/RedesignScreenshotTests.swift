@@ -79,13 +79,14 @@ final class RedesignScreenshotTests: XCTestCase {
         _ = app.buttons["study.plan.Mix"].waitForExistence(timeout: 15)
         snap("10-study-start__\(theme)")
 
-        // Flashcard
+        // Flashcard. The styled answer bars surface their text, not a button
+        // role, so query and tap by the visible label.
         app.buttons["study.plan.Mix"].waitTap()
-        XCTAssertTrue(app.buttons["study.know"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["I Know"].waitForExistence(timeout: 10))
         snap("11-study-card__\(theme)")
 
         if full {
-            app.buttons["study.know"].waitTap()
+            app.staticTexts["I Know"].firstMatch.tap()
             sleep(1)
             snap("12-study-reveal__\(theme)")
         }
