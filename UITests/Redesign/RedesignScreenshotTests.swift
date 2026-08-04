@@ -57,14 +57,15 @@ final class RedesignScreenshotTests: XCTestCase {
         if full {
             snap("06-word-studyinfo__\(theme)")
 
-            if app.buttons["word.tab.English"].waitForExistence(timeout: 5) {
-                app.buttons["word.tab.English"].tap()
+            // The styled tab buttons surface their labels, not a button role.
+            if app.staticTexts["English"].waitForExistence(timeout: 5) {
+                app.staticTexts["English"].firstMatch.tap()
                 sleep(1)
                 snap("07-word-english__\(theme)")
-                app.buttons["word.tab.Synonyms"].tap()
+                app.staticTexts["Synonyms"].firstMatch.tap()
                 sleep(1)
                 snap("08-word-synonyms__\(theme)")
-                app.buttons["word.tab.Oxford"].tap()
+                app.staticTexts["Oxford"].firstMatch.tap()
                 sleep(1)
                 snap("09-word-oxford__\(theme)")
             }
