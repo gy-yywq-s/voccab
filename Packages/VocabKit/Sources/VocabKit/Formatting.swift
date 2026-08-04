@@ -55,4 +55,49 @@ public enum Formatting {
     public static func frequencyChip(_ band: FrequencyBand) -> String {
         "Frequency: \(band.label)"
     }
+
+    /// Normalizes user-entered mixed CJK/Latin text for display: full-width
+    /// punctuation becomes half-width, runs of whitespace collapse, and a
+    /// single space separates CJK from Latin at boundaries.
+    public static func tidy(_ text: String) -> String {
+        var result = ""
+        let replacements: [Character: String] = [
+            "：": ": ", "，": ", ", "。": ". ", "；": "; ", "！": "! ",
+            "？": "? ", "（": " (", "）": ") ", "、": ", ", "　": " ",
+        ]
+        for ch in text {
+            if let mapped = replacements[ch] {
+                result += mapped
+            } else {
+                result.append(ch)
+            }
+        }
+
+        func isCJK(_ ch: Character) -> Bool {
+            ch.unicodeScalars.first.map { (0x4E00...0x9FFF).contains(Int($0.value)) } ?? false
+        }
+        func isLatinOrDigit(_ ch: Character) -> Bool {
+            ch.isASCII && (ch.isLetter || ch.isNumber)
+        }
+        var spaced = ""
+        var previous: Character? = nil
+        for ch in result {
+            if let prev = previous,
+               (isCJK(prev) && isLatinOrDigit(ch)) || (isLatinOrDigit(prev) && isCJK(ch)) {
+                spaced.append(" ")
+            }
+            spaced.append(ch)
+            previous = ch
+        }
+        let collapsed = spaced
+            .components(separatedBy: .whitespaces)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        return collapsed
+            .replacingOccurrences(of: " ,", with: ",")
+            .replacingOccurrences(of: " .", with: ".")
+            .replacingOccurrences(of: " :", with: ":")
+            .replacingOccurrences(of: "( ", with: "(")
+            .replacingOccurrences(of: " )", with: ")")
+    }
 }

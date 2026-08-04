@@ -238,7 +238,7 @@ struct NeoFlashcardView: View {
                             Text("note")
                                 .font(Neo.caption)
                                 .foregroundStyle(.secondary)
-                            Text(note)
+                            Text(Formatting.tidy(note))
                                 .font(Neo.bodyFont)
                                 .foregroundStyle(Neo.warm)
                         }

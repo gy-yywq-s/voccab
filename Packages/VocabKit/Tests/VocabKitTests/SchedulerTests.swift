@@ -138,3 +138,15 @@ final class SeedDataTests: XCTestCase {
         XCTAssertEqual(rows.last?.word, "zealous")
     }
 }
+
+final class TidyTextTests: XCTestCase {
+    func testFullWidthPunctuationAndSpacing() {
+        XCTAssertEqual(
+            Formatting.tidy("特别义： certain， 如 some people = certain people"),
+            "特别义: certain, 如 some people = certain people"
+        )
+        XCTAssertEqual(Formatting.tidy("表明……的abc"), "表明……的 abc")
+        XCTAssertEqual(Formatting.tidy("a（b）c"), "a (b) c")
+        XCTAssertEqual(Formatting.tidy("  many   spaces  "), "many spaces")
+    }
+}

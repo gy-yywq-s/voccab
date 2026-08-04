@@ -58,13 +58,17 @@ struct NeoWordDetailView: View {
                 headword
                 chineseDefinitions
                 noteBlock
-                NeoHairline()
-                    .padding(.top, 16)
+                NeoSectionHeader(title: "Study") {
+                    Text(model.data.state.familiarity.map { "\($0)%" } ?? "Not set")
+                        .font(Neo.bodyFont)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 30)
                 studyBlock
-                NeoHairline()
-                metadataLine
+                NeoSectionHeader(title: "Dictionary")
+                    .padding(.top, 26)
                 tabBar
-                    .padding(.top, 20)
+                    .padding(.top, 12)
                 tabContent
                     .padding(.top, 16)
                 Color.clear.frame(height: 60)
@@ -113,9 +117,44 @@ struct NeoWordDetailView: View {
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("word.speak")
             }
+            classificationCaption
+                .padding(.top, 2)
         }
         .padding(.top, 6)
         .accessibilityIdentifier("word.headerCard")
+    }
+
+    /// Quiet classification line in the identity cluster: frequency band,
+    /// exam tags, list memberships.
+    private var classificationCaption: some View {
+        let dictWord = model.data.dictWord
+        return FlowLayout(spacing: 6) {
+            Group {
+                Text((dictWord?.frequencyBand ?? .unknown).label)
+                if let tags = dictWord?.examTags, !tags.isEmpty {
+                    Text("·")
+                    Text(tags.count > 1 ? "\(tags[0].label) & \(tags.count - 1) more" : tags[0].label)
+                }
+                if model.data.listNames.isEmpty {
+                    Text("·")
+                    Button {
+                        model.toggleMyWords()
+                    } label: {
+                        Text("+ Word lists")
+                            .font(Neo.caption.weight(.medium))
+                            .foregroundStyle(Neo.blue)
+                    }
+                    .buttonStyle(NeoPressStyle())
+                } else {
+                    ForEach(model.data.listNames, id: \.self) { name in
+                        Text("·")
+                        Text(name)
+                    }
+                }
+            }
+            .font(Neo.caption)
+            .foregroundStyle(.secondary)
+        }
     }
 
     private var myWordsControl: some View {
@@ -192,9 +231,10 @@ struct NeoWordDetailView: View {
                 Text("note")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text(model.data.state.note)
+                Text(Formatting.tidy(model.data.state.note))
                     .font(.body)
                     .foregroundStyle(Neo.warm)
+                    .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.top, 14)
@@ -241,48 +281,49 @@ struct NeoWordDetailView: View {
         .padding(.bottom, 2)
     }
 
-    /// Always-visible study state: the familiarity slider is a first-class
-    /// row, with the schedule facts as a quiet footnote below.
+    /// The Study section: a six-step segmented drag control (the reference
+    /// "reasoning effort" pattern) for familiarity, then the schedule facts
+    /// as scannable label/value rows.
     private var studyBlock: some View {
         let state = model.data.state
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Text("Familiarity")
-                    .font(.body)
-                NeoFamiliaritySlider(value: state.familiarity ?? 0) { newValue in
-                    model.setFamiliarity(newValue)
-                }
-                Text(state.familiarity.map { "\($0)%" } ?? "?")
-                    .font(.body.monospacedDigit())
-                    .foregroundStyle(state.familiarity == nil ? Color.secondary : Color.primary)
-                    .frame(width: 44, alignment: .trailing)
+        return VStack(alignment: .leading, spacing: 14) {
+            NeoFamiliaritySegments(value: state.familiarity) { newValue in
+                model.setFamiliarity(newValue)
             }
-            Group {
-                if state.timesStudied == 0 {
-                    Text("Never studied")
-                } else {
-                    Text(studyFacts(state))
+            .padding(.top, 12)
+
+            VStack(spacing: 0) {
+                factRow("Studied", state.timesStudied == 0 ? "never" : "\(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s")")
+                if let last = state.lastStudiedAt {
+                    factRow("Last review", Formatting.relative(last))
+                }
+                if let next = state.nextPlannedAt {
+                    factRow("Next review", Formatting.relative(next))
+                }
+                if state.memoryCircle > 0 {
+                    factRow("Memory circle", "\(state.memoryCircle)", last: true)
                 }
             }
-            .font(.footnote)
-            .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 14)
         .accessibilityIdentifier("word.studyInfo")
     }
 
-    private func studyFacts(_ state: WordState) -> String {
-        var parts = ["Studied \(state.timesStudied)×"]
-        if let last = state.lastStudiedAt {
-            parts.append("last \(Formatting.relative(last))")
+    private func factRow(_ label: String, _ value: String, last: Bool = false) -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(label)
+                    .font(Neo.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(value)
+                    .font(Neo.caption)
+                    .foregroundStyle(.primary)
+            }
+            .padding(.vertical, 8)
+            if !last {
+                NeoHairline()
+            }
         }
-        if let next = state.nextPlannedAt {
-            parts.append("next \(Formatting.relative(next))")
-        }
-        if state.memoryCircle > 0 {
-            parts.append("circle \(state.memoryCircle)")
-        }
-        return parts.joined(separator: " · ")
     }
 
     // MARK: Dictionary tabs (native segmented)
@@ -489,20 +530,73 @@ struct NeoWordDetailView: View {
     }
 }
 
-struct NeoFamiliaritySlider: View {
-    @State private var sliderValue: Double
-    private let onCommit: (Int) -> Void
+/// Familiarity as a six-step segmented drag control, styled after the
+/// reference "reasoning effort" segments: neutral gray track, thin dividers,
+/// selected white segment with a light shadow. Drag slides the selection;
+/// it snaps and commits on release. Tapping a segment commits directly.
+struct NeoFamiliaritySegments: View {
+    let value: Int?
+    let onCommit: (Int) -> Void
 
-    init(value: Int, onCommit: @escaping (Int) -> Void) {
-        _sliderValue = State(initialValue: Double(value))
-        self.onCommit = onCommit
+    private static let steps = [0, 20, 40, 60, 80, 100]
+    @State private var dragIndex: Int? = nil
+
+    private var selectedIndex: Int? {
+        if let dragIndex { return dragIndex }
+        guard let value else { return nil }
+        return Self.steps.enumerated().min(by: { abs($0.element - value) < abs($1.element - value) })?.offset
     }
 
     var body: some View {
-        Slider(value: $sliderValue, in: 0...100, step: 20) { editing in
-            if !editing { onCommit(Int(sliderValue)) }
+        GeometryReader { proxy in
+            let segmentWidth = proxy.size.width / CGFloat(Self.steps.count)
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(uiColor: .systemGray5))
+                HStack(spacing: 0) {
+                    ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, _ in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(Color(uiColor: .systemGray3).opacity(0.6))
+                                .frame(width: 0.7, height: 14)
+                        }
+                        Color.clear
+                            .frame(width: segmentWidth - (index > 0 ? 0.7 : 0))
+                    }
+                }
+                if let selected = selectedIndex {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(uiColor: .systemBackground))
+                        .shadow(color: .black.opacity(0.12), radius: 2.5, y: 1)
+                        .frame(width: segmentWidth - 6, height: 34)
+                        .offset(x: CGFloat(selected) * segmentWidth + 3)
+                        .animation(.easeOut(duration: 0.15), value: selected)
+                }
+                HStack(spacing: 0) {
+                    ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, step in
+                        Text("\(step)")
+                            .font(.system(size: 14, weight: index == selectedIndex ? .semibold : .regular))
+                            .foregroundStyle(index == selectedIndex ? Color.primary : Color.secondary)
+                            .frame(width: segmentWidth, height: 40)
+                    }
+                }
+            }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { gesture in
+                        let index = min(Self.steps.count - 1, max(0, Int(gesture.location.x / segmentWidth)))
+                        dragIndex = index
+                    }
+                    .onEnded { _ in
+                        if let index = dragIndex {
+                            onCommit(Self.steps[index])
+                        }
+                        dragIndex = nil
+                    }
+            )
         }
-        .tint(Neo.blue)
+        .frame(height: 40)
         .accessibilityIdentifier("word.familiaritySlider")
     }
 }
