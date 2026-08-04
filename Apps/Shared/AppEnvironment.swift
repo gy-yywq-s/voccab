@@ -18,7 +18,8 @@ final class AppEnvironment: ObservableObject {
 
     init() {
         let bundlePath = Bundle.main.path(forResource: "voccab-dict", ofType: "sqlite")
-        dictionary = bundlePath.flatMap { try? DictionaryStore(databasePath: $0) }
+        let extrasPath = Bundle.main.path(forResource: "voccab-extras", ofType: "sqlite")
+        dictionary = bundlePath.flatMap { try? DictionaryStore(databasePath: $0, extrasPath: extrasPath) }
 
         let supportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         let dbName = Self.isUITest ? "voccab-uitest.sqlite" : "voccab-user.sqlite"

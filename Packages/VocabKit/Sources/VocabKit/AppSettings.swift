@@ -20,13 +20,28 @@ public enum PronunciationAccent: String, CaseIterable, Codable, Sendable {
     }
 }
 
+/// How pronunciation audio is produced.
+public enum PronunciationSource: String, CaseIterable, Codable, Sendable {
+    case system       // on-device text-to-speech
+    case recorded     // human recordings (Wiktionary-sourced, fetched + cached)
+
+    public var label: String {
+        switch self {
+        case .system: return "System voice"
+        case .recorded: return "Recorded (online)"
+        }
+    }
+}
+
 /// The dictionaries whose sections/tabs can be shown on the word page.
 public enum DictionarySource: String, CaseIterable, Codable, Sendable {
     case chinese      // ECDICT English-Chinese (header card content)
-    case oxford       // licensed bilingual dictionary — placeholder until user data is installed
+    case oxford       // user-supplied Concise Oxford table
     case english      // WordNet English definitions
     case synonyms     // WordNet synonyms/thesaurus
-    case apple        // hand off to the system dictionary sheet
+    case webster      // GCIDE / Webster's 1913 (public domain)
+    case moby         // Moby Thesaurus II (public domain)
+    case apple        // system dictionary, embedded inline
 
     public var label: String {
         switch self {
@@ -34,7 +49,22 @@ public enum DictionarySource: String, CaseIterable, Codable, Sendable {
         case .oxford: return "Oxford"
         case .english: return "English definition"
         case .synonyms: return "Synonyms"
+        case .webster: return "Webster 1913"
+        case .moby: return "Moby Thesaurus"
         case .apple: return "Apple Dictionary"
+        }
+    }
+
+    /// One-line provenance note, shown in the dictionary preview page.
+    public var sourceNote: String {
+        switch self {
+        case .chinese: return "ECDICT — open English-Chinese dictionary with frequency data."
+        case .oxford: return "Concise Oxford (user-supplied data, 31k entries)."
+        case .english: return "WordNet 3.1 — Princeton's lexical database."
+        case .synonyms: return "WordNet synonym sets, grouped by part of speech."
+        case .webster: return "GCIDE / Webster's 1913 — the classic unabridged dictionary, public domain."
+        case .moby: return "Moby Thesaurus II — the largest public-domain English thesaurus."
+        case .apple: return "Apple's built-in dictionaries, embedded in the page."
         }
     }
 
@@ -59,6 +89,13 @@ public final class AppSettings {
         static let studyOrder = "settings.studyOrder"
         static let enabledDictionaries = "settings.enabledDictionaries"
         static let scheduler = "settings.scheduler"
+        static let pronunciationSource = "settings.pronunciationSource"
+    }
+
+    /// System TTS vs downloaded human recordings.
+    public var pronunciationSource: PronunciationSource {
+        get { defaults.string(forKey: Key.pronunciationSource).flatMap(PronunciationSource.init) ?? .system }
+        set { defaults.set(newValue.rawValue, forKey: Key.pronunciationSource) }
     }
 
     /// The memory-scheduling algorithm (user-selectable upgrade; defaults to

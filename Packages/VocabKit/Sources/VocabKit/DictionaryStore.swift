@@ -1,11 +1,14 @@
 import Foundation
 
-/// Read-only access to the bundled dictionary database.
+/// Read-only access to the bundled dictionary database, plus an optional
+/// extras database (Webster 1913 / Moby Thesaurus).
 public final class DictionaryStore {
     private let db: Database
+    private let extras: Database?
 
-    public init(databasePath: String) throws {
+    public init(databasePath: String, extrasPath: String? = nil) throws {
         db = try Database(path: databasePath, mode: .readOnly)
+        extras = extrasPath.flatMap { try? Database(path: $0, mode: .readOnly) }
     }
 
     private static let columns =
@@ -142,6 +145,33 @@ public final class DictionaryStore {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
         return paragraphs.isEmpty ? [meaning] : paragraphs
+    }
+
+    /// Webster's 1913 / GCIDE entry, split into display paragraphs.
+    public func websterEntry(for term: String) -> [String]? {
+        guard let extras else { return nil }
+        let rows = (try? extras.execute(
+            "SELECT definition FROM webster WHERE word = ? COLLATE NOCASE LIMIT 1",
+            [.text(term)]
+        )) ?? []
+        guard let definition = rows.first?.text("definition"), !definition.isEmpty else { return nil }
+        let paragraphs = definition
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return paragraphs.isEmpty ? nil : paragraphs
+    }
+
+    /// Moby Thesaurus synonyms.
+    public func mobySynonyms(for term: String) -> [String]? {
+        guard let extras else { return nil }
+        let rows = (try? extras.execute(
+            "SELECT synonyms FROM moby WHERE word = ? COLLATE NOCASE LIMIT 1",
+            [.text(term)]
+        )) ?? []
+        guard let synonyms = rows.first?.text("synonyms"), !synonyms.isEmpty else { return nil }
+        let list = synonyms.split(separator: ",").map(String.init)
+        return list.isEmpty ? nil : list
     }
 
     public func senses(for term: String) -> [WordNetSense] {

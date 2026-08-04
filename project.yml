@@ -43,6 +43,8 @@ targets:
       - path: Apps/Shared
       - path: Data/dict/voccab-dict.sqlite
         buildPhase: resources
+      - path: Data/dict/voccab-extras.sqlite
+        buildPhase: resources
       - path: Data/seed/sat_rw_vocab.csv
         buildPhase: resources
     settings:
@@ -56,6 +58,8 @@ targets:
       - path: Apps/Redesign
       - path: Apps/Shared
       - path: Data/dict/voccab-dict.sqlite
+        buildPhase: resources
+      - path: Data/dict/voccab-extras.sqlite
         buildPhase: resources
       - path: Data/seed/sat_rw_vocab.csv
         buildPhase: resources

@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import UIKit
 import Vision
 
 /// Photo-based word lookup: take a photo or pick one, OCR the text, tap a

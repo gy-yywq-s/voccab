@@ -149,7 +149,7 @@ struct SearchOverlay: View {
                 Image(systemName: "speaker.wave.2.fill")
                     .foregroundStyle(.tint)
                     .onTapGesture {
-                        env.speech.speak(word.word, accent: env.settings.pronunciationAccent)
+                        env.speech.speak(word.word, accent: env.settings.pronunciationAccent, source: env.settings.pronunciationSource)
                     }
             }
             ForEach(word.translationLines.prefix(3), id: \.self) { line in

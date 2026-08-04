@@ -161,6 +161,8 @@ struct WordDetailData {
     var related: [(label: String, words: [String])]
     var senses: [WordNetSense]
     var oxford: [String]?
+    var webster: [String]?
+    var mobySynonyms: [String]?
 
     var synonymSections: [(pos: String, synonyms: [String])] {
         var result: [(String, [String])] = []
@@ -206,7 +208,9 @@ final class WordDetailModel: ObservableObject {
             isInMyWords: env.userStore.isWord(word, in: myWords.id),
             related: dictWord.map { env.dictionary?.relatedForms(of: $0) ?? [] } ?? [],
             senses: env.dictionary?.senses(for: word) ?? [],
-            oxford: env.dictionary?.oxfordEntry(for: word)
+            oxford: env.dictionary?.oxfordEntry(for: word),
+            webster: env.dictionary?.websterEntry(for: word),
+            mobySynonyms: env.dictionary?.mobySynonyms(for: word)
         )
     }
 
@@ -240,7 +244,7 @@ final class WordDetailModel: ObservableObject {
     }
 
     func speak() {
-        env.speech.speak(displayWord, accent: env.settings.pronunciationAccent)
+        env.speech.speak(displayWord, accent: env.settings.pronunciationAccent, source: env.settings.pronunciationSource)
     }
 
     /// The "Feel Familiar?" quick menu, matching the original.
@@ -362,7 +366,7 @@ final class StudyModel: ObservableObject {
 
     func speakCurrent() {
         guard let word = session?.current?.word else { return }
-        env.speech.speak(word, accent: env.settings.pronunciationAccent)
+        env.speech.speak(word, accent: env.settings.pronunciationAccent, source: env.settings.pronunciationSource)
     }
 }
 

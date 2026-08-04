@@ -243,11 +243,21 @@ struct WordDetailView: View {
         Picker("Dictionary", selection: $tab) {
             Text("Related").tag(DictionarySource.chinese)
             ForEach(visibleTabs, id: \.self) { source in
-                Text(source.label).tag(source)
+                Text(shortTabLabel(source)).tag(source)
             }
         }
         .pickerStyle(.segmented)
         .accessibilityIdentifier("word.tabs")
+    }
+
+    private func shortTabLabel(_ source: DictionarySource) -> String {
+        switch source {
+        case .english: return "English"
+        case .webster: return "Webster"
+        case .moby: return "Moby"
+        case .apple: return "Apple"
+        default: return source.label
+        }
     }
 
     @ViewBuilder
@@ -261,9 +271,57 @@ struct WordDetailView: View {
             englishTab
         case .synonyms:
             synonymsTab
+        case .webster:
+            websterTab
+        case .moby:
+            mobyTab
         case .apple:
             appleTab
         }
+    }
+
+    private var websterTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let paragraphs = model.data.webster {
+                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(paragraph)
+                        .font(.body)
+                        .lineSpacing(3)
+                }
+            } else {
+                Text("No Webster 1913 entry for this word.")
+                    .font(.headline)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 12)
+        .accessibilityIdentifier("word.websterTab")
+    }
+
+    private var mobyTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let synonyms = model.data.mobySynonyms {
+                FlowLayout(spacing: 8) {
+                    ForEach(synonyms, id: \.self) { synonym in
+                        NavigationLink(value: Route.wordDetail(word: synonym, context: [])) {
+                            Text(synonym)
+                                .font(.body)
+                                .foregroundStyle(.tint)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(Capsule().fill(ClassicTheme.wordChipBackground))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            } else {
+                Text("No Moby Thesaurus entry for this word.")
+                    .font(.headline)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 12)
+        .accessibilityIdentifier("word.mobyTab")
     }
 
     private var relatedTab: some View {

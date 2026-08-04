@@ -45,6 +45,19 @@ frontends sharing one backend:
 - A user-supplied Concise Oxford dump (31k entries), audited and loaded by
   `Data/tools/load_oxford.py` into the `oxford` table
 
+`Data/dict/voccab-extras.sqlite` is built by `Data/tools/build_extras.py` from:
+
+- [GCIDE](https://gcide.gnu.org.ua/) — the maintained machine-readable
+  Webster's 1913 (51k entries kept)
+- [Moby Thesaurus II](https://www.gutenberg.org/ebooks/3202) — the largest
+  public-domain English thesaurus (27k entries kept)
+
+Pronunciation: system TTS by default, or human recordings
+(Wiktionary-sourced mp3 via dictionaryapi.dev) fetched on demand and cached —
+switchable in Settings, with automatic TTS fallback. Settings › Dictionary
+Preview shows how every source renders a sample word, with per-source
+toggles.
+
 `Data/seed/sat_rw_vocab.csv` is used only by the UI-test walkthrough
 (deterministic screenshot content) — production launches start with no lists.
 

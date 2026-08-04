@@ -356,6 +356,8 @@ struct NeoWordDetailView: View {
         switch source {
         case .english: return "English"
         case .synonyms: return "Synonyms"
+        case .webster: return "Webster"
+        case .moby: return "Moby"
         case .apple: return "Apple"
         default: return source.label
         }
@@ -372,9 +374,59 @@ struct NeoWordDetailView: View {
             englishContent
         case .synonyms:
             synonymsContent
+        case .webster:
+            websterContent
+        case .moby:
+            mobyContent
         case .apple:
             appleContent
         }
+    }
+
+    private var websterContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let paragraphs = model.data.webster {
+                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(paragraph)
+                        .font(Neo.bodyFont)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                Text("No Webster 1913 entry for this word.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityIdentifier("word.webster")
+    }
+
+    private var mobyContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let synonyms = model.data.mobySynonyms {
+                FlowLayout(spacing: 8) {
+                    ForEach(synonyms, id: \.self) { synonym in
+                        NavigationLink(value: Route.wordDetail(word: synonym, context: [])) {
+                            Text(synonym)
+                                .font(.body.weight(.medium))
+                                .foregroundStyle(Neo.blue)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Neo.paleBlue)
+                                )
+                        }
+                        .buttonStyle(NeoPressStyle())
+                    }
+                }
+            } else {
+                Text("No Moby Thesaurus entry for this word.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityIdentifier("word.moby")
     }
 
     private var relatedContent: some View {

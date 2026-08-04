@@ -4,6 +4,7 @@ import VocabKit
 struct SettingsView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var accent: PronunciationAccent = .american
+    @State private var pronunciationSource: PronunciationSource = .system
     @State private var goalNew = 15
     @State private var goalReview = 30
     @State private var target = 90
@@ -32,8 +33,25 @@ struct SettingsView: View {
                 .onChange(of: accent) { env.settings.pronunciationAccent = accent }
                 .accessibilityIdentifier("settings.pronunciation")
 
+                Picker(selection: $pronunciationSource) {
+                    ForEach(PronunciationSource.allCases, id: \.self) { option in
+                        Text(option.label).tag(option)
+                    }
+                } label: {
+                    Label("Voice", systemImage: "person.wave.2")
+                }
+                .onChange(of: pronunciationSource) { env.settings.pronunciationSource = pronunciationSource }
+                .accessibilityIdentifier("settings.voice")
+
+                NavigationLink {
+                    DictionaryPreviewPage()
+                } label: {
+                    Label("Dictionary Preview", systemImage: "text.book.closed")
+                }
+                .accessibilityIdentifier("settings.dictPreview")
+
                 // Upgrade: choose which dictionaries show on the word page.
-                ForEach([DictionarySource.oxford, .english, .synonyms, .apple], id: \.self) { source in
+                ForEach([DictionarySource.oxford, .english, .synonyms, .webster, .moby, .apple], id: \.self) { source in
                     Toggle(isOn: binding(for: source)) {
                         Label {
                             HStack {
@@ -177,6 +195,7 @@ struct SettingsView: View {
 
     private func load() {
         accent = env.settings.pronunciationAccent
+        pronunciationSource = env.settings.pronunciationSource
         goalNew = env.settings.dailyGoalNew
         goalReview = env.settings.dailyGoalReview
         target = env.settings.targetFamiliarity

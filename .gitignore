@@ -5,3 +5,4 @@ shots/
 Packages/VocabKit/.build/
 Packages/VocabKit/.swiftpm/
 DerivedData/
+Data/tools/cache/

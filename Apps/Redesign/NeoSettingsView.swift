@@ -8,6 +8,7 @@ import VocabKit
 struct NeoSettingsView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var accent: PronunciationAccent = .american
+    @State private var pronunciationSource: PronunciationSource = .system
     @State private var goalNew = 15
     @State private var goalReview = 30
     @State private var target = 90
@@ -40,7 +41,25 @@ struct NeoSettingsView: View {
                 }
                 .accessibilityIdentifier("settings.pronunciation")
                 NeoHairline()
-                ForEach([DictionarySource.oxford, .english, .synonyms, .apple], id: \.self) { source in
+                menuRow("Voice", value: pronunciationSource.label) {
+                    ForEach(PronunciationSource.allCases, id: \.self) { option in
+                        Button(option.label) {
+                            pronunciationSource = option
+                            env.settings.pronunciationSource = option
+                        }
+                    }
+                }
+                .accessibilityIdentifier("settings.voice")
+                NeoHairline()
+                NavigationLink {
+                    DictionaryPreviewPage()
+                } label: {
+                    valueRow("Dictionary Preview", value: "", chevron: true)
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.dictPreview")
+                NeoHairline()
+                ForEach([DictionarySource.oxford, .english, .synonyms, .webster, .moby, .apple], id: \.self) { source in
                     toggleRow(source)
                     NeoHairline()
                 }
@@ -245,6 +264,7 @@ struct NeoSettingsView: View {
 
     private func load() {
         accent = env.settings.pronunciationAccent
+        pronunciationSource = env.settings.pronunciationSource
         goalNew = env.settings.dailyGoalNew
         goalReview = env.settings.dailyGoalReview
         target = env.settings.targetFamiliarity
