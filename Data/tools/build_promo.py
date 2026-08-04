@@ -63,16 +63,15 @@ CURATED_OUT = {
     "holbrook", "harwood", "sioux", "euclid", "bessemer", "phillips",
     "newbury", "howard", "mason", "lyndon", "macbeth", "michigan",
     "brooklyn", "cairo", "lexington", "jefferson", "capitol", "yankee",
-    "greek", "southside",
+    "greek", "southside", "fontana", "niagara",
 }
 
 # Additional text-rich public-domain pools for top-up passes.
 TOPUP_CATS = [
-    "Category:World War II posters from the United States",
-    "Category:United States Office of War Information posters",
-    "Category:Circus posters",
-    "Category:Advertising posters in the United States",
-    "Category:Posters of the United States Food Administration",
+    "Category:United States Army recruiting posters",
+    "Category:United States Navy recruiting posters",
+    "Category:United States Marine Corps recruiting posters",
+    "Category:Liberty bond posters",
 ]
 
 BLACKLIST = {
