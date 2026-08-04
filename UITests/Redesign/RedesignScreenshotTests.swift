@@ -55,10 +55,7 @@ final class RedesignScreenshotTests: XCTestCase {
         snap("05-word-related__\(theme)")
 
         if full {
-            app.buttons["word.studyInfoToggle"].waitTap()
-            sleep(1)
             snap("06-word-studyinfo__\(theme)")
-            app.buttons["word.studyInfoToggle"].waitTap()
 
             let tabs = app.segmentedControls["word.tabs"]
             if tabs.waitForExistence(timeout: 5) {

@@ -48,9 +48,56 @@ enum Neo {
         dark: UIColor(white: 0.75, alpha: 1)
     )
 
-    /// Serif is content-only: the dictionary headword.
-    static func headword(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
-        .system(size: size, weight: weight, design: .serif)
+    /// Serif appears exactly once in the app: the masthead wordmark,
+    /// mirroring Passage's type allocation. Everything else is SF.
+    static let masthead: Font = .system(size: 23, weight: .medium, design: .serif)
+
+    // MARK: Type roles measured from the Passage reference screens.
+    // Hierarchy is carried by size + weight + gray level, never by family:
+    //   pageTitle    28 bold primary      ("Sessions")
+    //   sectionTitle 24 bold primary      ("Scheduled delivery")
+    //   rowTitle     20 semibold primary  (session/item titles, nav titles)
+    //   body         17 regular primary   (main statements)
+    //   bodyQuiet    17 regular secondary (summaries, helper prose)
+    //   contextLabel 17 regular secondary ("Archive", "reject", "targeted")
+    //   caption      15 regular secondary/tertiary ("Command of Evidence · …")
+    //   action       20 semibold blue     ("Begin today")
+    //   warm body    17 regular warm      (risk/note prose)
+    static let pageTitle: Font = .system(size: 28, weight: .bold)
+    static let sectionTitle: Font = .system(size: 24, weight: .bold)
+    static let rowTitle: Font = .system(size: 20, weight: .semibold)
+    static let bodyFont: Font = .system(size: 17)
+    static let caption: Font = .system(size: 15)
+    static let action: Font = .system(size: 20, weight: .semibold)
+}
+
+/// The primary-entry bar, straight from Passage's "Begin today": full-width
+/// pale-blue block, left-aligned blue semibold label, trailing icon.
+struct NeoBeginBar: View {
+    var title: String
+    var systemImage: String = "arrow.right"
+    var tint: Color = Neo.blue
+    var background: Color = Neo.paleBlue
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                    .font(Neo.action)
+                Spacer()
+                Image(systemName: systemImage)
+                    .font(.body.weight(.medium))
+            }
+            .foregroundStyle(tint)
+            .padding(.horizontal, 20)
+            .frame(height: 56)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(background)
+            )
+        }
+        .buttonStyle(NeoPressStyle())
     }
 }
 
@@ -74,7 +121,7 @@ struct NeoSectionHeader<Trailing: View>: View {
                 .frame(width: 28, height: 2)
             HStack(alignment: .firstTextBaseline) {
                 Text(title)
-                    .font(.title2.weight(.bold))
+                    .font(Neo.sectionTitle)
                 Spacer()
                 trailing()
             }
@@ -114,35 +161,6 @@ struct NeoQuietButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(role == .destructive ? Neo.red.opacity(0.09) : Neo.paleBlue)
-            )
-        }
-        .buttonStyle(NeoPressStyle())
-    }
-}
-
-/// Deep-navy commitment ("Submit" style): compact, extremely light shadow.
-struct NeoPrimaryButton: View {
-    var title: String
-    var systemImage: String?
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.subheadline.weight(.semibold))
-                }
-                Text(title)
-                    .font(.body.weight(.semibold))
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 11)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Neo.navy)
-                    .shadow(color: .black.opacity(0.08), radius: 1.5, y: 1)
             )
         }
         .buttonStyle(NeoPressStyle())

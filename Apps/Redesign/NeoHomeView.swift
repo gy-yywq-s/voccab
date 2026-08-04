@@ -54,7 +54,7 @@ struct NeoHomeView: View {
             HStack {
                 Spacer()
                 Text("Voccab")
-                    .font(.title3.weight(.semibold))
+                    .font(Neo.masthead)
                     .accessibilityIdentifier("home.greeting")
                 Spacer()
             }
@@ -80,10 +80,11 @@ struct NeoHomeView: View {
         let counts = env.userStore.todayCounts()
         return VStack(alignment: .leading, spacing: 6) {
             Text(greetingWord)
-                .font(.largeTitle.weight(.bold))
+                .font(Neo.pageTitle)
             statText(counts)
-                .font(.body)
+                .font(Neo.bodyFont)
                 .foregroundStyle(.secondary)
+                .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, 26)
@@ -130,10 +131,10 @@ struct NeoHomeView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Saved words")
-                            .font(.subheadline)
+                            .font(Neo.caption)
                             .foregroundStyle(.secondary)
                         Text(myWords.wordCount == 0 ? "None yet" : "\(myWords.wordCount) words")
-                            .font(.title3.weight(.semibold))
+                            .font(Neo.rowTitle)
                             .foregroundStyle(.primary)
                     }
                     Spacer()
@@ -169,11 +170,11 @@ struct NeoHomeView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(list.name)
-                                    .font(.body.weight(.semibold))
+                                    .font(Neo.rowTitle)
                                     .foregroundStyle(.primary)
                                     .lineLimit(1)
                                 Text("\(list.wordCount) words")
-                                    .font(.subheadline)
+                                    .font(Neo.caption)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
@@ -202,8 +203,9 @@ struct NeoHomeView: View {
             NeoSectionHeader(title: "Snap words")
                 .padding(.top, 24)
             Text("Photograph text and tap any word to look it up. The camera button below starts a capture.")
-                .font(.subheadline)
+                .font(Neo.bodyFont)
                 .foregroundStyle(.secondary)
+                .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()

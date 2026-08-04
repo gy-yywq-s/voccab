@@ -60,7 +60,7 @@ struct NeoWordListView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(model.list.name)
-                    .font(.largeTitle.weight(.bold))
+                    .font(Neo.pageTitle)
                     .lineLimit(2)
                 Text("\(model.totalCount)")
                     .font(.title3.monospacedDigit())
@@ -158,7 +158,7 @@ struct NeoWordListView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(section.title)
-                            .font(.headline.weight(.bold))
+                            .font(Neo.rowTitle)
                         Spacer()
                         Text("\(section.rows.count)")
                             .font(.footnote.monospacedDigit())
@@ -214,42 +214,36 @@ struct NeoWordListView: View {
     }
 
     private func rowLabel(_ row: WordRowInfo) -> some View {
-        HStack(spacing: 10) {
-            familiarityDot(row.familiarity)
-            Text(row.word)
-                .font(.body)
-                .foregroundStyle(row.archived ? Color.secondary : Color.primary)
-            if row.archived {
-                Image(systemName: "archivebox")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(row.word)
+                        .font(Neo.rowTitle)
+                        .foregroundStyle(row.archived ? Color.secondary : Color.primary)
+                    if row.archived {
+                        Image(systemName: "archivebox")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                if let familiarity = row.familiarity {
+                    Text("Familiarity \(familiarity)%")
+                        .font(Neo.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
             Text(rightMeta(row))
-                .font(.footnote.monospacedDigit())
+                .font(Neo.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(Color(uiColor: .quaternaryLabel))
         }
-        .padding(.vertical, 11)
+        .padding(.vertical, 10)
         .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
             NeoHairline().padding(.leading, 16)
-        }
-    }
-
-    private func familiarityDot(_ familiarity: Int?) -> some View {
-        Group {
-            if let familiarity {
-                Circle()
-                    .fill(familiarity >= 80 ? Neo.green : Neo.warm)
-                    .frame(width: 6, height: 6)
-            } else {
-                Circle()
-                    .stroke(Neo.hairline, lineWidth: 1)
-                    .frame(width: 6, height: 6)
-            }
         }
     }
 
@@ -283,6 +277,14 @@ struct NeoWordListView: View {
                     Label(model.showArchived ? "Hide Archived" : "Show Archived",
                           systemImage: model.showArchived ? "archivebox.fill" : "archivebox")
                 }
+                if model.pausedSession != nil {
+                    Button(role: .destructive) {
+                        env.userStore.clearPausedSession(listID: model.list.id)
+                        model.reload()
+                    } label: {
+                        Label("End Session", systemImage: "xmark.circle")
+                    }
+                }
                 if !model.list.isBuiltin {
                     Button {
                         renameText = model.list.name
@@ -304,46 +306,21 @@ struct NeoWordListView: View {
     }
 
     private var bottomBar: some View {
-        HStack(spacing: 10) {
-            if let paused = model.pausedSession {
-                Text("\(paused.totalCount - paused.position) cards left in session")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Menu {
-                    Button(role: .destructive) {
-                        env.userStore.clearPausedSession(listID: model.list.id)
-                        model.reload()
-                    } label: {
-                        Label("End Session", systemImage: "xmark.circle")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 40, height: 40)
-                }
-                .accessibilityIdentifier("wordList.sessionMenu")
-                NeoPrimaryButton(title: "Continue", systemImage: "play.fill") {
-                    navigateToStudy = true
-                }
-                .accessibilityIdentifier("wordList.study")
-            } else {
-                Text(studyCountLabel)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                NeoPrimaryButton(title: "Study", systemImage: "book") {
-                    navigateToStudy = true
-                }
-                .disabled(model.visibleWords.isEmpty)
-                .opacity(model.visibleWords.isEmpty ? 0.4 : 1)
-                .accessibilityIdentifier("wordList.study")
+        VStack(spacing: 0) {
+            NeoBeginBar(
+                title: model.pausedSession.map { "Continue studying · \($0.totalCount - $0.position) left" }
+                    ?? "Study \(studyCountLabel)",
+                systemImage: model.pausedSession == nil ? "arrow.right" : "play.fill"
+            ) {
+                navigateToStudy = true
             }
+            .disabled(model.visibleWords.isEmpty && model.pausedSession == nil)
+            .opacity(model.visibleWords.isEmpty && model.pausedSession == nil ? 0.4 : 1)
+            .accessibilityIdentifier("wordList.study")
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 6)
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 10)
-        .padding(.bottom, 6)
         .background(.regularMaterial)
     }
 
@@ -351,6 +328,6 @@ struct NeoWordListView: View {
         let count = model.visibleWords.count
         return count == model.totalCount
             ? "\(count) words"
-            : "\(count) of \(model.totalCount) in view"
+            : "\(count) words in view"
     }
 }

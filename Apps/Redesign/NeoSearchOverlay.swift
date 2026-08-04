@@ -19,7 +19,7 @@ struct NeoSearchOverlay: View {
         VStack(spacing: 0) {
             HStack {
                 Text("Lookup")
-                    .font(.title3.weight(.semibold))
+                    .font(Neo.rowTitle)
                 Spacer()
                 Button {
                     dismiss()
@@ -87,11 +87,11 @@ struct NeoSearchOverlay: View {
                 } label: {
                     HStack {
                         Text(item.term)
-                            .font(.body.weight(.medium))
+                            .font(Neo.rowTitle)
                             .foregroundStyle(.primary)
                         Spacer()
                         Text(Formatting.relative(item.searchedAt))
-                            .font(.footnote)
+                            .font(Neo.caption)
                             .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 12)
@@ -135,7 +135,7 @@ struct NeoSearchOverlay: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(word.word)
-                    .font(Neo.headword(30))
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(.primary)
                     .minimumScaleFactor(0.5)
                 if !word.phonetic.isEmpty {

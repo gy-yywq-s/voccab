@@ -58,12 +58,13 @@ struct NeoWordDetailView: View {
                 headword
                 chineseDefinitions
                 noteBlock
+                NeoHairline()
+                    .padding(.top, 16)
+                studyBlock
+                NeoHairline()
                 metadataLine
-                if model.showStudyInfo {
-                    studyInfo
-                }
                 tabBar
-                    .padding(.top, 24)
+                    .padding(.top, 20)
                 tabContent
                     .padding(.top, 16)
                 Color.clear.frame(height: 60)
@@ -89,7 +90,7 @@ struct NeoWordDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
                 Text(model.displayWord)
-                    .font(Neo.headword(36))
+                    .font(.system(size: 32, weight: .bold))
                     .minimumScaleFactor(0.5)
                     .lineLimit(2)
                 Spacer()
@@ -187,9 +188,16 @@ struct NeoWordDetailView: View {
     @ViewBuilder
     private var noteBlock: some View {
         if !model.data.state.note.isEmpty {
-            (Text("Note  ").font(.subheadline.weight(.semibold)).foregroundColor(Neo.warm)
-                + Text(model.data.state.note).font(.subheadline).foregroundColor(.secondary))
-                .padding(.top, 12)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("note")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(model.data.state.note)
+                    .font(.body)
+                    .foregroundStyle(Neo.warm)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.top, 14)
         }
     }
 
@@ -197,18 +205,9 @@ struct NeoWordDetailView: View {
     /// separated by dots, color only where it carries state.
     private var metadataLine: some View {
         let dictWord = model.data.dictWord
-        let familiarity = model.data.state.familiarity
         return HStack(alignment: .top, spacing: 8) {
             FlowLayout(spacing: 6) {
                 Group {
-                    if let familiarity {
-                        Text("Familiarity \(familiarity)%")
-                            .foregroundStyle(familiarity >= 80 ? Neo.green : Neo.warm)
-                    } else {
-                        Text("Familiarity ?")
-                            .foregroundStyle(.secondary)
-                    }
-                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
                     Text((dictWord?.frequencyBand ?? .unknown).label)
                         .foregroundStyle(.secondary)
                     if let tags = dictWord?.examTags, let label = examTagChipLabel(tags) {
@@ -237,61 +236,53 @@ struct NeoWordDetailView: View {
             }
 
             Spacer(minLength: 0)
-
-            Button {
-                withAnimation { model.showStudyInfo.toggle() }
-            } label: {
-                Image(systemName: "info.circle")
-                    .font(.body)
-                    .foregroundStyle(model.showStudyInfo ? Neo.blue : Color.secondary)
-                    .frame(width: 36, height: 36)
-            }
-            .buttonStyle(NeoPressStyle())
-            .accessibilityIdentifier("word.studyInfoToggle")
         }
         .padding(.top, 12)
+        .padding(.bottom, 2)
     }
 
-    private var studyInfo: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    /// Always-visible study state: the familiarity slider is a first-class
+    /// row, with the schedule facts as a quiet footnote below.
+    private var studyBlock: some View {
+        let state = model.data.state
+        return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
-                Text("Set familiarity")
-                    .font(.subheadline)
-                NeoFamiliaritySlider(value: model.data.state.familiarity ?? 0) { newValue in
+                Text("Familiarity")
+                    .font(.body)
+                NeoFamiliaritySlider(value: state.familiarity ?? 0) { newValue in
                     model.setFamiliarity(newValue)
                 }
-                Text("\(model.data.state.familiarity ?? 0)%")
-                    .font(.subheadline.monospacedDigit())
+                Text(state.familiarity.map { "\($0)%" } ?? "?")
+                    .font(.body.monospacedDigit())
+                    .foregroundStyle(state.familiarity == nil ? Color.secondary : Color.primary)
                     .frame(width: 44, alignment: .trailing)
             }
-            let state = model.data.state
-            VStack(alignment: .leading, spacing: 3) {
+            Group {
                 if state.timesStudied == 0 {
-                    Text("Never studied.")
+                    Text("Never studied")
                 } else {
-                    Text("Studied \(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s")")
-                    if let last = state.lastStudiedAt {
-                        Text("Last studied \(Formatting.relative(last))")
-                    }
-                    if let next = state.nextPlannedAt {
-                        Text("Next planned \(Formatting.relative(next))")
-                    }
-                    if state.memoryCircle > 0 {
-                        Text("Memory circle \(state.memoryCircle)")
-                    }
+                    Text(studyFacts(state))
                 }
             }
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemBackground))
-        )
-        .padding(.top, 10)
+        .padding(.vertical, 14)
         .accessibilityIdentifier("word.studyInfo")
+    }
+
+    private func studyFacts(_ state: WordState) -> String {
+        var parts = ["Studied \(state.timesStudied)×"]
+        if let last = state.lastStudiedAt {
+            parts.append("last \(Formatting.relative(last))")
+        }
+        if let next = state.nextPlannedAt {
+            parts.append("next \(Formatting.relative(next))")
+        }
+        if state.memoryCircle > 0 {
+            parts.append("circle \(state.memoryCircle)")
+        }
+        return parts.joined(separator: " · ")
     }
 
     // MARK: Dictionary tabs (native segmented)
