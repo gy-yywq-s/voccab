@@ -40,7 +40,7 @@ struct CameraLookupView: View {
                                         .font(.body)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 7)
-                                        .background(Capsule().fill(ClassicTheme.wordChipBackground))
+                                        .background(Capsule().fill(Color(uiColor: .secondarySystemFill)))
                                         .foregroundStyle(.tint)
                                 }
                                 .buttonStyle(.plain)
@@ -55,7 +55,7 @@ struct CameraLookupView: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(Capsule().fill(ClassicTheme.continueButtonBackground))
+                        .background(Capsule().fill(Color(uiColor: .secondarySystemFill)))
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)

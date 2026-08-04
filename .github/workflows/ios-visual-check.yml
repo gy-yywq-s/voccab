@@ -104,7 +104,9 @@ jobs:
           mkdir -p /tmp/shots-branch
           cp -R shots/* /tmp/shots-branch/ 2>/dev/null || true
           for log in artifacts/*.log; do
-            [ -f "$log" ] && tail -200 "$log" > "/tmp/shots-branch/$(basename "$log")"
+            if [ -f "$log" ]; then
+              { grep -E "error:|error " "$log" | head -120; echo "--- tail ---"; tail -120 "$log"; } > "/tmp/shots-branch/$(basename "$log")" || true
+            fi
           done
           echo "run: ${{ github.run_id }} ($(date -u +%Y-%m-%dT%H:%M:%SZ)) commit: ${{ github.sha }}" > /tmp/shots-branch/RUN.txt
           git config user.name "github-actions[bot]"

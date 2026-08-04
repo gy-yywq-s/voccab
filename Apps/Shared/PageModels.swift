@@ -89,7 +89,7 @@ final class WordListModel: ObservableObject {
         case .frequency:
             let grouped = Dictionary(grouping: rows) { FrequencyBand(rank: $0.rank) }
             let bands = grouped.keys.sorted()
-            let ordered = ascending ? bands : bands.reversed()
+            let ordered = ascending ? bands : Array(bands.reversed())
             return ordered.map { band in
                 let inBand = grouped[band]!.sorted {
                     let a = $0.rank <= 0 ? Int.max : $0.rank
@@ -108,7 +108,7 @@ final class WordListModel: ObservableObject {
                 case (let x?, let y?): return x < y
                 }
             }
-            let ordered = ascending ? keys : keys.reversed()
+            let ordered = ascending ? keys : Array(keys.reversed())
             return ordered.map { bucket in
                 let title = bucket.map { "\($0)%" } ?? "Unknown"
                 let inBucket = grouped[bucket]!.sorted { $0.word.lowercased() < $1.word.lowercased() }
@@ -126,7 +126,7 @@ final class WordListModel: ObservableObject {
                 case (let x?, let y?): return x < y
                 }
             }
-            let ordered = ascending ? keys : keys.reversed()
+            let ordered = ascending ? keys : Array(keys.reversed())
             return ordered.map { day in
                 let title = day.map { Formatting.relative($0) } ?? "Not Planned"
                 let inDay = grouped[day]!.sorted { $0.word.lowercased() < $1.word.lowercased() }
@@ -280,11 +280,12 @@ final class StudyModel: ObservableObject {
     }
 
     var sessionMessage: String {
-        Formatting.sessionMessage(
+        let mix = plans.first(where: { $0.mode == .mix })
+        return Formatting.sessionMessage(
             newWords: todayCounts.newWords,
             reviewed: todayCounts.reviewed,
-            hasNewLeft: plans.first(where: { $0.mode == .mix })?.newCount ?? 0 > 0,
-            hasReviewLeft: plans.first(where: { $0.mode == .mix })?.reviewCount ?? 0 > 0
+            hasNewLeft: (mix?.newCount ?? 0) > 0,
+            hasReviewLeft: (mix?.reviewCount ?? 0) > 0
         )
     }
 

@@ -22,14 +22,6 @@ struct ClassicApp: App {
     }
 }
 
-/// Navigation destinations shared across the app.
-enum Route: Hashable {
-    case wordList(WordList)
-    case wordDetail(word: String, context: [String])
-    case settings
-    case importWords
-}
-
 extension View {
     @MainActor
     func classicDestinations(env: AppEnvironment) -> some View {
