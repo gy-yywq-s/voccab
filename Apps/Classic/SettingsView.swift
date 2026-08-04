@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var goalReview = 30
     @State private var target = 90
     @State private var order: StudyOrder = .listOrder
+    @State private var scheduler: SchedulerKind = .circles
     @State private var enabledDictionaries: Set<DictionarySource> = []
     @State private var expandGoal = false
 
@@ -54,7 +55,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Study") {
+            Section {
                 DisclosureGroup(isExpanded: $expandGoal) {
                     goalEditor
                 } label: {
@@ -87,6 +88,22 @@ struct SettingsView: View {
                 }
                 .onChange(of: order) { env.settings.studyOrder = order }
                 .accessibilityIdentifier("settings.studyOrder")
+
+                // Selectable memory algorithm; the default matches the
+                // original app's circles.
+                Picker(selection: $scheduler) {
+                    ForEach(SchedulerKind.allCases, id: \.self) { kind in
+                        Text(kind.label).tag(kind)
+                    }
+                } label: {
+                    Label("Algorithm", systemImage: "brain")
+                }
+                .onChange(of: scheduler) { env.settings.scheduler = scheduler }
+                .accessibilityIdentifier("settings.scheduler")
+            } header: {
+                Text("Study")
+            } footer: {
+                Text(scheduler.summary)
             }
 
             Section("About") {
@@ -164,6 +181,7 @@ struct SettingsView: View {
         goalReview = env.settings.dailyGoalReview
         target = env.settings.targetFamiliarity
         order = env.settings.studyOrder
+        scheduler = env.settings.scheduler
         enabledDictionaries = Set(env.settings.enabledDictionaries)
     }
 }

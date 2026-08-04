@@ -11,6 +11,7 @@ struct NeoSettingsView: View {
     @State private var goalReview = 30
     @State private var target = 90
     @State private var order: StudyOrder = .listOrder
+    @State private var scheduler: SchedulerKind = .circles
     @State private var enabledDictionaries: Set<DictionarySource> = []
     @State private var showGoalSheet = false
 
@@ -79,7 +80,29 @@ struct NeoSettingsView: View {
                         }
                     }
                     .accessibilityIdentifier("settings.studyOrder")
+
+                    hairline
+                    menuRow("Algorithm", value: scheduler.label) {
+                        ForEach(SchedulerKind.allCases, id: \.self) { kind in
+                            Button {
+                                scheduler = kind
+                                env.settings.scheduler = kind
+                            } label: {
+                                if scheduler == kind {
+                                    Label(kind.label, systemImage: "checkmark")
+                                } else {
+                                    Text(kind.label)
+                                }
+                            }
+                        }
+                    }
+                    .accessibilityIdentifier("settings.scheduler")
                 }
+                Text(scheduler.summary)
+                    .font(.footnote)
+                    .foregroundStyle(Neo.faint)
+                    .padding(.top, 6)
+                    .padding(.horizontal, 4)
 
                 group(title: "About") {
                     rowLabel("Version",
@@ -253,6 +276,7 @@ struct NeoSettingsView: View {
         goalReview = env.settings.dailyGoalReview
         target = env.settings.targetFamiliarity
         order = env.settings.studyOrder
+        scheduler = env.settings.scheduler
         enabledDictionaries = Set(env.settings.enabledDictionaries)
     }
 }

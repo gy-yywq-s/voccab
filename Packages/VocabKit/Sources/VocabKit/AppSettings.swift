@@ -61,6 +61,14 @@ public final class AppSettings {
         static let targetFamiliarity = "settings.targetFamiliarity"
         static let studyOrder = "settings.studyOrder"
         static let enabledDictionaries = "settings.enabledDictionaries"
+        static let scheduler = "settings.scheduler"
+    }
+
+    /// The memory-scheduling algorithm (user-selectable upgrade; defaults to
+    /// the original app's memory circles).
+    public var scheduler: SchedulerKind {
+        get { defaults.string(forKey: Key.scheduler).flatMap(SchedulerKind.init) ?? .circles }
+        set { defaults.set(newValue.rawValue, forKey: Key.scheduler) }
     }
 
     public var pronunciationAccent: PronunciationAccent {

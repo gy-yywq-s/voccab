@@ -67,6 +67,11 @@ public final class UserStore {
                 updated_at REAL NOT NULL
             )
         """)
+        // Scheduler columns added for the selectable-algorithms upgrade;
+        // ALTER TABLE fails harmlessly when the column already exists.
+        for column in ["interval_days REAL", "ease_factor REAL", "stability REAL", "difficulty REAL"] {
+            _ = try? db.execute("ALTER TABLE word_state ADD COLUMN \(column)")
+        }
         // Built-in favorites list.
         try db.execute(
             "INSERT OR IGNORE INTO lists (name, is_builtin, created_at) VALUES (?, 1, ?)",
@@ -184,14 +189,22 @@ public final class UserStore {
             "SELECT * FROM word_state WHERE word = ?", [.text(word)]
         )) ?? []
         guard let row = rows.first else { return WordState(word: word) }
-        return WordState(
+        return Self.state(from: row, word: word)
+    }
+
+    private static func state(from row: Database.Row, word: String) -> WordState {
+        WordState(
             word: word,
             familiarity: row.optionalDouble("familiarity").map { Int($0) },
             note: row.text("note"),
             timesStudied: row.int("times_studied"),
             lastStudiedAt: row.optionalDouble("last_studied_at").map { Date(timeIntervalSince1970: $0) },
             nextPlannedAt: row.optionalDouble("next_planned_at").map { Date(timeIntervalSince1970: $0) },
-            memoryCircle: row.int("memory_circle")
+            memoryCircle: row.int("memory_circle"),
+            intervalDays: row.optionalDouble("interval_days"),
+            easeFactor: row.optionalDouble("ease_factor"),
+            stability: row.optionalDouble("stability"),
+            difficulty: row.optionalDouble("difficulty")
         )
     }
 
@@ -205,15 +218,7 @@ public final class UserStore {
             )) ?? []
             for row in rows {
                 let word = row.text("word")
-                result[word.lowercased()] = WordState(
-                    word: word,
-                    familiarity: row.optionalDouble("familiarity").map { Int($0) },
-                    note: row.text("note"),
-                    timesStudied: row.int("times_studied"),
-                    lastStudiedAt: row.optionalDouble("last_studied_at").map { Date(timeIntervalSince1970: $0) },
-                    nextPlannedAt: row.optionalDouble("next_planned_at").map { Date(timeIntervalSince1970: $0) },
-                    memoryCircle: row.int("memory_circle")
-                )
+                result[word.lowercased()] = Self.state(from: row, word: word)
             }
         }
         return result
@@ -221,15 +226,20 @@ public final class UserStore {
 
     public func save(state: WordState) {
         try? db.execute("""
-            INSERT INTO word_state (word, familiarity, note, times_studied, last_studied_at, next_planned_at, memory_circle)
-            VALUES (?,?,?,?,?,?,?)
+            INSERT INTO word_state (word, familiarity, note, times_studied, last_studied_at, next_planned_at,
+                                    memory_circle, interval_days, ease_factor, stability, difficulty)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(word) DO UPDATE SET
                 familiarity = excluded.familiarity,
                 note = excluded.note,
                 times_studied = excluded.times_studied,
                 last_studied_at = excluded.last_studied_at,
                 next_planned_at = excluded.next_planned_at,
-                memory_circle = excluded.memory_circle
+                memory_circle = excluded.memory_circle,
+                interval_days = excluded.interval_days,
+                ease_factor = excluded.ease_factor,
+                stability = excluded.stability,
+                difficulty = excluded.difficulty
         """, [
             .text(state.word),
             state.familiarity.map { Database.Value.int(Int64($0)) } ?? .null,
@@ -238,6 +248,10 @@ public final class UserStore {
             state.lastStudiedAt.map { Database.Value.real($0.timeIntervalSince1970) } ?? .null,
             state.nextPlannedAt.map { Database.Value.real($0.timeIntervalSince1970) } ?? .null,
             .int(Int64(state.memoryCircle)),
+            state.intervalDays.map { Database.Value.real($0) } ?? .null,
+            state.easeFactor.map { Database.Value.real($0) } ?? .null,
+            state.stability.map { Database.Value.real($0) } ?? .null,
+            state.difficulty.map { Database.Value.real($0) } ?? .null,
         ])
     }
 

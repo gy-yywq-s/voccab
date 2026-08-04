@@ -16,6 +16,11 @@ frontends sharing one backend:
   Settings → Study → Study Order, plus a per-session override on the session
   start page. Orders: list order, frequency (common/rare first), familiarity
   (low/high first), planned review due-first, alphabetical A-Z/Z-A, random.
+- **Selectable memory algorithms** (Settings → Study → Algorithm): the
+  original's fixed Ebbinghaus ladder ("Memory Circles", default), Leitner
+  boxes, SM-2, and a simplified FSRS-4.5 — all driven by the same
+  I Know / I Don't Know input, switchable at any time without losing
+  progress. Research notes in `docs/ALGORITHMS.md`.
 - **Multi-dictionary word page** with per-dictionary toggles in Settings:
   English-Chinese (bundled, ECDICT), English definitions + Synonyms (bundled,
   WordNet), Apple system dictionary, and an Oxford slot that activates when

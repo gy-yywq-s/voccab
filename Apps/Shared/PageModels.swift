@@ -313,7 +313,7 @@ final class StudyModel: ObservableObject {
         guard var s = session, let item = s.current else { return }
         var state = env.userStore.state(of: item.word)
         let wasNew = state.timesStudied == 0
-        StudyEngine.answer(knew, session: &s, state: &state)
+        StudyEngine.answer(knew, session: &s, state: &state, scheduler: env.settings.scheduler.scheduler)
         env.userStore.save(state: state)
         env.userStore.logStudy(word: item.word, knew: knew, wasNew: wasNew)
         session = s

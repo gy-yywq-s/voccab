@@ -280,12 +280,23 @@ public struct WordState: Hashable, Sendable {
     public var timesStudied: Int
     public var lastStudiedAt: Date?
     public var nextPlannedAt: Date?
-    /// SRS stage, 0 = not started. "Memory: Circle N" in the UI.
+    /// SRS stage, 0 = not started. "Memory: Circle N" in the UI. Doubles as
+    /// the Leitner box number under the Leitner scheduler.
     public var memoryCircle: Int
+    /// Last scheduled interval in days (used by SM-2).
+    public var intervalDays: Double?
+    /// SM-2 ease factor.
+    public var easeFactor: Double?
+    /// FSRS memory stability (days).
+    public var stability: Double?
+    /// FSRS difficulty (1...10).
+    public var difficulty: Double?
 
     public init(word: String, familiarity: Int? = nil, note: String = "",
                 timesStudied: Int = 0, lastStudiedAt: Date? = nil,
-                nextPlannedAt: Date? = nil, memoryCircle: Int = 0) {
+                nextPlannedAt: Date? = nil, memoryCircle: Int = 0,
+                intervalDays: Double? = nil, easeFactor: Double? = nil,
+                stability: Double? = nil, difficulty: Double? = nil) {
         self.word = word
         self.familiarity = familiarity
         self.note = note
@@ -293,6 +304,10 @@ public struct WordState: Hashable, Sendable {
         self.lastStudiedAt = lastStudiedAt
         self.nextPlannedAt = nextPlannedAt
         self.memoryCircle = memoryCircle
+        self.intervalDays = intervalDays
+        self.easeFactor = easeFactor
+        self.stability = stability
+        self.difficulty = difficulty
     }
 }
 

@@ -106,9 +106,10 @@ public enum StudyEngine {
 
     /// Applies an answer. "I Don't Know" re-queues the card near the end of
     /// the session so it comes back before the session finishes.
-    public static func answer(_ knew: Bool, session: inout StudySession, state: inout WordState, now: Date = Date()) {
+    public static func answer(_ knew: Bool, session: inout StudySession, state: inout WordState,
+                              scheduler: any Scheduler = CirclesScheduler(), now: Date = Date()) {
         guard let item = session.current else { return }
-        SRS.apply(answer: knew, to: &state, now: now)
+        scheduler.apply(answer: knew, to: &state, now: now)
         if knew {
             session.completedWords.append(item.word)
             session.position += 1
