@@ -53,6 +53,7 @@ struct NeoWordListView: View {
             NeoStudyStartView(model: StudyModel(list: model.list, candidateWords: model.visibleWords, env: env))
         }
         .onReceive(env.$dataVersion) { _ in model.reload() }
+        .onAppear { model.reload() }
     }
 
     private var header: some View {

@@ -15,8 +15,13 @@ struct WordDetailPager: View {
         _selection = State(initialValue: word)
     }
 
+    /// TabView's page style builds children eagerly, so cap the pager to a
+    /// window around the opened word instead of the whole list.
     private var pages: [String] {
-        context.isEmpty ? [word] : context
+        guard !context.isEmpty, let index = context.firstIndex(of: word) else { return [word] }
+        let lower = max(0, index - 15)
+        let upper = min(context.count, index + 16)
+        return Array(context[lower..<upper])
     }
 
     var body: some View {
