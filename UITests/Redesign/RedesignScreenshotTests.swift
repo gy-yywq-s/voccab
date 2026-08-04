@@ -51,21 +51,20 @@ final class RedesignScreenshotTests: XCTestCase {
         // Word detail: "some"
         app.staticTexts["some"].firstMatch.waitTap()
         XCTAssertTrue(app.staticTexts["/sʌm/"].waitForExistence(timeout: 10)
-            || app.segmentedControls["word.tabs"].waitForExistence(timeout: 10))
+            || app.buttons["word.tab.Oxford"].waitForExistence(timeout: 10))
         snap("05-word-related__\(theme)")
 
         if full {
             snap("06-word-studyinfo__\(theme)")
 
-            let tabs = app.segmentedControls["word.tabs"]
-            if tabs.waitForExistence(timeout: 5) {
-                tabs.buttons["English"].tap()
+            if app.buttons["word.tab.English"].waitForExistence(timeout: 5) {
+                app.buttons["word.tab.English"].tap()
                 sleep(1)
                 snap("07-word-english__\(theme)")
-                tabs.buttons["Synonyms"].tap()
+                app.buttons["word.tab.Synonyms"].tap()
                 sleep(1)
                 snap("08-word-synonyms__\(theme)")
-                tabs.buttons["Oxford"].tap()
+                app.buttons["word.tab.Oxford"].tap()
                 sleep(1)
                 snap("09-word-oxford__\(theme)")
             }

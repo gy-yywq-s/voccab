@@ -326,16 +326,42 @@ struct NeoWordDetailView: View {
         }
     }
 
-    // MARK: Dictionary tabs (native segmented)
+    // MARK: Dictionary tabs — a low, thin custom switcher, visually
+    // subordinate to (and distinct from) the blue familiarity segments.
+
+    private var allTabs: [(DictionarySource, String)] {
+        [(DictionarySource.chinese, "Related")] + dictionaryTabs.map { ($0, shortLabel($0)) }
+    }
 
     private var tabBar: some View {
-        Picker("Dictionary", selection: $tab) {
-            Text("Related").tag(DictionarySource.chinese)
-            ForEach(dictionaryTabs, id: \.self) { source in
-                Text(shortLabel(source)).tag(source)
+        HStack(spacing: 2) {
+            ForEach(allTabs, id: \.0) { source, label in
+                Button {
+                    tab = source
+                } label: {
+                    Text(label)
+                        .font(.system(size: 13, weight: tab == source ? .medium : .regular))
+                        .foregroundStyle(tab == source ? Color.primary : Color.secondary)
+                        .padding(.horizontal, 10)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 24)
+                        .background {
+                            if tab == source {
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(Color(uiColor: .systemBackground))
+                                    .shadow(color: .black.opacity(0.10), radius: 1.5, y: 0.5)
+                            }
+                        }
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("word.tab.\(label)")
             }
         }
-        .pickerStyle(.segmented)
+        .padding(2)
+        .background(
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(Color(uiColor: .systemGray6))
+        )
         .accessibilityIdentifier("word.tabs")
     }
 
@@ -552,12 +578,12 @@ struct NeoFamiliaritySegments: View {
             let segmentWidth = proxy.size.width / CGFloat(Self.steps.count)
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(uiColor: .systemGray5))
+                    .fill(Neo.paleBlue)
                 HStack(spacing: 0) {
                     ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, _ in
                         if index > 0 {
                             Rectangle()
-                                .fill(Color(uiColor: .systemGray3).opacity(0.6))
+                                .fill(Neo.blue.opacity(0.22))
                                 .frame(width: 0.7, height: 14)
                         }
                         Color.clear
@@ -567,7 +593,7 @@ struct NeoFamiliaritySegments: View {
                 if let selected = selectedIndex {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(Color(uiColor: .systemBackground))
-                        .shadow(color: .black.opacity(0.12), radius: 2.5, y: 1)
+                        .shadow(color: Neo.blue.opacity(0.25), radius: 2.5, y: 1)
                         .frame(width: segmentWidth - 6, height: 34)
                         .offset(x: CGFloat(selected) * segmentWidth + 3)
                         .animation(.easeOut(duration: 0.15), value: selected)
@@ -576,7 +602,7 @@ struct NeoFamiliaritySegments: View {
                     ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, step in
                         Text("\(step)")
                             .font(.system(size: 14, weight: index == selectedIndex ? .semibold : .regular))
-                            .foregroundStyle(index == selectedIndex ? Color.primary : Color.secondary)
+                            .foregroundStyle(index == selectedIndex ? Neo.blue : Neo.blue.opacity(0.55))
                             .frame(width: segmentWidth, height: 40)
                     }
                 }
