@@ -10,8 +10,10 @@
 		0AB21D710E3BB436ABCD9364 /* PromoCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */; };
 		0D30B572751D5FF896374C2A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6CD4DCE15F6990064326553C /* Assets.xcassets */; };
 		1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DFA034A4C4765AD7697D786 /* NeoSettingsView.swift */; };
+		22FBAEBD03321C158895E4F1 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
 		232FF4B3386D1556BA0003CB /* RedesignApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3033400849322EE17506565 /* RedesignApp.swift */; };
 		258FD4FDE479337CC0394788 /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B09A07489A23C06DCABDAFB1 /* ClassicTheme.swift */; };
+		2FF3D41231EEBE5CE05EF264 /* DictionaryPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69AC979915B5150FF744F4B /* DictionaryPreview.swift */; };
 		316405FDF224695C9CDE6CFF /* CameraLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7583571466DE107FC55B425 /* CameraLookup.swift */; };
 		34C4E9CA1727496A0EE92D0C /* RedesignScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */; };
 		38DF09E152DA33150577826A /* PromoCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */; };
@@ -46,12 +48,14 @@
 		BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */; };
 		BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
 		D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE9A2571DD20459B5C9B8CA1 /* NeoWordDetailView.swift */; };
+		D25A922D1EFE1067E4833F46 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
 		D69FB15DF56B49C0D88CDA84 /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0AE9BEB2FE1101D996F12F4 /* VocabKit */; };
 		DC397606F9BA49B455C41206 /* PageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */; };
 		DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CF31D3814A1989115A3077 /* HomeView.swift */; };
 		DE9A63535FF802FED31CFA19 /* voccab-dict.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */; };
 		E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */; };
 		F1BD950D4CAF0DC2DFE82690 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207DB7AE943E677C21167D87 /* SharedComponents.swift */; };
+		F3018AD883473481A56EB7A7 /* DictionaryPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69AC979915B5150FF744F4B /* DictionaryPreview.swift */; };
 		F7E9B445148768CC1FA9D1E1 /* PromoAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -108,7 +112,9 @@
 		D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoStudyViews.swift; sourceTree = "<group>"; };
 		D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "voccab-dict.sqlite"; sourceTree = "<group>"; };
 		DB602BB69CE1BA53DD7CDB33 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "voccab-extras.sqlite"; sourceTree = "<group>"; };
 		F3033400849322EE17506565 /* RedesignApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignApp.swift; sourceTree = "<group>"; };
+		F69AC979915B5150FF744F4B /* DictionaryPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryPreview.swift; sourceTree = "<group>"; };
 		FE3C3C371AD56F164772C89B /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -194,6 +200,7 @@
 			isa = PBXGroup;
 			children = (
 				D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */,
+				E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */,
 			);
 			path = dict;
 			sourceTree = "<group>";
@@ -219,6 +226,7 @@
 			children = (
 				63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */,
 				C7583571466DE107FC55B425 /* CameraLookup.swift */,
+				F69AC979915B5150FF744F4B /* DictionaryPreview.swift */,
 				36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */,
 				44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */,
 				C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */,
@@ -409,6 +417,7 @@
 				F7E9B445148768CC1FA9D1E1 /* PromoAssets.xcassets in Resources */,
 				8FD4ACD352AB136280F2B67E /* sat_rw_vocab.csv in Resources */,
 				606BB16B2D82C8C1F3F658BA /* voccab-dict.sqlite in Resources */,
+				22FBAEBD03321C158895E4F1 /* voccab-extras.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -420,6 +429,7 @@
 				4002A9F466C9A2A963D2AD4E /* PromoAssets.xcassets in Resources */,
 				BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */,
 				DE9A63535FF802FED31CFA19 /* voccab-dict.sqlite in Resources */,
+				D25A922D1EFE1067E4833F46 /* voccab-extras.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -441,6 +451,7 @@
 			files = (
 				E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */,
 				908E3489DEFABD8B711906DC /* CameraLookup.swift in Sources */,
+				2FF3D41231EEBE5CE05EF264 /* DictionaryPreview.swift in Sources */,
 				8B798228919395568B524658 /* NeoHomeView.swift in Sources */,
 				BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */,
 				1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */,
@@ -466,6 +477,7 @@
 				316405FDF224695C9CDE6CFF /* CameraLookup.swift in Sources */,
 				3EB3998B5D4A449B41F43D46 /* ClassicApp.swift in Sources */,
 				258FD4FDE479337CC0394788 /* ClassicTheme.swift in Sources */,
+				F3018AD883473481A56EB7A7 /* DictionaryPreview.swift in Sources */,
 				DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */,
 				DC397606F9BA49B455C41206 /* PageModels.swift in Sources */,
 				38DF09E152DA33150577826A /* PromoCarousel.swift in Sources */,
