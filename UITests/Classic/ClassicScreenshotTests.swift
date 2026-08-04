@@ -50,9 +50,11 @@ final class ClassicScreenshotTests: XCTestCase {
             sleep(1)
         }
 
-        // Word detail: "some"
+        // Word detail: "some". The header-card identifier is flattened by
+        // accessibility grouping, so wait on the dictionary tab bar instead.
         app.staticTexts["some"].firstMatch.waitTap()
-        XCTAssertTrue(app.otherElements["word.headerCard"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.segmentedControls["word.tabs"].waitForExistence(timeout: 10)
+            || app.staticTexts["/sʌm/"].waitForExistence(timeout: 5))
         snap("05-word-related__\(theme)")
 
         if full {
