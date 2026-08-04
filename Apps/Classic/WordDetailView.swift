@@ -306,17 +306,30 @@ struct WordDetailView: View {
 
     private var oxfordTab: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: "text.book.closed")
-                .font(.system(size: 40))
-                .foregroundStyle(.secondary)
-            Text("Oxford dictionary data is not installed.")
-                .font(.headline)
-            Text("Licensed dictionary content can't be bundled with this build. Import your own Oxford data package in Settings to enable this tab.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+            if let paragraphs = model.data.oxford {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(model.displayWord)
+                        .font(ClassicTheme.serifWord(size: 30))
+                    if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
+                        Text("| \(phonetic) |")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(paragraph)
+                        .font(.body)
+                        .lineSpacing(3)
+                }
+            } else {
+                Image(systemName: "text.book.closed")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.secondary)
+                Text("No Oxford entry for this word.")
+                    .font(.headline)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 20)
+        .padding(.top, 12)
         .accessibilityIdentifier("word.oxford")
     }
 

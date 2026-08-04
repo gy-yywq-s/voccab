@@ -145,6 +145,7 @@ struct WordDetailData {
     var isInMyWords: Bool
     var related: [(label: String, words: [String])]
     var senses: [WordNetSense]
+    var oxford: [String]?
 
     var synonymSections: [(pos: String, synonyms: [String])] {
         var result: [(String, [String])] = []
@@ -189,7 +190,8 @@ final class WordDetailModel: ObservableObject {
             listNames: env.userStore.listNames(containing: word),
             isInMyWords: env.userStore.isWord(word, in: myWords.id),
             related: dictWord.map { env.dictionary?.relatedForms(of: $0) ?? [] } ?? [],
-            senses: env.dictionary?.senses(for: word) ?? []
+            senses: env.dictionary?.senses(for: word) ?? [],
+            oxford: env.dictionary?.oxfordEntry(for: word)
         )
     }
 

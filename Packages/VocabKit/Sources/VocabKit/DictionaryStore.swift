@@ -119,6 +119,31 @@ public final class DictionaryStore {
         return Array(results.prefix(limit))
     }
 
+    /// True when the bundled database carries the user-installed Oxford table.
+    public lazy var hasOxfordData: Bool = {
+        let rows = (try? db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='oxford'"
+        )) ?? []
+        return !rows.isEmpty
+    }()
+
+    /// The Oxford entry for a word, split into paragraphs for display.
+    /// The source data separates senses with em-dash part-of-speech markers.
+    public func oxfordEntry(for term: String) -> [String]? {
+        guard hasOxfordData else { return nil }
+        let rows = (try? db.execute(
+            "SELECT meaning FROM oxford WHERE word = ? COLLATE NOCASE LIMIT 1",
+            [.text(term)]
+        )) ?? []
+        guard let meaning = rows.first?.text("meaning"), !meaning.isEmpty else { return nil }
+        let paragraphs = meaning
+            .replacingOccurrences(of: "—", with: "\n—")
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return paragraphs.isEmpty ? [meaning] : paragraphs
+    }
+
     public func senses(for term: String) -> [WordNetSense] {
         let rows = (try? db.execute(
             """

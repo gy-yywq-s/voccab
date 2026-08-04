@@ -39,10 +39,7 @@ public enum DictionarySource: String, CaseIterable, Codable, Sendable {
     }
 
     public var hasBundledData: Bool {
-        switch self {
-        case .oxford: return false
-        default: return true
-        }
+        true  // Oxford data is installed in the bundled database.
     }
 }
 

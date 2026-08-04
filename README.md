@@ -34,19 +34,23 @@ frontends sharing one backend:
   frequency ranks, exam tags, word forms)
 - [WordNet 3.1](https://wordnet.princeton.edu/) (English definitions,
   examples, synonyms)
+- A user-supplied Concise Oxford dump (31k entries), audited and loaded by
+  `Data/tools/load_oxford.py` into the `oxford` table
 
 `Data/seed/sat_rw_vocab.csv` seeds the starter "SAT RW Vocab" list on first
 launch.
 
 ## Building
 
-Requires macOS + Xcode 16.
+Requires macOS + Xcode 16. The generated `Voccab.xcodeproj` is committed, so
+a plain download builds directly:
 
 ```sh
-brew install xcodegen
-xcodegen generate
-open Voccab.xcodeproj
+open Voccab.xcodeproj   # pick the VoccabClassic or VoccabRedesign scheme
 ```
+
+After editing `project.yml`, regenerate with `xcodegen generate` (CI also
+regenerates and commits the project automatically).
 
 Unit tests: `swift test --package-path Packages/VocabKit`.
 

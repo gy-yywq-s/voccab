@@ -32,6 +32,18 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      - name: Commit generated project so the repo builds after plain download
+        if: github.event_name == 'push'
+        run: |
+          if [ -n "$(git status --porcelain Voccab.xcodeproj)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add Voccab.xcodeproj
+            git commit -m "Regenerate Voccab.xcodeproj [skip ci]"
+            git push origin "HEAD:${GITHUB_REF_NAME}" || true
+            git push origin HEAD:main || true
+          fi
+
       - name: VocabKit unit tests (macOS)
         run: swift test --package-path Packages/VocabKit 2>&1 | tail -40
 

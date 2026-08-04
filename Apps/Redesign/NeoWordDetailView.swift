@@ -357,12 +357,20 @@ struct NeoWordDetailView: View {
     }
 
     private var oxfordContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Oxford data not installed")
-                .font(.headline)
-            Text("Licensed dictionary content can't ship with this build. Import an Oxford data package from Settings to enable this tab.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            if let paragraphs = model.data.oxford {
+                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(paragraph)
+                        .font(Neo.bodyFont)
+                        .lineSpacing(3)
+                }
+            } else {
+                Text("No Oxford entry for this word")
+                    .font(.headline)
+                Text("This word isn't in the installed Oxford data.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .accessibilityIdentifier("word.oxford")
     }
