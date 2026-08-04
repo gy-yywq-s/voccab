@@ -42,10 +42,25 @@ final class WordListModel: ObservableObject {
     @Published private(set) var sections: [WordListSection] = []
     @Published private(set) var totalCount = 0
     @Published var pausedSession: StudySession?
+    @Published private(set) var loaded = false
 
     init(list: WordList, env: AppEnvironment) {
         self.list = list
         self.env = env
+        // No reload here — the view calls loadIfNeeded() from .task so the
+        // push animation starts before any data work happens.
+    }
+
+    func loadIfNeeded() {
+        guard !loaded else { return }
+        loaded = true
+        reload()
+    }
+
+    /// dataVersion notifications arrive on subscription too; ignore them
+    /// until the initial load has happened.
+    func reloadIfLoaded() {
+        guard loaded else { return }
         reload()
     }
 

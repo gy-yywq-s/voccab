@@ -6,6 +6,7 @@ struct HomeView: View {
     @State private var path = NavigationPath()
     @State private var showSearch = false
     @State private var showCamera = false
+    @State private var searchInitialQuery = ""
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -34,7 +35,7 @@ struct HomeView: View {
             }
             .classicDestinations(env: env)
             .fullScreenCover(isPresented: $showSearch) {
-                SearchOverlay(env: env) { word, context in
+                SearchOverlay(env: env, initialQuery: searchInitialQuery) { word, context in
                     path.append(Route.wordDetail(word: word, context: context))
                 }
             }
@@ -171,9 +172,11 @@ struct HomeView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(alignment: .bottom, spacing: 0) {
-                Spacer(minLength: 30)
-                PromoCarousel(cornerRadius: 24)
-                    .frame(maxWidth: 300)
+                Spacer(minLength: 8)
+                PromoCarousel(cornerRadius: 24) { word in
+                    path.append(Route.wordDetail(word: word, context: []))
+                }
+                .frame(maxWidth: 320)
                 CurvedArrow()
                     .stroke(
                         ClassicTheme.dynamic(
@@ -182,7 +185,7 @@ struct HomeView: View {
                         ),
                         style: StrokeStyle(lineWidth: 5, lineCap: .round)
                     )
-                    .frame(width: 110, height: 170)
+                    .frame(width: 84, height: 170)
                     .padding(.bottom, -18)
                 Spacer(minLength: 0)
             }
@@ -191,28 +194,43 @@ struct HomeView: View {
 
     private var bottomBar: some View {
         HStack(spacing: 14) {
-            Button {
-                showSearch = true
-            } label: {
-                HStack {
-                    Text("Lookup words or sentences")
-                        .foregroundStyle(Color(uiColor: .placeholderText))
-                    Spacer()
+            // Two siblings inside one capsule: the field opens search, the
+            // clipboard icon pastes and searches in one tap.
+            HStack {
+                Button {
+                    searchInitialQuery = ""
+                    showSearch = true
+                } label: {
+                    HStack {
+                        Text("Lookup words or sentences")
+                            .foregroundStyle(Color(uiColor: .placeholderText))
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("home.search")
+
+                Button {
+                    searchInitialQuery = UIPasteboard.general.string?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    showSearch = true
+                } label: {
                     Image(systemName: "doc.on.clipboard")
                         .foregroundStyle(.tint)
                         .padding(8)
                         .background(Circle().fill(ClassicTheme.wordChipBackground))
                 }
-                .font(.body)
-                .padding(.leading, 20)
-                .padding(.trailing, 8)
-                .frame(height: 52)
-                .background(
-                    Capsule().fill(Color(uiColor: .tertiarySystemFill))
-                )
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("home.paste")
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("home.search")
+            .font(.body)
+            .padding(.leading, 20)
+            .padding(.trailing, 8)
+            .frame(height: 52)
+            .background(
+                Capsule().fill(Color(uiColor: .tertiarySystemFill))
+            )
 
             Button {
                 showCamera = true

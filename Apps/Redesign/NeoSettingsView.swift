@@ -269,11 +269,9 @@ struct NeoImportWordsView: View {
                 Text("Import Words")
                     .font(.largeTitle.weight(.bold))
                     .padding(.top, 8)
-                (Text("A CSV file with columns ")
-                    + Text("word").bold()
-                    + Text(" and optional ")
-                    + Text("note").bold()
-                    + Text(". Each import creates a new list named after the file."))
+                (Text("Import a word table from a file or the clipboard. CSV, TSV (Excel / Numbers / Sheets copy-paste), semicolon tables and plain lists like ")
+                    + Text("1. word - meaning").bold()
+                    + Text(" all work — headers are optional. Each import creates a new list."))
                     .font(.body)
                     .foregroundStyle(.secondary)
 
@@ -281,6 +279,10 @@ struct NeoImportWordsView: View {
 
                 HStack {
                     Spacer()
+                    NeoQuietButton(title: "Paste", systemImage: "doc.on.clipboard") {
+                        importFromClipboard()
+                    }
+                    .accessibilityIdentifier("import.paste")
                     NeoQuietButton(title: "Choose File", systemImage: "square.and.arrow.down") {
                         showPicker = true
                     }
@@ -294,7 +296,10 @@ struct NeoImportWordsView: View {
         .scrollIndicators(.hidden)
         .background(Color(uiColor: .systemBackground))
         .navigationBarTitleDisplayMode(.inline)
-        .fileImporter(isPresented: $showPicker, allowedContentTypes: [.commaSeparatedText, .plainText]) { result in
+        .fileImporter(
+            isPresented: $showPicker,
+            allowedContentTypes: [.commaSeparatedText, .tabSeparatedText, .plainText, .text]
+        ) { result in
             handle(result)
         }
         .alert("Import failed", isPresented: .constant(errorMessage != nil)) {
@@ -354,18 +359,31 @@ struct NeoImportWordsView: View {
         case .success(let url):
             let secured = url.startAccessingSecurityScopedResource()
             defer { if secured { url.stopAccessingSecurityScopedResource() } }
-            guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+            guard let data = try? Data(contentsOf: url), let text = CSVImport.decode(data) else {
                 errorMessage = "Could not read the file."
                 return
             }
-            do {
-                let rows = try CSVImport.parse(text)
-                let name = url.deletingPathExtension().lastPathComponent
-                importedList = CSVImport.importRows(rows, listName: name, userStore: env.userStore)
-                env.touch()
-            } catch {
-                errorMessage = "The file must contain a 'word' column."
-            }
+            importText(text, listName: url.deletingPathExtension().lastPathComponent)
+        }
+    }
+
+    private func importFromClipboard() {
+        guard let text = UIPasteboard.general.string,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "The clipboard is empty."
+            return
+        }
+        let stamp = Date().formatted(date: .abbreviated, time: .shortened)
+        importText(text, listName: "Pasted \(stamp)")
+    }
+
+    private func importText(_ text: String, listName: String) {
+        do {
+            let rows = try CSVImport.parse(text)
+            importedList = CSVImport.importRows(rows, listName: listName, userStore: env.userStore)
+            env.touch()
+        } catch {
+            errorMessage = "No words found — check the table or list format."
         }
     }
 }

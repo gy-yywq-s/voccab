@@ -46,7 +46,6 @@ struct NeoWordDetailView: View {
     @State private var tab: DictionarySource = .chinese
     @State private var showNoteEditor = false
     @State private var noteText = ""
-    @State private var showAppleDictionary = false
 
     private var dictionaryTabs: [DictionarySource] {
         env.settings.enabledDictionaries.filter { $0 != .chinese }
@@ -82,9 +81,6 @@ struct NeoWordDetailView: View {
             TextField("Note", text: $noteText, axis: .vertical)
             Button("Save") { model.setNote(noteText) }
             Button("Cancel", role: .cancel) {}
-        }
-        .sheet(isPresented: $showAppleDictionary) {
-            AppleDictionarySheet(term: model.displayWord)
         }
     }
 
@@ -131,10 +127,6 @@ struct NeoWordDetailView: View {
         return FlowLayout(spacing: 6) {
             Group {
                 Text((dictWord?.frequencyBand ?? .unknown).label)
-                if let tags = dictWord?.examTags, !tags.isEmpty {
-                    Text("·")
-                    Text(tags.count > 1 ? "\(tags[0].label) & \(tags.count - 1) more" : tags[0].label)
-                }
                 if model.data.listNames.isEmpty {
                     Text("·")
                     Button {
@@ -250,11 +242,6 @@ struct NeoWordDetailView: View {
                 Group {
                     Text((dictWord?.frequencyBand ?? .unknown).label)
                         .foregroundStyle(.secondary)
-                    if let tags = dictWord?.examTags, let label = examTagChipLabel(tags) {
-                        Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
-                        Text(label)
-                            .foregroundStyle(.secondary)
-                    }
                     Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
                     if model.data.listNames.isEmpty {
                         Button {
@@ -515,16 +502,7 @@ struct NeoWordDetailView: View {
     }
 
     private var appleContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("System dictionary")
-                .font(.headline)
-            Text("Open “\(model.displayWord)” in Apple's built-in dictionaries.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            NeoQuietButton(title: "Open Dictionary", systemImage: "character.book.closed") {
-                showAppleDictionary = true
-            }
-        }
+        AppleDictionaryInline(term: model.displayWord)
     }
 
     @ToolbarContentBuilder

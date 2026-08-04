@@ -37,8 +37,8 @@ struct WordListView: View {
         .navigationDestination(isPresented: $navigateToStudy) {
             StudyStartView(model: StudyModel(list: model.list, candidateWords: model.visibleWords, env: env))
         }
-        .onReceive(env.$dataVersion) { _ in model.reload() }
-        .onAppear { model.reload() }
+        .onReceive(env.$dataVersion) { _ in model.reloadIfLoaded() }
+        .task { model.loadIfNeeded() }
     }
 
     private var list: some View {

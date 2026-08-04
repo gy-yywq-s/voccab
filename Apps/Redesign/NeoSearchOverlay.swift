@@ -10,9 +10,13 @@ struct NeoSearchOverlay: View {
     @FocusState private var focused: Bool
     let onOpenWord: (String, [String]) -> Void
 
-    init(env: AppEnvironment, onOpenWord: @escaping (String, [String]) -> Void) {
+    init(env: AppEnvironment, initialQuery: String = "", onOpenWord: @escaping (String, [String]) -> Void) {
         self.onOpenWord = onOpenWord
-        _model = StateObject(wrappedValue: SearchModel(env: env))
+        _model = StateObject(wrappedValue: {
+            let model = SearchModel(env: env)
+            model.query = initialQuery
+            return model
+        }())
     }
 
     var body: some View {

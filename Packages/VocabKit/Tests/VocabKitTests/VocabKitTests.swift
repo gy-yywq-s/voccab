@@ -257,8 +257,47 @@ final class CSVImportTests: XCTestCase {
         XCTAssertEqual(rows[2].note, "")
     }
 
-    func testParseRejectsMissingWordColumn() {
-        XCTAssertThrowsError(try CSVImport.parse("a,b\n1,2"))
+    func testHeaderlessTwoColumnUsesFirstColumnAsWord() throws {
+        let rows = try CSVImport.parse("apple,红苹果\nbanana,香蕉")
+        XCTAssertEqual(rows.map(\.word), ["apple", "banana"])
+        XCTAssertEqual(rows[0].note, "红苹果")
+    }
+
+    func testTSVFromSpreadsheetPaste() throws {
+        let rows = try CSVImport.parse("word\tmeaning\nalpha\tfirst letter\nbeta\tsecond letter")
+        XCTAssertEqual(rows.count, 2)
+        XCTAssertEqual(rows[0].word, "alpha")
+        XCTAssertEqual(rows[0].note, "first letter")
+    }
+
+    func testSemicolonDelimiter() throws {
+        let rows = try CSVImport.parse("gamma;third\ndelta;fourth")
+        XCTAssertEqual(rows.map(\.word), ["gamma", "delta"])
+        XCTAssertEqual(rows[1].note, "fourth")
+    }
+
+    func testPlainLinesWithDashNotesAndNumbering() throws {
+        let rows = try CSVImport.parse("1. epsilon - fifth letter\n2) zeta\ntheta: eighth")
+        XCTAssertEqual(rows.map(\.word), ["epsilon", "zeta", "theta"])
+        XCTAssertEqual(rows[0].note, "fifth letter")
+        XCTAssertEqual(rows[1].note, "")
+        XCTAssertEqual(rows[2].note, "eighth")
+    }
+
+    func testChineseHeaderNames() throws {
+        let rows = try CSVImport.parse("单词,释义\nkappa,第十个")
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(rows[0].word, "kappa")
+        XCTAssertEqual(rows[0].note, "第十个")
+    }
+
+    func testExtraColumnsJoinIntoNote() throws {
+        let rows = try CSVImport.parse("iota,ninth,tiny amount")
+        XCTAssertEqual(rows[0].note, "ninth; tiny amount")
+    }
+
+    func testNumericOnlyRowsSkipped() throws {
+        XCTAssertThrowsError(try CSVImport.parse("1,2\n3,4"))
     }
 
     func testParseDedupes() throws {

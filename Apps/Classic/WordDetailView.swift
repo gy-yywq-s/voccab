@@ -44,7 +44,6 @@ struct WordDetailView: View {
     @State private var tab: DictionarySource = .chinese
     @State private var showNoteEditor = false
     @State private var noteText = ""
-    @State private var showAppleDictionary = false
 
     private var visibleTabs: [DictionarySource] {
         var tabs: [DictionarySource] = [.chinese]  // header card is Chinese; "Related" is always first tab
@@ -73,9 +72,6 @@ struct WordDetailView: View {
             TextField("Note", text: $noteText, axis: .vertical)
             Button("Save") { model.setNote(noteText) }
             Button("Cancel", role: .cancel) {}
-        }
-        .sheet(isPresented: $showAppleDictionary) {
-            AppleDictionarySheet(term: model.displayWord)
         }
     }
 
@@ -178,9 +174,6 @@ struct WordDetailView: View {
                 text: Formatting.frequencyChip(dictWord?.frequencyBand ?? .unknown),
                 background: ClassicTheme.frequencyChip
             )
-            if let tags = dictWord?.examTags, let label = examTagChipLabel(tags) {
-                TagChip(text: label, background: ClassicTheme.examChip)
-            }
             if model.data.listNames.isEmpty {
                 TagChip(text: "+ Word lists", background: ClassicTheme.listChip)
                     .onTapGesture { model.toggleMyWords() }
@@ -417,20 +410,9 @@ struct WordDetailView: View {
     }
 
     private var appleTab: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Look up “\(model.displayWord)” in the system dictionary.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-            Button {
-                showAppleDictionary = true
-            } label: {
-                Label("Open Apple Dictionary", systemImage: "character.book.closed")
-                    .font(.headline)
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 20)
+        AppleDictionaryInline(term: model.displayWord)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
     }
 
     // MARK: Toolbar

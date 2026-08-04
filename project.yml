@@ -9,14 +9,15 @@ packages:
   VocabKit:
     path: Packages/VocabKit
 
+# Signing stays at Xcode defaults (automatic, no pinned team) so a fresh
+# clone builds for simulator with zero setup and device builds only need
+# picking a team in Signing & Capabilities. CI disables signing via
+# xcodebuild flags instead of project settings.
 settings:
   base:
     SWIFT_VERSION: "5.9"
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
-    CODE_SIGNING_ALLOWED: "NO"
-    CODE_SIGN_IDENTITY: ""
-    DEVELOPMENT_TEAM: ""
 
 targetTemplates:
   VoccabApp:
@@ -31,6 +32,7 @@ targetTemplates:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         NSPhotoLibraryUsageDescription: "Pick photos to recognize and look up words."
+        NSCameraUsageDescription: "Photograph text to recognize and look up words."
         ITSAppUsesNonExemptEncryption: false
 
 targets:

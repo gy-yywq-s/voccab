@@ -23,8 +23,16 @@ frontends sharing one backend:
   progress. Research notes in `docs/ALGORITHMS.md`.
 - **Multi-dictionary word page** with per-dictionary toggles in Settings:
   English-Chinese (bundled, ECDICT), English definitions + Synonyms (bundled,
-  WordNet), Apple system dictionary, and an Oxford slot that activates when
-  licensed data is imported (not bundled for copyright reasons).
+  WordNet), the Apple system dictionary embedded inline in the page, and a
+  Concise Oxford table loaded from a user-supplied dump.
+- **Flexible import**: CSV / TSV / semicolon tables (copy-paste straight from
+  Excel / Numbers / Sheets), optional word/note headers in English or
+  Chinese, and plain lists like `1. word - meaning`; from a file or the
+  clipboard. The app ships with no built-in word list — you import your own.
+- **Photo lookup** from the camera or the photo library (OCR via Vision).
+- **Promo carousel** of 100 public-domain poster artworks that genuinely
+  contain the highlighted word (OCR-verified at build time by
+  `Data/tools/build_promo.py`); tapping a slide opens that word.
 
 ## Data
 
@@ -37,8 +45,8 @@ frontends sharing one backend:
 - A user-supplied Concise Oxford dump (31k entries), audited and loaded by
   `Data/tools/load_oxford.py` into the `oxford` table
 
-`Data/seed/sat_rw_vocab.csv` seeds the starter "SAT RW Vocab" list on first
-launch.
+`Data/seed/sat_rw_vocab.csv` is used only by the UI-test walkthrough
+(deterministic screenshot content) — production launches start with no lists.
 
 ## Building
 
@@ -48,6 +56,10 @@ a plain download builds directly:
 ```sh
 open Voccab.xcodeproj   # pick the VoccabClassic or VoccabRedesign scheme
 ```
+
+Signing is left at Xcode defaults: simulator builds need no setup at all;
+for a device build pick your team once under Signing & Capabilities. (CI
+disables signing via `xcodebuild` flags, not project settings.)
 
 After editing `project.yml`, regenerate with `xcodegen generate` (CI also
 regenerates and commits the project automatically).

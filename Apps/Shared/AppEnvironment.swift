@@ -37,8 +37,10 @@ final class AppEnvironment: ObservableObject {
                 .appendingPathComponent("voccab-user.sqlite").path))
         settings = AppSettings()
 
-        seedInitialContentIfNeeded()
+        // Production launches start empty — the user imports their own lists.
+        // Only UI tests get the embedded deterministic walkthrough content.
         if Self.isUITest {
+            seedUITestList()
             UITestSeeder.seed(userStore: userStore, dictionary: dictionary, settings: settings)
         }
     }
@@ -47,15 +49,12 @@ final class AppEnvironment: ObservableObject {
         dataVersion += 1
     }
 
-    /// First launch: create the embedded "SAT RW Vocab" starter list.
-    private func seedInitialContentIfNeeded() {
-        let marker = "seed.satListInstalled"
-        guard !UserDefaults.standard.bool(forKey: marker) || Self.isUITest else { return }
+    /// UI-test-only: install the embedded walkthrough list.
+    private func seedUITestList() {
         guard let rows = try? CSVImport.parse(SeedData.satRWVocabCSV) else { return }
         if !userStore.lists().contains(where: { $0.name == SeedData.satListName }) {
             CSVImport.importRows(rows, listName: SeedData.satListName, userStore: userStore)
         }
-        UserDefaults.standard.set(true, forKey: marker)
     }
 }
 

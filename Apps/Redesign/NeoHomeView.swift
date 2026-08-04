@@ -10,6 +10,7 @@ struct NeoHomeView: View {
     @State private var path = NavigationPath()
     @State private var showSearch = false
     @State private var showCamera = false
+    @State private var searchInitialQuery = ""
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -33,7 +34,7 @@ struct NeoHomeView: View {
             .toolbar(.hidden, for: .navigationBar)
             .neoDestinations(env: env)
             .fullScreenCover(isPresented: $showSearch) {
-                NeoSearchOverlay(env: env) { word, context in
+                NeoSearchOverlay(env: env, initialQuery: searchInitialQuery) { word, context in
                     path.append(Route.wordDetail(word: word, context: context))
                 }
             }
@@ -157,10 +158,24 @@ struct NeoHomeView: View {
             NeoSectionHeader(title: "Word lists")
                 .padding(.top, 24)
             if lists.isEmpty {
-                Text("Import a CSV in Settings to create your first list.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 14)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("No word lists yet. Import your own vocabulary to get started.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Button {
+                        path.append(Route.importWords)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.arrow.down")
+                            Text("Import words")
+                        }
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(Neo.blue)
+                    }
+                    .buttonStyle(NeoPressStyle())
+                    .accessibilityIdentifier("home.import")
+                }
+                .padding(.vertical, 14)
             }
             VStack(spacing: 0) {
                 ForEach(lists) { list in
@@ -207,11 +222,8 @@ struct NeoHomeView: View {
                 .foregroundStyle(.secondary)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack {
-                Spacer()
-                PromoCarousel(cornerRadius: 10)
-                    .frame(maxWidth: 260)
-                Spacer()
+            PromoCarousel(cornerRadius: 10) { word in
+                path.append(Route.wordDetail(word: word, context: []))
             }
             .padding(.top, 6)
         }
@@ -221,6 +233,7 @@ struct NeoHomeView: View {
     private var bottomBar: some View {
         HStack(spacing: 12) {
             Button {
+                searchInitialQuery = ""
                 showSearch = true
             } label: {
                 HStack(spacing: 8) {
@@ -240,6 +253,20 @@ struct NeoHomeView: View {
             }
             .buttonStyle(NeoPressStyle())
             .accessibilityIdentifier("home.search")
+
+            Button {
+                searchInitialQuery = UIPasteboard.general.string?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                showSearch = true
+            } label: {
+                Image(systemName: "doc.on.clipboard")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Neo.blue)
+                    .frame(width: 46, height: 46)
+                    .background(Circle().fill(Neo.paleBlue))
+            }
+            .buttonStyle(NeoPressStyle())
+            .accessibilityIdentifier("home.paste")
 
             Button {
                 showCamera = true

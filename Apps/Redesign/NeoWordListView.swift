@@ -18,7 +18,8 @@ struct NeoWordListView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
+                // Lazy so pushing a large list doesn't build every row up front.
+                LazyVStack(alignment: .leading, spacing: 0) {
                     header
                     sortRow
                         .padding(.top, 14)
@@ -52,8 +53,8 @@ struct NeoWordListView: View {
         .navigationDestination(isPresented: $navigateToStudy) {
             NeoStudyStartView(model: StudyModel(list: model.list, candidateWords: model.visibleWords, env: env))
         }
-        .onReceive(env.$dataVersion) { _ in model.reload() }
-        .onAppear { model.reload() }
+        .onReceive(env.$dataVersion) { _ in model.reloadIfLoaded() }
+        .task { model.loadIfNeeded() }
     }
 
     private var header: some View {
@@ -140,7 +141,14 @@ struct NeoWordListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if model.sections.isEmpty {
+        if !model.loaded {
+            HStack {
+                Spacer()
+                ProgressView()
+                Spacer()
+            }
+            .padding(.top, 110)
+        } else if model.sections.isEmpty {
             VStack(spacing: 12) {
                 Image(systemName: "text.magnifyingglass")
                     .font(.system(size: 48, weight: .light))
@@ -155,21 +163,25 @@ struct NeoWordListView: View {
             .padding(.top, 110)
             .accessibilityIdentifier("wordList.empty")
         } else {
+            // Section inside the LazyVStack keeps rows individually lazy.
             ForEach(model.sections) { section in
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(section.title)
-                            .font(Neo.rowTitle)
-                        Spacer()
-                        Text("\(section.rows.count)")
-                            .font(.footnote.monospacedDigit())
-                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
-                    }
-                    .padding(.top, 24)
-                    .padding(.bottom, 6)
-                    NeoHairline()
+                Section {
                     ForEach(section.rows) { row in
                         rowView(row)
+                    }
+                } header: {
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(section.title)
+                                .font(Neo.rowTitle)
+                            Spacer()
+                            Text("\(section.rows.count)")
+                                .font(.footnote.monospacedDigit())
+                                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                        }
+                        .padding(.top, 24)
+                        .padding(.bottom, 6)
+                        NeoHairline()
                     }
                 }
             }

@@ -13,34 +13,75 @@ public enum CSVImport {
         case missingWordColumn
     }
 
-    /// Parses RFC-4180-ish CSV (quoted fields, escaped quotes, CRLF).
+    /// Decodes an imported file: UTF-8 first, then UTF-16 (BOM), then
+    /// GB18030 (Excel on Chinese systems), then Latin-1 as a last resort.
+    public static func decode(_ data: Data) -> String? {
+        if let text = String(data: data, encoding: .utf8) { return text }
+        if let text = String(data: data, encoding: .unicode) { return text }
+        let gbEncoding = String.Encoding(
+            rawValue: CFStringConvertEncodingToNSStringEncoding(
+                CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)))
+        if let text = String(data: data, encoding: gbEncoding) { return text }
+        return String(data: data, encoding: .isoLatin1)
+    }
+
+    /// Recognized header spellings for the word / note columns.
+    private static let wordHeaders: Set<String> = [
+        "word", "words", "term", "vocab", "vocabulary", "单词", "词", "词汇",
+    ]
+    private static let noteHeaders: Set<String> = [
+        "note", "notes", "meaning", "definition", "translation", "gloss",
+        "释义", "笔记", "备注", "解释", "意思", "翻译",
+    ]
+
+    /// Parses a pasted or uploaded word table. Accepts:
+    /// - CSV / TSV / semicolon-separated (quoted fields, escaped quotes,
+    ///   CRLF), so a direct copy-paste from Excel / Numbers / Sheets works
+    /// - an optional header row naming the word/note columns (several
+    ///   spellings, English and Chinese); headerless tables use the first
+    ///   column as the word and the rest as the note
+    /// - plain lines: one word per line, optionally "word - note",
+    ///   "word — note" or "word: note", with leading "1." / "2)" numbering
+    ///   stripped
     public static func parse(_ text: String) throws -> [ImportedRow] {
-        let rows = parseRaw(text)
-        guard let header = rows.first, !header.isEmpty else { throw ImportError.empty }
-        let normalized = header.map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
-        guard let wordIndex = normalized.firstIndex(of: "word") else {
-            // Headerless single-column files: treat every line as a word.
-            if normalized.count == 1 {
-                return rows.compactMap { row in
-                    let word = row.first?.trimmingCharacters(in: .whitespaces) ?? ""
-                    return word.isEmpty ? nil : ImportedRow(word: word, note: "")
-                }
-            }
-            throw ImportError.missingWordColumn
+        var content = text
+        if content.hasPrefix("\u{FEFF}") { content.removeFirst() }
+
+        let rows: [[String]]
+        if let delimiter = detectDelimiter(content) {
+            rows = parseRaw(content, delimiter: delimiter)
+        } else {
+            rows = plainLines(content)
         }
-        let noteIndex = normalized.firstIndex(of: "note")
+        guard let first = rows.first, !first.isEmpty else { throw ImportError.empty }
+
+        let headerCells = first.map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+        let headerWordIndex = headerCells.firstIndex(where: { wordHeaders.contains($0) })
+        let wordIndex = headerWordIndex ?? 0
+        let noteIndex = headerWordIndex == nil
+            ? nil
+            : headerCells.firstIndex(where: { noteHeaders.contains($0) })
+        let dataRows = headerWordIndex == nil ? rows : Array(rows.dropFirst())
+
         var result: [ImportedRow] = []
         var seen: Set<String> = []
-        for row in rows.dropFirst() {
+        for row in dataRows {
             guard wordIndex < row.count else { continue }
             let word = row[wordIndex].trimmingCharacters(in: .whitespaces)
-            guard !word.isEmpty else { continue }
+            guard !word.isEmpty, word.rangeOfCharacter(from: .letters) != nil else { continue }
             let key = word.lowercased()
             guard !seen.contains(key) else { continue }
             seen.insert(key)
-            var note = ""
+            let note: String
             if let noteIndex, noteIndex < row.count {
                 note = row[noteIndex].trimmingCharacters(in: .whitespaces)
+            } else {
+                // No named note column: everything after the word column.
+                note = row.enumerated()
+                    .filter { $0.offset != wordIndex }
+                    .map { $0.element.trimmingCharacters(in: .whitespaces) }
+                    .filter { !$0.isEmpty }
+                    .joined(separator: "; ")
             }
             result.append(ImportedRow(word: word, note: note))
         }
@@ -48,7 +89,44 @@ public enum CSVImport {
         return result
     }
 
-    private static func parseRaw(_ text: String) -> [[String]] {
+    /// Tab wins (Excel paste), then semicolon vs comma by count; nil means
+    /// no table delimiter at all — fall back to plain-line parsing.
+    private static func detectDelimiter(_ text: String) -> Character? {
+        if text.contains("\t") { return "\t" }
+        let commas = text.filter { $0 == "," }.count
+        let semicolons = text.filter { $0 == ";" }.count
+        if semicolons > commas { return ";" }
+        if commas > 0 { return "," }
+        return nil
+    }
+
+    /// One entry per line; supports "word - note" style separators and
+    /// strips leading list numbering.
+    private static func plainLines(_ text: String) -> [[String]] {
+        let separators = [" - ", " — ", " – ", "：", ": "]
+        return text
+            .components(separatedBy: .newlines)
+            .map { line -> [String] in
+                var trimmed = line.trimmingCharacters(in: .whitespaces)
+                // Strip "1." / "23)" / "4、" list numbering.
+                if let match = trimmed.range(of: "^\\d+[.)、]\\s*", options: .regularExpression) {
+                    trimmed = String(trimmed[match.upperBound...])
+                }
+                guard !trimmed.isEmpty else { return [] }
+                for separator in separators {
+                    if let range = trimmed.range(of: separator) {
+                        return [
+                            String(trimmed[..<range.lowerBound]),
+                            String(trimmed[range.upperBound...]),
+                        ]
+                    }
+                }
+                return [trimmed]
+            }
+            .filter { !$0.isEmpty }
+    }
+
+    private static func parseRaw(_ text: String, delimiter: Character = ",") -> [[String]] {
         var rows: [[String]] = []
         var field = ""
         var row: [String] = []
@@ -87,7 +165,7 @@ public enum CSVImport {
                 switch ch {
                 case "\"" where field.isEmpty:
                     inQuotes = true
-                case ",":
+                case delimiter:
                     endField()
                 case "\r":
                     if let next = iterator.next() {

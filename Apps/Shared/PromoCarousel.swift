@@ -1,37 +1,42 @@
 import Combine
 import SwiftUI
+import VocabKit
 
-/// The home-page camera promo: public-domain artworks with the in-photo
-/// word-lookup effect recreated as a live overlay. Auto-advances, swipes
-/// left/right, and marks the position with small dots at the bottom of the
-/// image.
-struct PromoSlide: Identifiable {
-    let id: Int
-    let imageName: String
-    let word: String
-    let phonetic: String
-    let definition: String
-}
-
+/// The home-page promo: public-domain poster art that genuinely contains
+/// the highlighted word (OCR-verified at build time), with the photo
+/// word-lookup effect recreated live: a highlight box on the word in the
+/// artwork plus a lookup card fed by the real dictionary. Auto-advances
+/// every 10 seconds, swipes left/right, and tapping a slide opens the
+/// word's detail page.
 struct PromoCarousel: View {
-    static let slides: [PromoSlide] = [
-        PromoSlide(id: 0, imageName: "Promo1", word: "peruse", phonetic: "pə'ruːz", definition: "vt. 熟读, 精读, 阅读"),
-        PromoSlide(id: 1, imageName: "Promo2", word: "luminous", phonetic: "'luːminəs", definition: "a. 发光的, 明亮的"),
-        PromoSlide(id: 2, imageName: "Promo3", word: "vernal", phonetic: "'vəːnl", definition: "a. 春天的, 和煦的"),
-        PromoSlide(id: 3, imageName: "Promo4", word: "sublime", phonetic: "sə'blaim", definition: "a. 高尚的, 壮观的"),
-    ]
-
     /// Corner radius differs slightly per frontend; everything else is shared.
     var cornerRadius: CGFloat = 16
+    var onWordTap: ((String) -> Void)? = nil
 
+    @EnvironmentObject private var env: AppEnvironment
     @State private var index = 0
-    private let ticker = Timer.publish(every: 4, on: .main, in: .common).autoconnect()
+    private let ticker = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
+
+    private var slides: [PromoSlideData] { PromoData.slides }
 
     var body: some View {
         TabView(selection: $index) {
-            ForEach(Self.slides) { slide in
-                slideView(slide)
-                    .tag(slide.id)
+            ForEach(slides) { slide in
+                Group {
+                    // Only the visible slide and its neighbors keep their
+                    // image decoded; the rest stay as flat placeholders.
+                    if isNear(slide.id) {
+                        PromoSlideView(
+                            slide: slide,
+                            dictWord: env.dictionary?.lookup(slide.word)
+                        )
+                    } else {
+                        Rectangle().fill(Color(uiColor: .secondarySystemFill))
+                    }
+                }
+                .tag(slide.id)
+                .contentShape(Rectangle())
+                .onTapGesture { onWordTap?(slide.word) }
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -41,60 +46,96 @@ struct PromoCarousel: View {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .stroke(Color(uiColor: .separator).opacity(0.6), lineWidth: 0.5)
         )
-        .overlay(alignment: .bottom) {
-            dots
-                .padding(.bottom, 10)
-        }
         .onReceive(ticker) { _ in
+            guard !slides.isEmpty else { return }
             withAnimation(.easeInOut(duration: 0.45)) {
-                index = (index + 1) % Self.slides.count
+                index = (index + 1) % slides.count
             }
         }
         .accessibilityIdentifier("home.promoCarousel")
     }
 
-    private func slideView(_ slide: PromoSlide) -> some View {
+    private func isNear(_ id: Int) -> Bool {
+        let count = slides.count
+        guard count > 0 else { return false }
+        let distance = abs(id - index)
+        return distance <= 1 || distance == count - 1
+    }
+}
+
+private struct PromoSlideView: View {
+    let slide: PromoSlideData
+    let dictWord: DictWord?
+
+    var body: some View {
         GeometryReader { proxy in
-            ZStack(alignment: .bottomLeading) {
+            let width = proxy.size.width
+            let height = proxy.size.height
+            // The bundled image is exactly 3:4 like the frame, so the
+            // normalized OCR box maps straight onto view coordinates.
+            let box = CGRect(
+                x: slide.x * width, y: slide.y * height,
+                width: slide.width * width, height: slide.height * height
+            )
+            ZStack(alignment: .topLeading) {
                 if let image = UIImage(named: slide.imageName) {
                     Image(uiImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .frame(width: width, height: height)
                         .clipped()
                 } else {
-                    Rectangle()
-                        .fill(Color(uiColor: .secondarySystemFill))
+                    Rectangle().fill(Color(uiColor: .secondarySystemFill))
                 }
-                lookupCard(slide)
-                    .padding(.leading, 14)
-                    .padding(.bottom, 30)
+
+                // Highlight box around the word in the artwork.
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(.white.opacity(0.16))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .strokeBorder(.white.opacity(0.95), lineWidth: 1.6)
+                    )
+                    .frame(width: box.width + 12, height: box.height + 10)
+                    .position(x: box.midX, y: box.midY)
+                    .shadow(color: .black.opacity(0.35), radius: 4)
+
+                lookupCard
+                    .padding(12)
+                    .frame(
+                        maxWidth: .infinity, maxHeight: .infinity,
+                        // Keep the card away from the highlighted word.
+                        alignment: box.midY < height / 2 ? .bottomLeading : .topLeading
+                    )
             }
         }
     }
 
-    /// The word-lookup popup, recreated over the artwork.
-    private func lookupCard(_ slide: PromoSlide) -> some View {
+    private var lookupCard: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline) {
-                Text(slide.word)
-                    .font(.system(size: 22, weight: .bold, design: .serif))
+                Text(dictWord?.word ?? slide.word)
+                    .font(.system(size: 21, weight: .bold, design: .serif))
                 Spacer(minLength: 14)
                 Image(systemName: "plus.circle")
                     .font(.subheadline)
                     .foregroundStyle(Color(red: 0.55, green: 0.72, blue: 1.0))
             }
-            HStack(spacing: 5) {
-                Text("/\(slide.phonetic)/")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.85))
-                Image(systemName: "speaker.wave.2.fill")
-                    .font(.caption2)
-                    .foregroundStyle(Color(red: 0.55, green: 0.72, blue: 1.0))
+            if let phonetic = dictWord?.phonetic, !phonetic.isEmpty {
+                HStack(spacing: 5) {
+                    Text("/\(phonetic)/")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.85))
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.caption2)
+                        .foregroundStyle(Color(red: 0.55, green: 0.72, blue: 1.0))
+                }
             }
-            Text(slide.definition)
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.92))
+            if let line = dictWord?.translationLines.first {
+                Text(line)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.92))
+                    .lineLimit(2)
+            }
             Rectangle()
                 .fill(.white.opacity(0.18))
                 .frame(height: 0.5)
@@ -106,33 +147,13 @@ struct PromoCarousel: View {
                     .font(.caption)
             }
             .foregroundStyle(Color(red: 0.55, green: 0.72, blue: 1.0))
-            HStack(spacing: 5) {
-                Image(systemName: "plus")
-                    .font(.caption2)
-                Text("Save to My Words")
-                    .font(.caption)
-            }
-            .foregroundStyle(Color(red: 0.55, green: 0.72, blue: 1.0))
         }
         .foregroundStyle(.white)
         .padding(12)
-        .frame(maxWidth: 190, alignment: .leading)
+        .frame(maxWidth: 200, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(.black.opacity(0.62))
         )
-    }
-
-    private var dots: some View {
-        HStack(spacing: 5) {
-            ForEach(Self.slides) { slide in
-                Circle()
-                    .fill(slide.id == index ? .white : .white.opacity(0.45))
-                    .frame(width: 5, height: 5)
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(.black.opacity(0.25)))
     }
 }

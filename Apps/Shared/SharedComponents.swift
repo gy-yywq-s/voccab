@@ -50,3 +50,26 @@ struct AppleDictionarySheet: UIViewControllerRepresentable {
 
     func updateUIViewController(_ controller: UIReferenceLibraryViewController, context: Context) {}
 }
+
+/// The system dictionary embedded directly in the page (no modal slide-up).
+/// Apple exposes no text API for its dictionaries, so the reference view
+/// controller itself is hosted inline in the tab content area.
+struct AppleDictionaryInline: View {
+    let term: String
+
+    var body: some View {
+        if UIReferenceLibraryViewController.dictionaryHasDefinition(forTerm: term) {
+            AppleDictionarySheet(term: term)
+                .frame(height: 460)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color(uiColor: .separator).opacity(0.5), lineWidth: 0.5)
+                )
+        } else {
+            Text("No entry for “\(term)” in the system dictionaries. Add dictionaries in Settings › General › Dictionary.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+}

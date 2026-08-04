@@ -197,11 +197,13 @@ struct ImportWordsView: View {
         ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    (Text("Import words from a csv file, this file contains these columns: ")
+                    (Text("Import a word table from a file or the clipboard. CSV, TSV (Excel / Numbers / Sheets copy-paste), semicolon tables and plain lists like ")
+                        + Text("1. word - meaning").bold()
+                        + Text(" all work. Columns can be named ")
                         + Text("word").bold()
-                        + Text(", ")
+                        + Text(" and ")
                         + Text("note").bold()
-                        + Text(" (optional)."))
+                        + Text(" but don't have to be."))
                         .font(.title3)
                         .foregroundStyle(.secondary)
 
@@ -212,24 +214,42 @@ struct ImportWordsView: View {
                 .padding(.top, 6)
             }
 
-            Button {
-                showPicker = true
-            } label: {
-                Text("Import")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.tint)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(Capsule().fill(ClassicTheme.continueButtonBackground))
+            HStack(spacing: 12) {
+                Button {
+                    importFromClipboard()
+                } label: {
+                    Text("Paste")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.tint)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(Capsule().fill(ClassicTheme.continueButtonBackground))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("import.paste")
+
+                Button {
+                    showPicker = true
+                } label: {
+                    Text("Import File")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.tint)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(Capsule().fill(ClassicTheme.continueButtonBackground))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("import.button")
             }
-            .buttonStyle(.plain)
             .padding(.horizontal, 24)
             .padding(.bottom, 12)
-            .accessibilityIdentifier("import.button")
         }
         .navigationTitle("Import Words")
         .navigationBarTitleDisplayMode(.large)
-        .fileImporter(isPresented: $showPicker, allowedContentTypes: [.commaSeparatedText, .plainText]) { result in
+        .fileImporter(
+            isPresented: $showPicker,
+            allowedContentTypes: [.commaSeparatedText, .tabSeparatedText, .plainText, .text]
+        ) { result in
             handle(result)
         }
         .alert("Import failed", isPresented: .constant(errorMessage != nil)) {
@@ -287,18 +307,31 @@ struct ImportWordsView: View {
         case .success(let url):
             let secured = url.startAccessingSecurityScopedResource()
             defer { if secured { url.stopAccessingSecurityScopedResource() } }
-            guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+            guard let data = try? Data(contentsOf: url), let text = CSVImport.decode(data) else {
                 errorMessage = "Could not read the file."
                 return
             }
-            do {
-                let rows = try CSVImport.parse(text)
-                let name = url.deletingPathExtension().lastPathComponent
-                importedList = CSVImport.importRows(rows, listName: name, userStore: env.userStore)
-                env.touch()
-            } catch {
-                errorMessage = "The file must contain a 'word' column."
-            }
+            importText(text, listName: url.deletingPathExtension().lastPathComponent)
+        }
+    }
+
+    private func importFromClipboard() {
+        guard let text = UIPasteboard.general.string,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "The clipboard is empty."
+            return
+        }
+        let stamp = Date().formatted(date: .abbreviated, time: .shortened)
+        importText(text, listName: "Pasted \(stamp)")
+    }
+
+    private func importText(_ text: String, listName: String) {
+        do {
+            let rows = try CSVImport.parse(text)
+            importedList = CSVImport.importRows(rows, listName: listName, userStore: env.userStore)
+            env.touch()
+        } catch {
+            errorMessage = "No words found — check the table or list format."
         }
     }
 }

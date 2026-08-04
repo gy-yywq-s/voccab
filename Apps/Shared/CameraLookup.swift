@@ -2,13 +2,15 @@ import PhotosUI
 import SwiftUI
 import Vision
 
-/// Photo-based word lookup: pick a photo, OCR the text, tap a recognized word.
+/// Photo-based word lookup: take a photo or pick one, OCR the text, tap a
+/// recognized word.
 struct CameraLookupView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selection: PhotosPickerItem?
     @State private var image: UIImage?
     @State private var words: [String] = []
     @State private var busy = false
+    @State private var showCamera = false
     let onWordPicked: (String) -> Void
 
     var body: some View {
@@ -25,7 +27,7 @@ struct CameraLookupView: View {
                     ProgressView("Recognizing words…")
                 } else if words.isEmpty {
                     ContentUnavailableView(
-                        "Pick a photo with text",
+                        "Snap or pick a photo with text",
                         systemImage: "camera.viewfinder",
                         description: Text("Recognized English words will appear here — tap one to look it up.")
                     )
@@ -50,12 +52,26 @@ struct CameraLookupView: View {
                     }
                 }
                 Spacer()
-                PhotosPicker(selection: $selection, matching: .images) {
-                    Label("Choose Photo", systemImage: "photo.on.rectangle")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Capsule().fill(Color(uiColor: .secondarySystemFill)))
+                HStack(spacing: 12) {
+                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                        Button {
+                            showCamera = true
+                        } label: {
+                            Label("Take Photo", systemImage: "camera")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Capsule().fill(Color(uiColor: .secondarySystemFill)))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    PhotosPicker(selection: $selection, matching: .images) {
+                        Label("Choose Photo", systemImage: "photo.on.rectangle")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Capsule().fill(Color(uiColor: .secondarySystemFill)))
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
@@ -72,21 +88,33 @@ struct CameraLookupView: View {
                 guard let selection else { return }
                 Task { await load(selection) }
             }
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraCapture { captured in
+                    showCamera = false
+                    guard let captured else { return }
+                    Task { await recognize(captured) }
+                }
+                .ignoresSafeArea()
+            }
         }
     }
 
     private func load(_ item: PhotosPickerItem) async {
+        guard let data = try? await item.loadTransferable(type: Data.self),
+              let uiImage = UIImage(data: data) else { return }
+        await recognize(uiImage)
+    }
+
+    private func recognize(_ uiImage: UIImage) async {
         busy = true
         defer { busy = false }
-        guard let data = try? await item.loadTransferable(type: Data.self),
-              let uiImage = UIImage(data: data),
-              let cgImage = uiImage.cgImage else { return }
+        guard let cgImage = uiImage.cgImage else { return }
         image = uiImage
 
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
-        let handler = VNImageRequestHandler(cgImage: cgImage)
+        let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .init(uiImage.imageOrientation))
         try? handler.perform([request])
         let text = (request.results ?? [])
             .compactMap { $0.topCandidates(1).first?.string }
@@ -98,5 +126,53 @@ struct CameraLookupView: View {
             .filter { $0.count >= 2 && $0.rangeOfCharacter(from: .letters) != nil }
             .map { $0.lowercased() }
             .filter { seen.insert($0).inserted }
+    }
+}
+
+/// Minimal system camera sheet; hands back the captured image (or nil).
+private struct CameraCapture: UIViewControllerRepresentable {
+    let onFinish: (UIImage?) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ picker: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(onFinish: onFinish) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let onFinish: (UIImage?) -> Void
+        init(onFinish: @escaping (UIImage?) -> Void) { self.onFinish = onFinish }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            onFinish(info[.originalImage] as? UIImage)
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            onFinish(nil)
+        }
+    }
+}
+
+private extension CGImagePropertyOrientation {
+    init(_ orientation: UIImage.Orientation) {
+        switch orientation {
+        case .up: self = .up
+        case .down: self = .down
+        case .left: self = .left
+        case .right: self = .right
+        case .upMirrored: self = .upMirrored
+        case .downMirrored: self = .downMirrored
+        case .leftMirrored: self = .leftMirrored
+        case .rightMirrored: self = .rightMirrored
+        @unknown default: self = .up
+        }
     }
 }
