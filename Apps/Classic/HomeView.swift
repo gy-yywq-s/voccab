@@ -66,11 +66,17 @@ struct HomeView: View {
     }
 
     private var greeting: some View {
-        HStack(alignment: .center, spacing: 14) {
-            Text("hi,")
-                .font(ClassicTheme.scriptFont(size: 54))
-            Text("😄")
-                .font(.system(size: 52))
+        HStack(alignment: .center, spacing: 12) {
+            Text("Hello,")
+                .font(.system(size: 46, weight: .bold, design: .rounded))
+            Image(systemName: "sparkles")
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(
+                    ClassicTheme.dynamic(
+                        light: UIColor(red: 0.98, green: 0.75, blue: 0.14, alpha: 1),
+                        dark: UIColor(red: 1.0, green: 0.82, blue: 0.30, alpha: 1)
+                    )
+                )
         }
         .accessibilityIdentifier("home.greeting")
     }
@@ -166,7 +172,7 @@ struct HomeView: View {
 
             HStack(alignment: .bottom, spacing: 0) {
                 Spacer(minLength: 30)
-                PromoImage()
+                PromoCarousel(cornerRadius: 24)
                     .frame(maxWidth: 300)
                 CurvedArrow()
                     .stroke(
@@ -295,31 +301,5 @@ struct CurvedArrow: Shape {
         path.addLine(to: end)
         path.addLine(to: CGPoint(x: end.x + 12, y: end.y - 18))
         return path
-    }
-}
-
-/// Bundled promo screenshot with a graceful fallback rectangle.
-struct PromoImage: View {
-    var body: some View {
-        if let image = UIImage(named: "PromoCamera") {
-            Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
-        } else {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemFill))
-                .frame(height: 420)
-                .overlay {
-                    VStack(spacing: 10) {
-                        Image(systemName: "camera.viewfinder")
-                            .font(.system(size: 44))
-                        Text("hello")
-                            .font(ClassicTheme.serifWord(size: 28))
-                    }
-                    .foregroundStyle(.secondary)
-                }
-        }
     }
 }

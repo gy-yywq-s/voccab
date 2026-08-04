@@ -20,9 +20,10 @@ struct StudyStartView: View {
     private var startContent: some View {
         ScrollView {
             VStack(spacing: 18) {
-                Text("📖")
-                    .font(.system(size: 96))
-                    .padding(.top, 60)
+                Image(systemName: "books.vertical.fill")
+                    .font(.system(size: 72, weight: .regular))
+                    .foregroundStyle(ClassicTheme.studyButtonText)
+                    .padding(.top, 64)
                 Text(model.list.name)
                     .font(.system(size: 34, weight: .semibold, design: .serif))
                 Text(model.sessionMessage)
@@ -191,8 +192,9 @@ struct FlashcardView: View {
 
     private var finished: some View {
         VStack(spacing: 16) {
-            Text("🎉")
-                .font(.system(size: 80))
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(ClassicTheme.studyButtonText)
             Text("Session complete!")
                 .font(.title2.weight(.bold))
             let counts = env.userStore.todayCounts()

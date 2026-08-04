@@ -78,8 +78,9 @@ struct WordListView: View {
 
     private var emptyState: some View {
         VStack(spacing: 14) {
-            Text("🧐")
-                .font(.system(size: 84))
+            Image(systemName: "text.magnifyingglass")
+                .font(.system(size: 56, weight: .light))
+                .foregroundStyle(.secondary)
             Text("This word list is empty.\nSearch words or pick words from a picture!")
                 .font(.title3)
                 .multilineTextAlignment(.center)

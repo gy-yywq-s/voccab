@@ -209,8 +209,8 @@ struct NeoHomeView: View {
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
-                PromoFigure()
-                    .frame(maxWidth: 240)
+                PromoCarousel(cornerRadius: 10)
+                    .frame(maxWidth: 260)
                 Spacer()
             }
             .padding(.top, 6)
@@ -257,33 +257,6 @@ struct NeoHomeView: View {
         .padding(.top, 10)
         .padding(.bottom, 6)
         .background(.regularMaterial)
-    }
-}
-
-/// The camera promo figure, framed by a hairline like an article figure.
-struct PromoFigure: View {
-    var body: some View {
-        Group {
-            if let image = UIImage(named: "PromoCamera") {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(uiColor: .secondarySystemFill))
-                    .frame(height: 320)
-                    .overlay {
-                        Image(systemName: "camera.viewfinder")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.secondary)
-                    }
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Neo.hairline, lineWidth: 0.5)
-        )
     }
 }
 

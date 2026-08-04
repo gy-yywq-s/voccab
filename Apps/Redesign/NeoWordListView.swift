@@ -141,9 +141,10 @@ struct NeoWordListView: View {
     @ViewBuilder
     private var content: some View {
         if model.sections.isEmpty {
-            VStack(spacing: 10) {
-                Text("🧐")
-                    .font(.system(size: 64))
+            VStack(spacing: 12) {
+                Image(systemName: "text.magnifyingglass")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundStyle(.secondary)
                 Text("This word list is empty.")
                     .font(.headline)
                 Text("Search words or pick words from a picture.")
