@@ -67,7 +67,7 @@ final class ClassicScreenshotTests: XCTestCase {
             // English definition tab
             let tabs = app.segmentedControls["word.tabs"]
             if tabs.waitForExistence(timeout: 5) {
-                tabs.buttons["English definition"].tap()
+                tabs.buttons["English"].tap()
                 sleep(1)
                 snap("07-word-english__\(theme)")
                 tabs.buttons["Synonyms"].tap()
