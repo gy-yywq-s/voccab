@@ -56,6 +56,25 @@ MIN_RANK = 1200          # skip ultra-common words: lookup demo should teach
 MAX_RANK = 60000
 MAX_WORD_REUSE = 1
 
+# Words rejected on curation review: proper nouns (people/places), dated or
+# offensive terms, and non-words that slipped through the dictionary check.
+CURATED_OUT = {
+    "negro", "womens", "salem", "nassau", "wheaton", "rockefeller",
+    "holbrook", "harwood", "sioux", "euclid", "bessemer", "phillips",
+    "newbury", "howard", "mason", "lyndon", "macbeth", "michigan",
+    "brooklyn", "cairo", "lexington", "jefferson", "capitol", "yankee",
+    "greek", "southside",
+}
+
+# Additional text-rich public-domain pools for top-up passes.
+TOPUP_CATS = [
+    "Category:World War II posters from the United States",
+    "Category:United States Office of War Information posters",
+    "Category:Circus posters",
+    "Category:Advertising posters in the United States",
+    "Category:Posters of the United States Food Administration",
+]
+
 BLACKLIST = {
     # proper nouns / poster boilerplate that read as words
     "america", "american", "americans", "york", "yorker", "carolina",
@@ -308,10 +327,40 @@ def write_assets(slides):
     SWIFT_OUT.write_text("\n".join(lines))
 
 
+def load_existing():
+    """Reload previously accepted slides (minus curated-out words) so a
+    top-up pass only has to find the remainder."""
+    manifest_path = REPO / "Data" / "tools" / "promo_manifest.json"
+    if not manifest_path.exists():
+        return []
+    slides = []
+    for i, entry in enumerate(json.loads(manifest_path.read_text())):
+        if entry["word"] in CURATED_OUT:
+            continue
+        name = f"Promo{i + 1:03d}"
+        jpg = ASSET_DIR / f"{name}.imageset" / f"{name}.jpg"
+        if not jpg.exists():
+            continue
+        img = Image.open(jpg).convert("RGB")
+        slides.append({"title": entry["title"], "word": entry["word"],
+                       "conf": entry["conf"], "image": img,
+                       "box": tuple(entry["box"])})
+    return slides
+
+
 def main():
+    global ROOT_CATS, BLACKLIST
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", type=int, default=100)
+    parser.add_argument("--merge", action="store_true",
+                        help="keep curated existing slides, harvest TOPUP_CATS for the rest")
     args = parser.parse_args()
+
+    BLACKLIST |= CURATED_OUT
+    existing = load_existing() if args.merge else []
+    if args.merge:
+        ROOT_CATS = TOPUP_CATS
+        print(f"merge mode: keeping {len(existing)} curated slides")
 
     dictionary = Dict()
     print("Harvesting category members…")
@@ -320,8 +369,12 @@ def main():
     urls = thumb_urls(titles)
     print(f"  {len(urls)} thumb urls")
 
-    slides, used_counts = [], {}
-    items = list(urls.items())
+    slides = list(existing)
+    used_counts = {}
+    for slide in slides:
+        used_counts[slide["word"]] = used_counts.get(slide["word"], 0) + 1
+    existing_titles = {s["title"] for s in slides}
+    items = [(t, u) for t, u in urls.items() if t not in existing_titles]
     with futures.ThreadPoolExecutor(max_workers=8) as pool:
         pending = {pool.submit(process_one, t, u, dictionary, used_counts): t
                    for t, u in items}
