@@ -2,7 +2,7 @@ import SwiftUI
 import VocabKit
 
 /// Lookup overlay — same zones (history / live preview + similar chips /
-/// bottom field) on a paper sheet with native search geometry.
+/// bottom field): white sheet, capsule field with shadow, plain rows.
 struct NeoSearchOverlay: View {
     @EnvironmentObject private var env: AppEnvironment
     @Environment(\.dismiss) private var dismiss
@@ -19,24 +19,22 @@ struct NeoSearchOverlay: View {
         VStack(spacing: 0) {
             HStack {
                 Text("Lookup")
-                    .font(Neo.serif(17, weight: .semibold))
-                    .foregroundStyle(Neo.ink)
+                    .font(.title3.weight(.semibold))
                 Spacer()
                 Button {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.body.weight(.medium))
-                        .foregroundStyle(Neo.graphite)
+                        .foregroundStyle(.secondary)
                         .frame(width: 44, height: 44, alignment: .trailing)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("search.close")
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
             .padding(.top, 8)
             NeoHairline()
-                .padding(.horizontal, 24)
 
             if model.query.isEmpty {
                 history
@@ -54,19 +52,19 @@ struct NeoSearchOverlay: View {
                                 open(word.word)
                             } label: {
                                 Text(word.word)
-                                    .font(Neo.sans(15))
+                                    .font(.body)
                                     .foregroundStyle(Neo.blue)
-                                    .padding(.horizontal, 12)
+                                    .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
                                     .background(
-                                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
                                             .fill(Neo.paleBlue)
                                     )
                             }
                             .buttonStyle(NeoPressStyle())
                         }
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                 }
                 .padding(.bottom, 10)
                 .accessibilityIdentifier("search.similar")
@@ -74,38 +72,38 @@ struct NeoSearchOverlay: View {
 
             searchField
         }
-        .background(Neo.paper)
+        .background(Color(uiColor: .systemBackground))
         .onAppear { focused = true }
     }
 
     private var history: some View {
         VStack(alignment: .leading, spacing: 0) {
-            NeoSectionHeader(title: "Last 7 Days")
-                .padding(.top, 26)
-                .padding(.bottom, 4)
+            NeoSectionHeader(title: "Last 7 days")
+                .padding(.top, 22)
+                .padding(.bottom, 2)
             ForEach(model.history, id: \.term) { item in
                 Button {
                     open(item.term)
                 } label: {
                     HStack {
                         Text(item.term)
-                            .font(Neo.serif(19))
-                            .foregroundStyle(Neo.ink)
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(.primary)
                         Spacer()
                         Text(Formatting.relative(item.searchedAt))
                             .font(.footnote)
-                            .foregroundStyle(Neo.faint)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 11)
+                    .padding(.vertical, 12)
                     .contentShape(Rectangle())
                     .overlay(alignment: .bottom) {
-                        Rectangle().fill(Neo.hairline).frame(height: 0.5)
+                        NeoHairline()
                     }
                 }
                 .buttonStyle(NeoPressStyle())
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 20)
         .accessibilityIdentifier("search.history")
     }
 
@@ -121,14 +119,14 @@ struct NeoSearchOverlay: View {
                 .accessibilityIdentifier("search.preview")
             } else {
                 Text("No results")
-                    .font(Neo.sans(15))
-                    .foregroundStyle(Neo.faint)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 60)
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 20)
+        .padding(.horizontal, 20)
+        .padding(.top, 18)
     }
 
     private func previewBlock(_ word: DictWord) -> some View {
@@ -137,57 +135,60 @@ struct NeoSearchOverlay: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(word.word)
-                    .font(Neo.serif(30, weight: .semibold))
-                    .foregroundStyle(Neo.ink)
+                    .font(Neo.headword(30))
+                    .foregroundStyle(.primary)
                     .minimumScaleFactor(0.5)
                 if !word.phonetic.isEmpty {
                     Text("/\(word.phonetic)/")
-                        .font(Neo.sans(15))
-                        .foregroundStyle(Neo.graphite)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image(systemName: "arrow.up.right")
                     .font(.subheadline)
-                    .foregroundStyle(Neo.faint)
+                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
             }
             ForEach(word.translationLines.prefix(3), id: \.self) { line in
                 Text(line)
-                    .font(Neo.sans(16))
-                    .foregroundStyle(Neo.ink)
+                    .font(.body)
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
             }
-            FlowLayout(spacing: 8) {
-                NeoTag(
-                    text: Formatting.familiarityChip(state.familiarity),
-                    color: state.familiarity == nil ? Neo.faint : Neo.warm
-                )
-                NeoTag(text: Formatting.frequencyChip(word.frequencyBand), color: Neo.graphite)
-                if lists.isEmpty {
-                    NeoTag(text: "+ Word lists", color: Neo.blue)
-                } else {
-                    NeoTag(text: lists[0], color: Neo.graphite)
+            HStack(spacing: 6) {
+                Group {
+                    if let familiarity = state.familiarity {
+                        Text("Familiarity \(familiarity)%")
+                            .foregroundStyle(Neo.warm)
+                    } else {
+                        Text("Familiarity ?")
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    Text(word.frequencyBand.label)
+                        .foregroundStyle(.secondary)
+                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    Text(lists.isEmpty ? "Not in any list" : lists.joined(separator: ", "))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
+                .font(.footnote)
             }
             .padding(.top, 2)
         }
         .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Neo.field)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.8)
-                )
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(uiColor: .systemBackground))
+                .shadow(color: .black.opacity(0.10), radius: 8, y: 2)
         )
     }
 
     private var searchField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .font(.subheadline)
-                .foregroundStyle(Neo.faint)
+                .foregroundStyle(.secondary)
             TextField("Lookup words or sentences", text: $model.query)
-                .font(Neo.sans(15))
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
@@ -202,7 +203,7 @@ struct NeoSearchOverlay: View {
                     model.query = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Neo.faint)
+                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
                 }
             } else {
                 Button {
@@ -216,17 +217,12 @@ struct NeoSearchOverlay: View {
                 }
             }
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .frame(height: 46)
         .background(
-            RoundedRectangle(cornerRadius: 11, style: .continuous)
-                .fill(Neo.field)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 11, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.8)
-                )
+            Capsule().fill(Color(uiColor: .secondarySystemBackground))
         )
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.bottom, 10)
     }
 

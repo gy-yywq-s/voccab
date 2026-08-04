@@ -33,24 +33,25 @@ final class RedesignScreenshotTests: XCTestCase {
 
         // SAT list
         app.buttons["home.list.SAT RW Vocab"].waitTap()
-        XCTAssertTrue(app.buttons["wordList.sort.Frequency"].waitForExistence(timeout: 10))
+        let sortControl = app.segmentedControls["wordList.sortChips"]
+        XCTAssertTrue(sortControl.waitForExistence(timeout: 10))
         snap("02-list-frequency__\(theme)")
 
         if full {
-            app.buttons["wordList.sort.Familiarity"].waitTap()
+            sortControl.buttons["Familiarity"].waitTap()
             sleep(1)
             snap("03-list-familiarity__\(theme)")
-            app.buttons["wordList.sort.Planned Review"].waitTap()
+            sortControl.buttons["Review"].waitTap()
             sleep(1)
             snap("04-list-planned__\(theme)")
-            app.buttons["wordList.sort.Frequency"].waitTap()
+            sortControl.buttons["Frequency"].waitTap()
             sleep(1)
         }
 
         // Word detail: "some"
         app.staticTexts["some"].firstMatch.waitTap()
-        XCTAssertTrue(app.otherElements["word.headerCard"].waitForExistence(timeout: 10)
-            || app.staticTexts["some"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["/sʌm/"].waitForExistence(timeout: 10)
+            || app.segmentedControls["word.tabs"].waitForExistence(timeout: 10))
         snap("05-word-related__\(theme)")
 
         if full {
@@ -59,14 +60,15 @@ final class RedesignScreenshotTests: XCTestCase {
             snap("06-word-studyinfo__\(theme)")
             app.buttons["word.studyInfoToggle"].waitTap()
 
-            if app.buttons["word.tab.English definition"].waitForExistence(timeout: 5) {
-                app.buttons["word.tab.English definition"].tap()
+            let tabs = app.segmentedControls["word.tabs"]
+            if tabs.waitForExistence(timeout: 5) {
+                tabs.buttons["English"].tap()
                 sleep(1)
                 snap("07-word-english__\(theme)")
-                app.buttons["word.tab.Synonyms"].tap()
+                tabs.buttons["Synonyms"].tap()
                 sleep(1)
                 snap("08-word-synonyms__\(theme)")
-                app.buttons["word.tab.Oxford"].tap()
+                tabs.buttons["Oxford"].tap()
                 sleep(1)
                 snap("09-word-oxford__\(theme)")
             }
@@ -75,7 +77,7 @@ final class RedesignScreenshotTests: XCTestCase {
         // Back to list, then study start
         app.navigationBars.buttons.firstMatch.waitTap()
         app.buttons["wordList.study"].waitTap()
-        XCTAssertTrue(app.staticTexts["Start With".uppercased()].waitForExistence(timeout: 10)
+        XCTAssertTrue(app.staticTexts["Start with"].waitForExistence(timeout: 10)
             || app.buttons["study.plan.Mix"].waitForExistence(timeout: 10))
         snap("10-study-start__\(theme)")
 
@@ -108,7 +110,8 @@ final class RedesignScreenshotTests: XCTestCase {
 
         // Settings
         app.buttons["home.settings"].waitTap()
-        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 10)
+            || app.navigationBars["Settings"].waitForExistence(timeout: 10))
         snap("15-settings__\(theme)")
 
         if full {

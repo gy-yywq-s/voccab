@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Voccab Neo design language, derived from the applicable parts of the
-/// passage-ios-ui-refinement skill: paper-white editorial surface, ink and
-/// whitespace over cards, serif reserved for words and the masthead,
-/// restrained blue as the interactive signal, differentiated hairlines,
-/// compact quiet controls with invisible hit targets.
+/// Voccab Neo design language — native-first iOS, calibrated against the
+/// Passage reference screens: pure system background, SF type for all
+/// interface text (serif reserved for dictionary headwords as content),
+/// bold sans section titles with a short leading rule, hairline separators,
+/// pale-blue task actions, a deep-navy commit, and native controls
+/// (toggles, segmented pickers, wheel sheets) everywhere else.
 enum Neo {
 
     static func dynamic(light: UIColor, dark: UIColor) -> Color {
@@ -13,160 +14,84 @@ enum Neo {
         })
     }
 
-    // Surfaces
-    static let paper = dynamic(
-        light: UIColor(red: 0.99, green: 0.985, blue: 0.975, alpha: 1),
-        dark: UIColor(red: 0.07, green: 0.07, blue: 0.075, alpha: 1)
-    )
-    static let field = dynamic(
-        light: .white,
-        dark: UIColor(red: 0.11, green: 0.11, blue: 0.115, alpha: 1)
-    )
+    // Ink roles map straight onto system labels.
+    static let ink = Color.primary
+    static let graphite = Color.secondary
+    static let faint = Color(uiColor: .tertiaryLabel)
 
-    // Ink
-    static let ink = dynamic(
-        light: UIColor(red: 0.10, green: 0.10, blue: 0.11, alpha: 1),
-        dark: UIColor(red: 0.93, green: 0.92, blue: 0.90, alpha: 1)
-    )
-    static let graphite = dynamic(
-        light: UIColor(red: 0.38, green: 0.38, blue: 0.40, alpha: 1),
-        dark: UIColor(red: 0.62, green: 0.62, blue: 0.64, alpha: 1)
-    )
-    static let faint = dynamic(
-        light: UIColor(red: 0.58, green: 0.58, blue: 0.60, alpha: 1),
-        dark: UIColor(red: 0.45, green: 0.45, blue: 0.47, alpha: 1)
-    )
-
-    // Blue roles
+    // Blue roles (Passage: interactive signal + deep navy commitment).
     static let blue = dynamic(
-        light: UIColor(red: 0.16, green: 0.36, blue: 0.66, alpha: 1),
-        dark: UIColor(red: 0.48, green: 0.65, blue: 0.92, alpha: 1)
-    )
-    static let navy = dynamic(
-        light: UIColor(red: 0.10, green: 0.18, blue: 0.34, alpha: 1),
-        dark: UIColor(red: 0.75, green: 0.82, blue: 0.95, alpha: 1)
+        light: UIColor(red: 0.13, green: 0.35, blue: 0.66, alpha: 1),
+        dark: UIColor(red: 0.42, green: 0.62, blue: 0.94, alpha: 1)
     )
     static let paleBlue = dynamic(
-        light: UIColor(red: 0.90, green: 0.94, blue: 0.99, alpha: 1),
-        dark: UIColor(red: 0.13, green: 0.18, blue: 0.27, alpha: 1)
+        light: UIColor(red: 0.13, green: 0.35, blue: 0.66, alpha: 0.09),
+        dark: UIColor(red: 0.42, green: 0.62, blue: 0.94, alpha: 0.16)
     )
-    static let navyFillText = dynamic(
-        light: .white,
-        dark: UIColor(red: 0.07, green: 0.07, blue: 0.075, alpha: 1)
+    static let navy = dynamic(
+        light: UIColor(red: 0.12, green: 0.23, blue: 0.42, alpha: 1),
+        dark: UIColor(red: 0.24, green: 0.42, blue: 0.70, alpha: 1)
     )
 
-    // Signals
+    // Signals.
     static let warm = dynamic(
-        light: UIColor(red: 0.80, green: 0.52, blue: 0.16, alpha: 1),
-        dark: UIColor(red: 0.90, green: 0.65, blue: 0.30, alpha: 1)
+        light: UIColor(red: 0.64, green: 0.42, blue: 0.12, alpha: 1),
+        dark: UIColor(red: 0.88, green: 0.64, blue: 0.30, alpha: 1)
     )
-    static let green = dynamic(
-        light: UIColor(red: 0.20, green: 0.52, blue: 0.30, alpha: 1),
-        dark: UIColor(red: 0.42, green: 0.75, blue: 0.50, alpha: 1)
-    )
-    static let red = dynamic(
-        light: UIColor(red: 0.72, green: 0.20, blue: 0.16, alpha: 1),
-        dark: UIColor(red: 0.92, green: 0.42, blue: 0.38, alpha: 1)
-    )
+    static let green = Color(uiColor: .systemGreen)
+    static let red = Color(uiColor: .systemRed)
 
-    // Rules (differentiated boundary roles)
-    static let hairline = dynamic(
-        light: UIColor(white: 0, alpha: 0.12),
-        dark: UIColor(white: 1, alpha: 0.14)
-    )
+    // Boundaries.
+    static let hairline = Color(uiColor: .separator)
     static let sectionRule = dynamic(
-        light: UIColor(white: 0, alpha: 0.22),
-        dark: UIColor(white: 1, alpha: 0.26)
+        light: UIColor(white: 0.25, alpha: 1),
+        dark: UIColor(white: 0.75, alpha: 1)
     )
 
-    // Type
-    static func serif(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+    /// Serif is content-only: the dictionary headword.
+    static func headword(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
         .system(size: size, weight: weight, design: .serif)
     }
-    static func sans(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight)
-    }
-    static let masthead = serif(17, weight: .semibold)
-    static let pageTitle = serif(30, weight: .semibold)
-    static let sectionHead = sans(13, weight: .semibold)
 }
 
-// MARK: - Small shared pieces
+// MARK: - Shared pieces
 
-/// Small-caps quiet section heading with a short title marker rule.
-struct NeoSectionHeader: View {
+/// Passage-style section heading: short dark rule above a bold sans title,
+/// with an optional trailing action slot aligned to the title baseline.
+struct NeoSectionHeader<Trailing: View>: View {
     var title: String
+    @ViewBuilder var trailing: () -> Trailing
+
+    init(title: String, @ViewBuilder trailing: @escaping () -> Trailing = { EmptyView() }) {
+        self.title = title
+        self.trailing = trailing
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Rectangle()
                 .fill(Neo.sectionRule)
-                .frame(width: 22, height: 2)
-            Text(title.uppercased())
-                .font(Neo.sectionHead)
-                .kerning(1.1)
-                .foregroundStyle(Neo.graphite)
+                .frame(width: 28, height: 2)
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.title2.weight(.bold))
+                Spacer()
+                trailing()
+            }
         }
     }
 }
 
-/// Full-width hairline.
 struct NeoHairline: View {
     var body: some View {
         Rectangle()
             .fill(Neo.hairline)
-            .frame(height: 0.7)
+            .frame(height: 0.5)
     }
 }
 
-/// Quiet metadata chip: hairline outline, no fill.
-struct NeoTag: View {
-    var text: String
-    var color: Color = Neo.graphite
-
-    var body: some View {
-        Text(text)
-            .font(.footnote)
-            .foregroundStyle(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .overlay(
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .stroke(Neo.hairline, lineWidth: 0.8)
-            )
-    }
-}
-
-/// Compact navy commitment button (rare, meaningful actions).
-struct NeoPrimaryButton: View {
-    var title: String
-    var systemImage: String?
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.subheadline)
-                }
-                Text(title)
-                    .font(Neo.sans(16, weight: .semibold))
-            }
-            .foregroundStyle(Neo.navyFillText)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 11)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Neo.navy)
-                    .shadow(color: .black.opacity(0.10), radius: 2, y: 1)
-            )
-        }
-        .buttonStyle(NeoPressStyle())
-    }
-}
-
-/// Pale-blue quiet task action, flat at rest.
+/// Pale-blue task action ("Generate extra" style): icon + label on a soft
+/// blue fill, flat at rest.
 struct NeoQuietButton: View {
     var title: String
     var systemImage: String?
@@ -178,29 +103,83 @@ struct NeoQuietButton: View {
             HStack(spacing: 6) {
                 if let systemImage {
                     Image(systemName: systemImage)
-                        .font(.subheadline)
+                        .font(.subheadline.weight(.medium))
                 }
                 Text(title)
-                    .font(Neo.sans(15, weight: .medium))
+                    .font(.body.weight(.medium))
             }
             .foregroundStyle(role == .destructive ? Neo.red : Neo.blue)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(role == .destructive ? Neo.red.opacity(0.08) : Neo.paleBlue)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(role == .destructive ? Neo.red.opacity(0.09) : Neo.paleBlue)
             )
         }
         .buttonStyle(NeoPressStyle())
     }
 }
 
-/// Press feedback: slight compression + tint, no permanent shadow.
+/// Deep-navy commitment ("Submit" style): compact, extremely light shadow.
+struct NeoPrimaryButton: View {
+    var title: String
+    var systemImage: String?
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.subheadline.weight(.semibold))
+                }
+                Text(title)
+                    .font(.body.weight(.semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 11)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Neo.navy)
+                    .shadow(color: .black.opacity(0.08), radius: 1.5, y: 1)
+            )
+        }
+        .buttonStyle(NeoPressStyle())
+    }
+}
+
+/// Press feedback: slight compression + tint change, no resting chrome.
 struct NeoPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
-            .opacity(configuration.isPressed ? 0.82 : 1)
+            .opacity(configuration.isPressed ? 0.75 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+/// Native-style rounded search field (Records reference): white fill, full
+/// capsule, light shadow, no stroke.
+struct NeoSearchField: View {
+    var placeholder: String
+    @Binding var text: String
+    var onChange: () -> Void = {}
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField(placeholder, text: $text)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .onChange(of: text) { onChange() }
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 46)
+        .background(
+            Capsule().fill(Color(uiColor: .systemBackground))
+                .shadow(color: .black.opacity(0.10), radius: 6, y: 2)
+        )
     }
 }

@@ -1,9 +1,10 @@
 import SwiftUI
 import VocabKit
 
-/// Settings — same sections (Word List / Word / Study / About), rendered as
-/// grouped white field blocks with internal hairlines, inline trailing
-/// values, autosave, and a wheel sheet for the daily goal.
+/// Settings — same sections (Word List / Word / Study / About) styled after
+/// the Passage "Reading settings" reference: bold sans sub-headings, plain
+/// rows with hairlines, inline trailing values, native toggles, wheel sheet
+/// for the daily goal. Autosave everywhere.
 struct NeoSettingsView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var accent: PronunciationAccent = .american
@@ -18,159 +19,129 @@ struct NeoSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                group(title: "Word List") {
-                    NavigationLink(value: Route.importWords) {
-                        rowLabel("Import Words", trailing: "CSV")
-                    }
-                    .buttonStyle(NeoPressStyle())
-                    .accessibilityIdentifier("settings.import")
+                NeoSectionHeader(title: "Word list")
+                    .padding(.top, 20)
+                NavigationLink(value: Route.importWords) {
+                    valueRow("Import Words", value: "CSV", chevron: true)
                 }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.import")
+                NeoHairline()
 
-                group(title: "Word") {
-                    menuRow("Pronunciation", value: accent.label) {
-                        ForEach(PronunciationAccent.allCases, id: \.self) { option in
-                            Button(option.label) {
-                                accent = option
-                                env.settings.pronunciationAccent = option
-                            }
+                NeoSectionHeader(title: "Word")
+                    .padding(.top, 28)
+                menuRow("Pronunciation", value: accent.label) {
+                    ForEach(PronunciationAccent.allCases, id: \.self) { option in
+                        Button(option.label) {
+                            accent = option
+                            env.settings.pronunciationAccent = option
                         }
-                    }
-                    .accessibilityIdentifier("settings.pronunciation")
-
-                    hairline
-                    ForEach([DictionarySource.oxford, .english, .synonyms, .apple], id: \.self) { source in
-                        toggleRow(source)
-                        if source != .apple { hairline }
                     }
                 }
-
-                group(title: "Study") {
-                    Button {
-                        showGoalSheet = true
-                    } label: {
-                        rowLabel("Daily Goal", trailing: "New \(goalNew) · Review \(goalReview)")
-                    }
-                    .buttonStyle(NeoPressStyle())
-                    .accessibilityIdentifier("settings.dailyGoal")
-
-                    hairline
-                    menuRow("Target Familiarity", value: ">=\(target)%") {
-                        ForEach([70, 80, 90, 100], id: \.self) { value in
-                            Button(">=\(value)%") {
-                                target = value
-                                env.settings.targetFamiliarity = value
-                            }
-                        }
-                    }
-                    .accessibilityIdentifier("settings.targetFamiliarity")
-
-                    hairline
-                    menuRow("Study Order", value: order.shortLabel) {
-                        ForEach(StudyOrder.allCases, id: \.self) { option in
-                            Button {
-                                order = option
-                                env.settings.studyOrder = option
-                            } label: {
-                                if order == option {
-                                    Label(option.label, systemImage: "checkmark")
-                                } else {
-                                    Text(option.label)
-                                }
-                            }
-                        }
-                    }
-                    .accessibilityIdentifier("settings.studyOrder")
-
-                    hairline
-                    menuRow("Algorithm", value: scheduler.label) {
-                        ForEach(SchedulerKind.allCases, id: \.self) { kind in
-                            Button {
-                                scheduler = kind
-                                env.settings.scheduler = kind
-                            } label: {
-                                if scheduler == kind {
-                                    Label(kind.label, systemImage: "checkmark")
-                                } else {
-                                    Text(kind.label)
-                                }
-                            }
-                        }
-                    }
-                    .accessibilityIdentifier("settings.scheduler")
+                .accessibilityIdentifier("settings.pronunciation")
+                NeoHairline()
+                ForEach([DictionarySource.oxford, .english, .synonyms, .apple], id: \.self) { source in
+                    toggleRow(source)
+                    NeoHairline()
                 }
+
+                NeoSectionHeader(title: "Study")
+                    .padding(.top, 28)
+                Button {
+                    showGoalSheet = true
+                } label: {
+                    valueRow("Daily Goal", value: "New \(goalNew) · Review \(goalReview)", chevron: true)
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.dailyGoal")
+                NeoHairline()
+                menuRow("Target Familiarity", value: ">=\(target)%") {
+                    ForEach([70, 80, 90, 100], id: \.self) { value in
+                        Button(">=\(value)%") {
+                            target = value
+                            env.settings.targetFamiliarity = value
+                        }
+                    }
+                }
+                .accessibilityIdentifier("settings.targetFamiliarity")
+                NeoHairline()
+                menuRow("Study Order", value: order.shortLabel) {
+                    ForEach(StudyOrder.allCases, id: \.self) { option in
+                        Button {
+                            order = option
+                            env.settings.studyOrder = option
+                        } label: {
+                            if order == option {
+                                Label(option.label, systemImage: "checkmark")
+                            } else {
+                                Text(option.label)
+                            }
+                        }
+                    }
+                }
+                .accessibilityIdentifier("settings.studyOrder")
+                NeoHairline()
+                menuRow("Algorithm", value: scheduler.label) {
+                    ForEach(SchedulerKind.allCases, id: \.self) { kind in
+                        Button {
+                            scheduler = kind
+                            env.settings.scheduler = kind
+                        } label: {
+                            if scheduler == kind {
+                                Label(kind.label, systemImage: "checkmark")
+                            } else {
+                                Text(kind.label)
+                            }
+                        }
+                    }
+                }
+                .accessibilityIdentifier("settings.scheduler")
                 Text(scheduler.summary)
                     .font(.footnote)
-                    .foregroundStyle(Neo.faint)
-                    .padding(.top, 6)
-                    .padding(.horizontal, 4)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
+                    .padding(.bottom, 8)
+                NeoHairline()
 
-                group(title: "About") {
-                    rowLabel("Version",
-                             trailing: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
-                             chevron: false)
-                }
+                NeoSectionHeader(title: "About")
+                    .padding(.top, 28)
+                valueRow("Version",
+                         value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
+                         chevron: false)
                 Color.clear.frame(height: 40)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Neo.paper)
+        .background(Color(uiColor: .systemBackground))
+        .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Settings")
-                    .font(Neo.serif(17, weight: .semibold))
-                    .foregroundStyle(Neo.ink)
-            }
-        }
         .sheet(isPresented: $showGoalSheet) {
             goalSheet
-                .presentationDetents([.height(320)])
+                .presentationDetents([.height(300)])
+                .presentationDragIndicator(.visible)
         }
         .onAppear(perform: load)
     }
 
-    // MARK: Building blocks
+    // MARK: Rows
 
-    private var hairline: some View {
-        Rectangle().fill(Neo.hairline).frame(height: 0.5).padding(.leading, 16)
-    }
-
-    @ViewBuilder
-    private func group<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        NeoSectionHeader(title: title)
-            .padding(.top, 26)
-            .padding(.bottom, 8)
-        VStack(spacing: 0) {
-            content()
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Neo.field)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.8)
-                )
-        )
-    }
-
-    private func rowLabel(_ title: String, trailing: String, chevron: Bool = true) -> some View {
+    private func valueRow(_ title: String, value: String, chevron: Bool) -> some View {
         HStack {
             Text(title)
-                .font(Neo.sans(15, weight: .medium))
-                .foregroundStyle(Neo.ink)
+                .font(.body)
+                .foregroundStyle(.primary)
             Spacer()
-            Text(trailing)
-                .font(Neo.sans(15))
-                .foregroundStyle(Neo.graphite)
+            Text(value)
+                .font(.body)
+                .foregroundStyle(.secondary)
             if chevron {
                 Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Neo.faint)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 13)
+        .padding(.vertical, 14)
         .contentShape(Rectangle())
     }
 
@@ -180,18 +151,24 @@ struct NeoSettingsView: View {
         } label: {
             HStack {
                 Text(title)
-                    .font(Neo.sans(15, weight: .medium))
-                    .foregroundStyle(Neo.ink)
+                    .font(.body)
+                    .foregroundStyle(.primary)
                 Spacer()
-                Text(value)
-                    .font(Neo.sans(15))
-                    .foregroundStyle(Neo.blue)
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2)
-                    .foregroundStyle(Neo.faint)
+                HStack(spacing: 5) {
+                    Text(value)
+                        .font(.body)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption2.weight(.semibold))
+                }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Neo.hairline, lineWidth: 0.7)
+                )
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 13)
+            .padding(.vertical, 9)
             .contentShape(Rectangle())
         }
     }
@@ -200,39 +177,37 @@ struct NeoSettingsView: View {
         Toggle(isOn: binding(for: source)) {
             HStack(spacing: 6) {
                 Text(source.label)
-                    .font(Neo.sans(15, weight: .medium))
-                    .foregroundStyle(Neo.ink)
+                    .font(.body)
                 if !source.hasBundledData {
                     Text("no data")
-                        .font(.caption2)
-                        .foregroundStyle(Neo.warm)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Neo.warm.opacity(0.5), lineWidth: 0.8)
-                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
-        .tint(Neo.blue)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .tint(Neo.navy)
+        .padding(.vertical, 11)
         .accessibilityIdentifier("settings.dictionary.\(source.rawValue)")
     }
 
     private var goalSheet: some View {
-        VStack(spacing: 12) {
-            Text("Daily Goal")
-                .font(Neo.serif(19, weight: .semibold))
-                .foregroundStyle(Neo.ink)
-                .padding(.top, 18)
+        VStack(spacing: 8) {
+            HStack {
+                Text("Daily Goal")
+                    .font(.headline)
+                Spacer()
+                Button("Done") { showGoalSheet = false }
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Neo.blue)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 18)
+            NeoHairline()
             HStack(spacing: 0) {
-                VStack(spacing: 2) {
-                    Text("NEW")
-                        .font(.caption2.weight(.semibold))
-                        .kerning(1)
-                        .foregroundStyle(Neo.faint)
+                VStack(spacing: 0) {
+                    Text("New")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                     Picker("New", selection: $goalNew) {
                         ForEach(Array(stride(from: 0, through: 60, by: 5)), id: \.self) { value in
                             Text("\(value)").tag(value)
@@ -240,11 +215,10 @@ struct NeoSettingsView: View {
                     }
                     .pickerStyle(.wheel)
                 }
-                VStack(spacing: 2) {
-                    Text("REVIEW")
-                        .font(.caption2.weight(.semibold))
-                        .kerning(1)
-                        .foregroundStyle(Neo.faint)
+                VStack(spacing: 0) {
+                    Text("Review")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                     Picker("Review", selection: $goalReview) {
                         ForEach(Array(stride(from: 0, through: 100, by: 5)), id: \.self) { value in
                             Text("\(value)").tag(value)
@@ -253,11 +227,10 @@ struct NeoSettingsView: View {
                     .pickerStyle(.wheel)
                 }
             }
-            .frame(height: 180)
+            .frame(height: 190)
             .onChange(of: goalNew) { env.settings.dailyGoalNew = goalNew }
             .onChange(of: goalReview) { env.settings.dailyGoalReview = goalReview }
         }
-        .presentationBackground(Neo.paper)
     }
 
     private func binding(for source: DictionarySource) -> Binding<Bool> {
@@ -281,7 +254,8 @@ struct NeoSettingsView: View {
     }
 }
 
-/// CSV import — same zone structure (explainer, example table, import action).
+/// CSV import — same zone structure (explainer, example table, import action)
+/// with a trailing pale-blue commit.
 struct NeoImportWordsView: View {
     @EnvironmentObject private var env: AppEnvironment
     @Environment(\.dismiss) private var dismiss
@@ -291,36 +265,34 @@ struct NeoImportWordsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 14) {
                 Text("Import Words")
-                    .font(Neo.pageTitle)
-                    .foregroundStyle(Neo.ink)
-                    .padding(.top, 10)
+                    .font(.largeTitle.weight(.bold))
+                    .padding(.top, 8)
                 (Text("A CSV file with columns ")
-                    + Text("word").font(Neo.sans(15, weight: .semibold))
+                    + Text("word").bold()
                     + Text(" and optional ")
-                    + Text("note").font(Neo.sans(15, weight: .semibold))
+                    + Text("note").bold()
                     + Text(". Each import creates a new list named after the file."))
-                    .font(Neo.sans(15))
-                    .foregroundStyle(Neo.graphite)
-                    .lineSpacing(3)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
 
                 exampleTable
 
                 HStack {
                     Spacer()
-                    NeoPrimaryButton(title: "Choose File", systemImage: "square.and.arrow.down") {
+                    NeoQuietButton(title: "Choose File", systemImage: "square.and.arrow.down") {
                         showPicker = true
                     }
                     .accessibilityIdentifier("import.button")
                 }
-                .padding(.top, 8)
+                .padding(.top, 6)
                 Color.clear.frame(height: 40)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Neo.paper)
+        .background(Color(uiColor: .systemBackground))
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showPicker, allowedContentTypes: [.commaSeparatedText, .plainText]) { result in
             handle(result)
@@ -349,39 +321,29 @@ struct NeoImportWordsView: View {
         ]
         return VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("word").frame(width: 84, alignment: .leading)
+                Text("word").frame(width: 90, alignment: .leading)
                 Text("note").frame(maxWidth: .infinity, alignment: .leading)
             }
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(Neo.graphite)
-            .padding(.horizontal, 12)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
             .padding(.vertical, 8)
-            Rectangle().fill(Neo.sectionRule).frame(height: 0.8)
+            NeoHairline()
             ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
                 HStack(alignment: .top) {
                     Text(row.0)
-                        .font(Neo.serif(13))
-                        .frame(width: 84, alignment: .leading)
+                        .font(.footnote.weight(.medium))
+                        .frame(width: 90, alignment: .leading)
                     Text(row.1)
-                        .font(.caption)
-                        .foregroundStyle(Neo.graphite)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.horizontal, 12)
                 .padding(.vertical, 7)
                 if index < rows.count - 1 {
-                    Rectangle().fill(Neo.hairline).frame(height: 0.5).padding(.leading, 12)
+                    NeoHairline()
                 }
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Neo.field)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.8)
-                )
-        )
         .accessibilityIdentifier("import.example")
     }
 

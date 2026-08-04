@@ -1,10 +1,10 @@
 import SwiftUI
 import VocabKit
 
-/// Word list — same zoning as classic (title+count, search, sort/filter row,
-/// grouped rows, bottom study action) with editorial treatment: serif title,
-/// underlined text-tab sort control, small-caps group headers, quiet rows,
-/// and a compact trailing study commitment instead of a giant pill.
+/// Word list — same zoning as classic (title+count, search, sort/filter,
+/// grouped rows, bottom study action) in the Passage language: native
+/// segmented sort control, capsule search with shadow, bold group headings,
+/// plain hairline rows, compact trailing navy Study commit.
 struct NeoWordListView: View {
     @EnvironmentObject private var env: AppEnvironment
     @StateObject var model: WordListModel
@@ -21,14 +21,14 @@ struct NeoWordListView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     header
                     sortRow
-                        .padding(.top, 18)
+                        .padding(.top, 14)
                     content
                     Color.clear.frame(height: 96)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
             }
             .scrollIndicators(.hidden)
-            .background(Neo.paper)
+            .background(Color(uiColor: .systemBackground))
 
             bottomBar
         }
@@ -58,90 +58,49 @@ struct NeoWordListView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(model.list.name)
-                    .font(Neo.pageTitle)
-                    .foregroundStyle(Neo.ink)
+                    .font(.largeTitle.weight(.bold))
                     .lineLimit(2)
                 Text("\(model.totalCount)")
-                    .font(Neo.sans(17, weight: .medium).monospacedDigit())
-                    .foregroundStyle(Neo.faint)
+                    .font(.title3.monospacedDigit())
+                    .foregroundStyle(.secondary)
             }
-            searchField
+            NeoSearchField(placeholder: "Search", text: $model.searchText) {
+                model.reload()
+            }
+            .accessibilityIdentifier("wordList.search")
         }
-        .padding(.top, 10)
+        .padding(.top, 8)
     }
 
-    private var searchField: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .font(.subheadline)
-                .foregroundStyle(Neo.faint)
-            TextField("Search", text: $model.searchText)
-                .font(Neo.sans(15))
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .onChange(of: model.searchText) { model.reload() }
-        }
-        .padding(.horizontal, 12)
-        .frame(height: 38)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Neo.field)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.8)
-                )
-        )
-        .accessibilityIdentifier("wordList.search")
-    }
-
-    /// Sort keys as quiet text tabs with an underline marker; filters hang off
-    /// the active tab as a compact menu.
+    /// Native segmented sort keys plus compact direction/filter controls.
     private var sortRow: some View {
-        HStack(spacing: 22) {
-            ForEach(WordListSortKey.allCases, id: \.self) { key in
-                sortTab(key)
+        HStack(spacing: 10) {
+            Picker("Sort", selection: sortBinding) {
+                Text("Frequency").tag(WordListSortKey.frequency)
+                Text("Familiarity").tag(WordListSortKey.familiarity)
+                Text("Review").tag(WordListSortKey.plannedReview)
             }
-            Spacer()
-        }
-        .accessibilityIdentifier("wordList.sortChips")
-    }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("wordList.sortChips")
 
-    private func sortTab(_ key: WordListSortKey) -> some View {
-        let isActive = model.sortKey == key
-        return HStack(spacing: 4) {
             Button {
-                if isActive {
-                    model.ascending.toggle()
-                } else {
-                    model.sortKey = key
-                    model.ascending = true
-                }
+                model.ascending.toggle()
                 model.reload()
             } label: {
-                HStack(spacing: 4) {
-                    Text(key.rawValue)
-                        .font(Neo.sans(15, weight: isActive ? .semibold : .regular))
-                    if isActive {
-                        Image(systemName: model.ascending ? "arrow.up" : "arrow.down")
-                            .font(.caption2.weight(.bold))
-                    }
-                }
-                .foregroundStyle(isActive ? Neo.ink : Neo.faint)
-                .padding(.vertical, 7)
-                .overlay(alignment: .bottom) {
-                    if isActive {
-                        Rectangle().fill(Neo.ink).frame(height: 1.6)
-                    }
-                }
+                Image(systemName: model.ascending ? "arrow.up" : "arrow.down")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Neo.blue)
+                    .frame(width: 34, height: 32)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Neo.paleBlue))
             }
             .buttonStyle(NeoPressStyle())
-            .accessibilityIdentifier("wordList.sort.\(key.rawValue)")
+            .accessibilityIdentifier("wordList.sortDirection")
 
-            if isActive, key != .plannedReview {
+            if model.sortKey != .plannedReview {
                 Menu {
-                    if key == .frequency {
+                    if model.sortKey == .frequency {
                         ForEach(FrequencyFilter.allCases, id: \.self) { filter in
                             Button(filter.label) {
                                 model.frequencyFilter = filter
@@ -158,36 +117,56 @@ struct NeoWordListView: View {
                     }
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease")
-                        .font(.caption.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Neo.blue)
-                        .frame(width: 26, height: 26)
+                        .frame(width: 34, height: 32)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(Neo.paleBlue))
                 }
+                .accessibilityIdentifier("wordList.filter")
             }
         }
+    }
+
+    private var sortBinding: Binding<WordListSortKey> {
+        Binding(
+            get: { model.sortKey },
+            set: { newKey in
+                model.sortKey = newKey
+                model.ascending = true
+                model.reload()
+            }
+        )
     }
 
     @ViewBuilder
     private var content: some View {
         if model.sections.isEmpty {
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 Text("🧐")
                     .font(.system(size: 64))
                 Text("This word list is empty.")
-                    .font(Neo.serif(20, weight: .semibold))
-                    .foregroundStyle(Neo.ink)
+                    .font(.headline)
                 Text("Search words or pick words from a picture.")
                     .font(.subheadline)
-                    .foregroundStyle(Neo.graphite)
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, 120)
+            .padding(.top, 110)
             .accessibilityIdentifier("wordList.empty")
         } else {
             ForEach(model.sections) { section in
                 VStack(alignment: .leading, spacing: 0) {
-                    NeoSectionHeader(title: section.title)
-                        .padding(.top, 26)
-                        .padding(.bottom, 6)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(section.title)
+                            .font(.headline.weight(.bold))
+                        Spacer()
+                        Text("\(section.rows.count)")
+                            .font(.footnote.monospacedDigit())
+                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    }
+                    .padding(.top, 24)
+                    .padding(.bottom, 6)
+                    NeoHairline()
                     ForEach(section.rows) { row in
                         rowView(row)
                     }
@@ -238,27 +217,28 @@ struct NeoWordListView: View {
         HStack(spacing: 10) {
             familiarityDot(row.familiarity)
             Text(row.word)
-                .font(Neo.serif(19))
-                .foregroundStyle(row.archived ? Neo.faint : Neo.ink)
+                .font(.body)
+                .foregroundStyle(row.archived ? Color.secondary : Color.primary)
             if row.archived {
                 Image(systemName: "archivebox")
                     .font(.caption2)
-                    .foregroundStyle(Neo.faint)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
             Text(rightMeta(row))
                 .font(.footnote.monospacedDigit())
-                .foregroundStyle(Neo.faint)
+                .foregroundStyle(.secondary)
+            Image(systemName: "chevron.right")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Color(uiColor: .quaternaryLabel))
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 11)
         .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
-            Rectangle().fill(Neo.hairline).frame(height: 0.5)
+            NeoHairline().padding(.leading, 16)
         }
     }
 
-    /// Tiny familiarity state signal: hollow = unknown, warm = learning,
-    /// green = familiar.
     private func familiarityDot(_ familiarity: Int?) -> some View {
         Group {
             if let familiarity {
@@ -291,7 +271,6 @@ struct NeoWordListView: View {
                 batchMarkMode.toggle()
             } label: {
                 Image(systemName: batchMarkMode ? "checkmark.circle.fill" : "checkmark.circle")
-                    .foregroundStyle(batchMarkMode ? Neo.blue : Neo.graphite)
             }
             .accessibilityIdentifier("wordList.batchMark")
         }
@@ -319,64 +298,59 @@ struct NeoWordListView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .foregroundStyle(Neo.graphite)
             }
             .accessibilityIdentifier("wordList.menu")
         }
     }
 
-    /// Study commitment: compact, trailing, navy — not a full-width pill.
     private var bottomBar: some View {
-        VStack(spacing: 0) {
-            NeoHairline()
-            HStack(spacing: 10) {
-                if let paused = model.pausedSession {
-                    Text("Paused session — \(paused.totalCount - paused.position) cards left")
-                        .font(.footnote)
-                        .foregroundStyle(Neo.graphite)
-                    Spacer()
-                    Menu {
-                        Button(role: .destructive) {
-                            env.userStore.clearPausedSession(listID: model.list.id)
-                            model.reload()
-                        } label: {
-                            Label("End Session", systemImage: "xmark.circle")
-                        }
+        HStack(spacing: 10) {
+            if let paused = model.pausedSession {
+                Text("\(paused.totalCount - paused.position) cards left in session")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Menu {
+                    Button(role: .destructive) {
+                        env.userStore.clearPausedSession(listID: model.list.id)
+                        model.reload()
                     } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.body)
-                            .foregroundStyle(Neo.graphite)
-                            .frame(width: 40, height: 40)
+                        Label("End Session", systemImage: "xmark.circle")
                     }
-                    .accessibilityIdentifier("wordList.sessionMenu")
-                    NeoPrimaryButton(title: "Continue", systemImage: "play.fill") {
-                        navigateToStudy = true
-                    }
-                    .accessibilityIdentifier("wordList.study")
-                } else {
-                    Text(studyCountLabel)
-                        .font(.footnote)
-                        .foregroundStyle(Neo.faint)
-                    Spacer()
-                    NeoPrimaryButton(title: "Study", systemImage: "book") {
-                        navigateToStudy = true
-                    }
-                    .disabled(model.visibleWords.isEmpty)
-                    .opacity(model.visibleWords.isEmpty ? 0.4 : 1)
-                    .accessibilityIdentifier("wordList.study")
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 40, height: 40)
                 }
+                .accessibilityIdentifier("wordList.sessionMenu")
+                NeoPrimaryButton(title: "Continue", systemImage: "play.fill") {
+                    navigateToStudy = true
+                }
+                .accessibilityIdentifier("wordList.study")
+            } else {
+                Text(studyCountLabel)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                NeoPrimaryButton(title: "Study", systemImage: "book") {
+                    navigateToStudy = true
+                }
+                .disabled(model.visibleWords.isEmpty)
+                .opacity(model.visibleWords.isEmpty ? 0.4 : 1)
+                .accessibilityIdentifier("wordList.study")
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
-            .background(Neo.paper.opacity(0.97))
         }
+        .padding(.horizontal, 18)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
+        .background(.regularMaterial)
     }
 
     private var studyCountLabel: String {
         let count = model.visibleWords.count
         return count == model.totalCount
             ? "\(count) words"
-            : "\(count) of \(model.totalCount) words in view"
+            : "\(count) of \(model.totalCount) in view"
     }
 }

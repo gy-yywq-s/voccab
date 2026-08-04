@@ -30,15 +30,16 @@ struct NeoWordDetailPager: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .navigationTitle(selection)
         .navigationBarTitleDisplayMode(.inline)
-        .background(Neo.paper)
+        .background(Color(uiColor: .systemBackground))
     }
 }
 
-/// Word page — same zones as classic (word header, note, tags, study info,
-/// dictionary tabs) with the word treated as editorial content on paper:
-/// no gray card, serif headword, hairline rules, quiet outlined tags,
-/// underlined text tabs.
+/// Word page — same zones as classic (headword, definitions, note, tags,
+/// study info, dictionary tabs). Serif is reserved for the headword itself;
+/// everything else is SF. Tags collapse into one quiet metadata line; the
+/// dictionary switch is a native segmented control.
 struct NeoWordDetailView: View {
     @EnvironmentObject private var env: AppEnvironment
     @StateObject var model: WordDetailModel
@@ -57,20 +58,20 @@ struct NeoWordDetailView: View {
                 headword
                 chineseDefinitions
                 noteBlock
-                tagRow
+                metadataLine
                 if model.showStudyInfo {
                     studyInfo
                 }
                 tabBar
-                    .padding(.top, 26)
+                    .padding(.top, 24)
                 tabContent
-                    .padding(.top, 18)
+                    .padding(.top, 16)
                 Color.clear.frame(height: 60)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Neo.paper)
+        .background(Color(uiColor: .systemBackground))
         .toolbar { toolbarItems }
         .alert("Edit note", isPresented: $showNoteEditor) {
             TextField("Note", text: $noteText, axis: .vertical)
@@ -85,21 +86,20 @@ struct NeoWordDetailView: View {
     // MARK: Header zone
 
     private var headword: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
                 Text(model.displayWord)
-                    .font(Neo.serif(38, weight: .semibold))
-                    .foregroundStyle(Neo.ink)
+                    .font(Neo.headword(36))
                     .minimumScaleFactor(0.5)
                     .lineLimit(2)
                 Spacer()
                 myWordsControl
             }
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
                     Text("/\(phonetic)/")
-                        .font(Neo.sans(16))
-                        .foregroundStyle(Neo.graphite)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
                 }
                 Button {
                     model.speak()
@@ -113,7 +113,7 @@ struct NeoWordDetailView: View {
                 .accessibilityIdentifier("word.speak")
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 6)
         .accessibilityIdentifier("word.headerCard")
     }
 
@@ -138,7 +138,7 @@ struct NeoWordDetailView: View {
                 } label: {
                     Image(systemName: "bookmark")
                         .font(.title3)
-                        .foregroundStyle(Neo.graphite)
+                        .foregroundStyle(.secondary)
                         .frame(width: 44, height: 44, alignment: .topTrailing)
                 }
                 .buttonStyle(NeoPressStyle())
@@ -148,34 +148,31 @@ struct NeoWordDetailView: View {
     }
 
     private var chineseDefinitions: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 6) {
             if let lines = model.data.dictWord?.translationLines, !lines.isEmpty {
                 ForEach(lines, id: \.self) { line in
                     definitionLine(line)
                 }
             } else {
                 Text("No dictionary entry")
-                    .font(Neo.sans(16))
-                    .foregroundStyle(Neo.faint)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
             }
         }
-        .padding(.top, 16)
+        .padding(.top, 14)
     }
 
-    /// Splits "pron. 一些, 一部分" into a small italic POS and the body text.
     private func definitionLine(_ line: String) -> some View {
         let parts = splitPOS(line)
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
             if let pos = parts.pos {
                 Text(pos)
-                    .font(Neo.serif(14).italic())
-                    .foregroundStyle(Neo.faint)
-                    .frame(minWidth: 34, alignment: .leading)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 36, alignment: .leading)
             }
             Text(parts.body)
-                .font(Neo.sans(17))
-                .foregroundStyle(Neo.ink)
-                .lineSpacing(2)
+                .font(.body)
         }
     }
 
@@ -190,77 +187,85 @@ struct NeoWordDetailView: View {
     @ViewBuilder
     private var noteBlock: some View {
         if !model.data.state.note.isEmpty {
-            HStack(alignment: .top, spacing: 10) {
-                Rectangle()
-                    .fill(Neo.warm)
-                    .frame(width: 2)
-                (Text("Note  ").font(Neo.sans(13, weight: .semibold)).foregroundColor(Neo.warm)
-                    + Text(model.data.state.note).font(Neo.sans(15)).foregroundColor(Neo.graphite))
-                    .lineSpacing(2)
-            }
-            .padding(.top, 14)
+            (Text("Note  ").font(.subheadline.weight(.semibold)).foregroundColor(Neo.warm)
+                + Text(model.data.state.note).font(.subheadline).foregroundColor(.secondary))
+                .padding(.top, 12)
         }
     }
 
-    private var tagRow: some View {
+    /// Tags as one quiet metadata line (Curio temperament): plain text
+    /// separated by dots, color only where it carries state.
+    private var metadataLine: some View {
         let dictWord = model.data.dictWord
         let familiarity = model.data.state.familiarity
-        return HStack(spacing: 8) {
-            FlowLayout(spacing: 8) {
-                NeoTag(
-                    text: Formatting.familiarityChip(familiarity),
-                    color: familiarity == nil ? Neo.faint : (familiarity! >= 80 ? Neo.green : Neo.warm)
-                )
-                NeoTag(text: Formatting.frequencyChip(dictWord?.frequencyBand ?? .unknown), color: Neo.graphite)
-                if let tags = dictWord?.examTags, let label = examTagChipLabel(tags) {
-                    NeoTag(text: label, color: Neo.blue)
-                }
-                if model.data.listNames.isEmpty {
-                    Button {
-                        model.toggleMyWords()
-                    } label: {
-                        NeoTag(text: "+ Word lists", color: Neo.blue)
-                    }
-                    .buttonStyle(NeoPressStyle())
+        return HStack(spacing: 6) {
+            Group {
+                if let familiarity {
+                    Text("Familiarity \(familiarity)%")
+                        .foregroundStyle(familiarity >= 80 ? Neo.green : Neo.warm)
                 } else {
-                    let first = model.data.listNames[0]
-                    let extra = model.data.listNames.count - 1
-                    NeoTag(text: extra > 0 ? "\(first) & \(extra) more" : first, color: Neo.graphite)
+                    Text("Familiarity ?")
+                        .foregroundStyle(.secondary)
+                }
+                Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                Text((dictWord?.frequencyBand ?? .unknown).label)
+                    .foregroundStyle(.secondary)
+                if let tags = dictWord?.examTags, let label = examTagChipLabel(tags) {
+                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    Text(label)
+                        .foregroundStyle(.secondary)
                 }
             }
+            .font(.footnote)
+
+            if model.data.listNames.isEmpty {
+                Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel)).font(.footnote)
+                Button {
+                    model.toggleMyWords()
+                } label: {
+                    Text("+ Word lists")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(Neo.blue)
+                }
+                .buttonStyle(NeoPressStyle())
+            } else {
+                Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel)).font(.footnote)
+                Text(model.data.listNames.joined(separator: ", "))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
             Spacer(minLength: 0)
+
             Button {
                 withAnimation { model.showStudyInfo.toggle() }
             } label: {
-                Image(systemName: model.showStudyInfo ? "chevron.up.circle" : "info.circle")
+                Image(systemName: "info.circle")
                     .font(.body)
-                    .foregroundStyle(Neo.faint)
+                    .foregroundStyle(model.showStudyInfo ? Neo.blue : Color.secondary)
                     .frame(width: 36, height: 36)
             }
             .buttonStyle(NeoPressStyle())
             .accessibilityIdentifier("word.studyInfoToggle")
         }
-        .padding(.top, 16)
+        .padding(.top, 12)
     }
 
     private var studyInfo: some View {
         VStack(alignment: .leading, spacing: 10) {
-            NeoHairline()
-                .padding(.bottom, 4)
             HStack(spacing: 12) {
-                Text("Familiarity")
-                    .font(Neo.sans(14, weight: .medium))
-                    .foregroundStyle(Neo.graphite)
+                Text("Set familiarity")
+                    .font(.subheadline)
                 NeoFamiliaritySlider(value: model.data.state.familiarity ?? 0) { newValue in
                     model.setFamiliarity(newValue)
                 }
                 Text("\(model.data.state.familiarity ?? 0)%")
-                    .font(Neo.sans(14).monospacedDigit())
-                    .foregroundStyle(Neo.ink)
+                    .font(.subheadline.monospacedDigit())
                     .frame(width: 44, alignment: .trailing)
             }
             let state = model.data.state
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 if state.timesStudied == 0 {
                     Text("Never studied.")
                 } else {
@@ -277,48 +282,38 @@ struct NeoWordDetailView: View {
                 }
             }
             .font(.footnote)
-            .foregroundStyle(Neo.faint)
-            NeoHairline()
-                .padding(.top, 4)
+            .foregroundStyle(.secondary)
         }
-        .padding(.top, 14)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemBackground))
+        )
+        .padding(.top, 10)
         .accessibilityIdentifier("word.studyInfo")
     }
 
-    // MARK: Dictionary tabs
+    // MARK: Dictionary tabs (native segmented)
 
     private var tabBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 22) {
-                tabButton("Related", source: .chinese)
-                ForEach(dictionaryTabs, id: \.self) { source in
-                    tabButton(source.label, source: source)
-                }
+        Picker("Dictionary", selection: $tab) {
+            Text("Related").tag(DictionarySource.chinese)
+            ForEach(dictionaryTabs, id: \.self) { source in
+                Text(shortLabel(source)).tag(source)
             }
         }
-        .overlay(alignment: .bottom) {
-            NeoHairline()
-        }
+        .pickerStyle(.segmented)
         .accessibilityIdentifier("word.tabs")
     }
 
-    private func tabButton(_ label: String, source: DictionarySource) -> some View {
-        let isActive = tab == source
-        return Button {
-            tab = source
-        } label: {
-            Text(label)
-                .font(Neo.sans(15, weight: isActive ? .semibold : .regular))
-                .foregroundStyle(isActive ? Neo.ink : Neo.faint)
-                .padding(.vertical, 9)
-                .overlay(alignment: .bottom) {
-                    if isActive {
-                        Rectangle().fill(Neo.ink).frame(height: 1.6)
-                    }
-                }
+    private func shortLabel(_ source: DictionarySource) -> String {
+        switch source {
+        case .english: return "English"
+        case .synonyms: return "Synonyms"
+        case .apple: return "Apple"
+        default: return source.label
         }
-        .buttonStyle(NeoPressStyle())
-        .accessibilityIdentifier("word.tab.\(label)")
     }
 
     @ViewBuilder
@@ -338,23 +333,28 @@ struct NeoWordDetailView: View {
     }
 
     private var relatedContent: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
             if model.data.related.isEmpty {
                 Text("No related forms.")
                     .font(.subheadline)
-                    .foregroundStyle(Neo.faint)
+                    .foregroundStyle(.secondary)
             }
             ForEach(model.data.related, id: \.label) { section in
-                VStack(alignment: .leading, spacing: 8) {
-                    NeoSectionHeader(title: section.label)
-                    FlowLayout(spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(section.label)
+                        .font(.headline)
+                    FlowLayout(spacing: 8) {
                         ForEach(section.words, id: \.self) { related in
                             NavigationLink(value: Route.wordDetail(word: related, context: [])) {
                                 Text(related)
-                                    .font(Neo.serif(18))
+                                    .font(.body.weight(.medium))
                                     .foregroundStyle(Neo.blue)
-                                    .underline(true, color: Neo.blue.opacity(0.35))
-                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                            .fill(Neo.paleBlue)
+                                    )
                             }
                             .buttonStyle(NeoPressStyle())
                         }
@@ -366,14 +366,12 @@ struct NeoWordDetailView: View {
     }
 
     private var oxfordContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Oxford data not installed")
-                .font(Neo.serif(19, weight: .semibold))
-                .foregroundStyle(Neo.ink)
+                .font(.headline)
             Text("Licensed dictionary content can't ship with this build. Import an Oxford data package from Settings to enable this tab.")
                 .font(.subheadline)
-                .foregroundStyle(Neo.graphite)
-                .lineSpacing(3)
+                .foregroundStyle(.secondary)
         }
         .accessibilityIdentifier("word.oxford")
     }
@@ -382,39 +380,35 @@ struct NeoWordDetailView: View {
         let senses = model.data.senses
         let byPos = Dictionary(grouping: senses, by: \.pos)
         let posOrder = ["noun", "verb", "adjective", "adverb"]
-        return VStack(alignment: .leading, spacing: 18) {
+        return VStack(alignment: .leading, spacing: 16) {
             if senses.isEmpty {
                 if let lines = model.data.dictWord?.definitionLines, !lines.isEmpty {
                     ForEach(lines, id: \.self) { line in
                         Text(line)
-                            .font(Neo.sans(16))
-                            .foregroundStyle(Neo.ink)
+                            .font(.body)
                     }
                 } else {
                     Text("No English definition available.")
                         .font(.subheadline)
-                        .foregroundStyle(Neo.faint)
+                        .foregroundStyle(.secondary)
                 }
             }
             ForEach(posOrder.filter { byPos[$0] != nil }, id: \.self) { pos in
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text(pos)
-                        .font(Neo.serif(15).italic())
-                        .foregroundStyle(Neo.graphite)
+                        .font(.headline)
                     ForEach(Array((byPos[pos] ?? []).enumerated()), id: \.offset) { index, sense in
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text("\(index + 1).")
-                                .font(Neo.sans(14).monospacedDigit())
-                                .foregroundStyle(Neo.faint)
-                            VStack(alignment: .leading, spacing: 3) {
+                                .font(.subheadline.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text(sense.gloss.prefix(1).capitalized + String(sense.gloss.dropFirst()) + ".")
-                                    .font(Neo.sans(16))
-                                    .foregroundStyle(Neo.ink)
-                                    .lineSpacing(2)
+                                    .font(.body)
                                 ForEach(sense.examples.prefix(2), id: \.self) { example in
                                     Text("“\(example)”")
-                                        .font(Neo.serif(15).italic())
-                                        .foregroundStyle(Neo.graphite)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
                         }
@@ -427,24 +421,23 @@ struct NeoWordDetailView: View {
 
     private var synonymsContent: some View {
         let sections = model.data.synonymSections
-        return VStack(alignment: .leading, spacing: 18) {
+        return VStack(alignment: .leading, spacing: 16) {
             if sections.isEmpty {
                 Text("No synonyms found.")
                     .font(.subheadline)
-                    .foregroundStyle(Neo.faint)
+                    .foregroundStyle(.secondary)
             }
             ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(section.pos)
-                        .font(Neo.serif(15).italic())
-                        .foregroundStyle(Neo.graphite)
-                    FlowLayout(spacing: 10) {
+                        .font(.headline)
+                    FlowLayout(spacing: 8) {
                         ForEach(section.synonyms, id: \.self) { synonym in
                             NavigationLink(value: Route.wordDetail(word: synonym, context: [])) {
                                 Text(synonym)
-                                    .font(Neo.sans(16))
+                                    .font(.body)
                                     .foregroundStyle(Neo.blue)
-                                    .padding(.vertical, 3)
+                                    .padding(.vertical, 2)
                             }
                             .buttonStyle(NeoPressStyle())
                         }
@@ -456,13 +449,12 @@ struct NeoWordDetailView: View {
     }
 
     private var appleContent: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("System dictionary")
-                .font(Neo.serif(19, weight: .semibold))
-                .foregroundStyle(Neo.ink)
+                .font(.headline)
             Text("Open “\(model.displayWord)” in Apple's built-in dictionaries.")
                 .font(.subheadline)
-                .foregroundStyle(Neo.graphite)
+                .foregroundStyle(.secondary)
             NeoQuietButton(title: "Open Dictionary", systemImage: "character.book.closed") {
                 showAppleDictionary = true
             }
@@ -471,11 +463,6 @@ struct NeoWordDetailView: View {
 
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            Text(model.displayWord)
-                .font(Neo.serif(17, weight: .semibold))
-                .foregroundStyle(Neo.ink)
-        }
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button {
@@ -497,7 +484,6 @@ struct NeoWordDetailView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .foregroundStyle(Neo.graphite)
             }
             .accessibilityIdentifier("word.menu")
         }

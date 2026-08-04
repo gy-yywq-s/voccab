@@ -2,8 +2,8 @@ import SwiftUI
 import VocabKit
 
 /// Session start — same zones (list identity, progress message, order,
-/// "Start with" options) with editorial treatment: serif list title, quiet
-/// stats line, options as a grouped white field block with hairlines.
+/// "Start with" options) in the Passage language: bold sans headings with a
+/// short rule, caption-over-value rows, native menu for the order override.
 struct NeoStudyStartView: View {
     @EnvironmentObject private var env: AppEnvironment
     @StateObject var model: StudyModel
@@ -22,63 +22,47 @@ struct NeoStudyStartView: View {
     private var startContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Study")
-                        .font(Neo.sans(13, weight: .semibold))
-                        .kerning(1.1)
-                        .foregroundStyle(Neo.faint)
-                        .textCase(.uppercase)
+                VStack(alignment: .leading, spacing: 6) {
                     Text(model.list.name)
-                        .font(Neo.pageTitle)
-                        .foregroundStyle(Neo.ink)
+                        .font(.largeTitle.weight(.bold))
                     Text(model.sessionMessage)
-                        .font(Neo.sans(15))
-                        .foregroundStyle(Neo.graphite)
-                        .lineSpacing(3)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.top, 12)
+                .padding(.top, 10)
 
                 orderRow
-                    .padding(.top, 26)
+                    .padding(.top, 22)
 
-                NeoSectionHeader(title: "Start With")
-                    .padding(.top, 30)
-                    .padding(.bottom, 10)
+                NeoSectionHeader(title: "Start with")
+                    .padding(.top, 28)
+                    .padding(.bottom, 2)
 
                 VStack(spacing: 0) {
                     ForEach(Array(model.plans.enumerated()), id: \.element.mode) { index, plan in
                         planRow(plan)
                         if index < model.plans.count - 1 {
-                            Rectangle().fill(Neo.hairline).frame(height: 0.5)
-                                .padding(.leading, 16)
+                            NeoHairline()
                         }
                     }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Neo.field)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(Neo.hairline, lineWidth: 0.8)
-                        )
-                )
                 Color.clear.frame(height: 40)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Neo.paper)
+        .background(Color(uiColor: .systemBackground))
         .accessibilityIdentifier("study.start")
         .onAppear { model.reloadPlans() }
     }
 
-    /// Recitation-order override: compact row, label left, value+control right.
+    /// Order override: label left, current value + chevrons right (native
+    /// inline-value row, "Target reading pace" style).
     private var orderRow: some View {
         HStack {
             Text("Order")
-                .font(Neo.sans(15, weight: .medium))
-                .foregroundStyle(Neo.ink)
+                .font(.body)
             Spacer()
             Menu {
                 ForEach(StudyOrder.allCases, id: \.self) { order in
@@ -96,48 +80,45 @@ struct NeoStudyStartView: View {
             } label: {
                 HStack(spacing: 5) {
                     Text(model.order.shortLabel)
-                        .font(Neo.sans(15))
+                        .font(.body)
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2)
+                        .font(.caption2.weight(.semibold))
                 }
-                .foregroundStyle(Neo.blue)
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Neo.hairline, lineWidth: 0.7)
+                )
             }
             .accessibilityIdentifier("study.orderPicker")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Neo.field)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.8)
-                )
-        )
+        .padding(.vertical, 4)
+        .overlay(alignment: .bottom) {
+            NeoHairline().offset(y: 12)
+        }
     }
 
     private func planRow(_ plan: SessionPlan) -> some View {
         Button {
             model.start(plan: plan)
         } label: {
-            HStack(alignment: .firstTextBaseline) {
-                Text(plan.mode.rawValue)
-                    .font(Neo.serif(19, weight: .semibold))
-                    .foregroundStyle(Neo.ink)
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(plan.newCount) new")
-                    Text("\(plan.reviewCount) review")
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(plan.mode.rawValue)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("\(plan.newCount) new · \(plan.reviewCount) review")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .font(.footnote.monospacedDigit())
-                .foregroundStyle(Neo.graphite)
+                Spacer()
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Neo.faint)
-                    .padding(.leading, 6)
+                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 15)
+            .padding(.vertical, 13)
             .contentShape(Rectangle())
             .opacity(plan.isEmpty ? 0.35 : 1)
         }
@@ -148,8 +129,8 @@ struct NeoStudyStartView: View {
 }
 
 /// Flashcard — same interaction contract (card, reveal, I Know / I Don't
-/// Know, progress) on a paper page: white field card with hairline + light
-/// shadow, thin progress rule, compact paired actions.
+/// Know, progress): white typed-surface card with light shadow, thin
+/// progress line, red-text quiet decline + navy commit.
 struct NeoFlashcardView: View {
     @EnvironmentObject private var env: AppEnvironment
     @ObservedObject var model: StudyModel
@@ -169,7 +150,7 @@ struct NeoFlashcardView: View {
             bottomControls
         }
         .frame(maxWidth: .infinity)
-        .background(Neo.paper)
+        .background(Color(uiColor: .secondarySystemBackground))
         .accessibilityIdentifier("study.flashcard")
         .onDisappear { model.pause() }
     }
@@ -181,22 +162,24 @@ struct NeoFlashcardView: View {
                     HStack {
                         Text("\(session.position + 1) of \(session.totalCount)")
                             .font(.footnote.monospacedDigit())
-                            .foregroundStyle(Neo.faint)
+                            .foregroundStyle(.secondary)
                         Spacer()
                         Text(session.order.shortLabel)
                             .font(.footnote)
-                            .foregroundStyle(Neo.faint)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
-                            Rectangle().fill(Neo.hairline)
+                            Rectangle().fill(Color(uiColor: .systemFill))
                             Rectangle()
                                 .fill(Neo.blue)
                                 .frame(width: max(3, proxy.size.width * session.progress))
                         }
                     }
-                    .frame(height: 2)
+                    .frame(height: 3)
+                    .clipShape(Capsule())
+                    .padding(.horizontal, 20)
                     .accessibilityIdentifier("study.progress")
                 }
                 .padding(.top, 8)
@@ -206,25 +189,22 @@ struct NeoFlashcardView: View {
 
     private func card(for item: StudyItem) -> some View {
         let dictWord = model.currentDictWord()
-        return VStack(spacing: 14) {
+        return VStack(spacing: 12) {
             Text(item.isNew ? "New word" : "Review")
-                .font(Neo.sans(13, weight: .semibold))
-                .kerning(1.1)
-                .textCase(.uppercase)
+                .font(.subheadline.weight(.medium))
                 .foregroundStyle(item.isNew ? Neo.warm : Neo.blue)
 
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 Text(dictWord?.word ?? item.word)
-                    .font(Neo.serif(40, weight: .semibold))
-                    .foregroundStyle(Neo.ink)
+                    .font(Neo.headword(40))
                     .minimumScaleFactor(0.4)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 8) {
                     if let phonetic = dictWord?.phonetic, !phonetic.isEmpty {
                         Text("/\(phonetic)/")
-                            .font(Neo.sans(16))
-                            .foregroundStyle(Neo.graphite)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
                     }
                     Button {
                         model.speakCurrent()
@@ -243,48 +223,38 @@ struct NeoFlashcardView: View {
                             .padding(.vertical, 6)
                         ForEach(dictWord?.translationLines ?? [], id: \.self) { line in
                             Text(line)
-                                .font(Neo.sans(16))
-                                .foregroundStyle(Neo.ink)
+                                .font(.body)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         if let note = model.currentState()?.note, !note.isEmpty {
-                            HStack(alignment: .top, spacing: 8) {
-                                Rectangle().fill(Neo.warm).frame(width: 2)
-                                Text(note)
-                                    .font(Neo.sans(14))
-                                    .foregroundStyle(Neo.graphite)
-                            }
-                            .padding(.top, 4)
+                            (Text("Note  ").font(.footnote.weight(.semibold)).foregroundColor(Neo.warm)
+                                + Text(note).font(.footnote).foregroundColor(.secondary))
+                                .padding(.top, 4)
                         }
                     }
                     .transition(.opacity)
                 }
             }
-            .padding(26)
+            .padding(24)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Neo.field)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Neo.hairline, lineWidth: 0.8)
-                    )
-                    .shadow(color: .black.opacity(0.06), radius: 10, y: 3)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(uiColor: .systemBackground))
+                    .shadow(color: .black.opacity(0.08), radius: 10, y: 3)
             )
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
             .onTapGesture { withAnimation { model.reveal() } }
         }
     }
 
     private var finished: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             Text("Session complete")
-                .font(Neo.serif(26, weight: .semibold))
-                .foregroundStyle(Neo.ink)
+                .font(.title2.weight(.bold))
             let counts = env.userStore.todayCounts()
             Text("Today: \(counts.newWords) new · \(counts.reviewed) reviewed")
-                .font(Neo.sans(15))
-                .foregroundStyle(Neo.graphite)
+                .font(.body)
+                .foregroundStyle(.secondary)
             NeoPrimaryButton(title: "Done") {
                 model.endSession()
                 dismiss()
@@ -297,53 +267,52 @@ struct NeoFlashcardView: View {
     private var bottomControls: some View {
         Group {
             if let session = model.session, !session.isFinished {
-                VStack(spacing: 0) {
-                    NeoHairline()
-                    HStack(spacing: 12) {
-                        Button {
-                            answerTapped(false)
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "questionmark")
-                                    .font(.subheadline.weight(.semibold))
-                                Text("I Don't Know")
-                                    .font(Neo.sans(16, weight: .medium))
-                            }
-                            .foregroundStyle(Neo.red)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(
-                                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                    .fill(Neo.red.opacity(0.08))
-                            )
+                HStack(spacing: 12) {
+                    Button {
+                        answerTapped(false)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "questionmark")
+                                .font(.subheadline.weight(.semibold))
+                            Text("I Don't Know")
+                                .font(.body.weight(.medium))
                         }
-                        .buttonStyle(NeoPressStyle())
-                        .accessibilityIdentifier("study.dontKnow")
-
-                        Button {
-                            answerTapped(true)
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "checkmark")
-                                    .font(.subheadline.weight(.semibold))
-                                Text("I Know")
-                                    .font(Neo.sans(16, weight: .semibold))
-                            }
-                            .foregroundStyle(Neo.navyFillText)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(
-                                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                    .fill(Neo.navy)
-                            )
-                        }
-                        .buttonStyle(NeoPressStyle())
-                        .accessibilityIdentifier("study.know")
+                        .foregroundStyle(Neo.red)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Neo.red.opacity(0.09))
+                        )
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 12)
-                    .padding(.bottom, 8)
+                    .buttonStyle(NeoPressStyle())
+                    .accessibilityIdentifier("study.dontKnow")
+
+                    Button {
+                        answerTapped(true)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark")
+                                .font(.subheadline.weight(.semibold))
+                            Text("I Know")
+                                .font(.body.weight(.semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Neo.navy)
+                                .shadow(color: .black.opacity(0.08), radius: 1.5, y: 1)
+                        )
+                    }
+                    .buttonStyle(NeoPressStyle())
+                    .accessibilityIdentifier("study.know")
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+                .background(.regularMaterial)
             }
         }
     }

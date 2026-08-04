@@ -79,6 +79,14 @@ public final class UserStore {
         )
     }
 
+    /// Groups many writes into one SQLite transaction (one fsync instead of
+    /// hundreds — first-launch seeding depends on this).
+    public func withTransaction(_ body: () -> Void) {
+        _ = try? db.execute("BEGIN IMMEDIATE")
+        body()
+        _ = try? db.execute("COMMIT")
+    }
+
     // MARK: - Lists
 
     public func lists(includeBuiltin: Bool = true) -> [WordList] {

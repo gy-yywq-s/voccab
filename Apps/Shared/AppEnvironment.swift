@@ -66,6 +66,12 @@ enum UITestSeeder {
     static func seed(userStore: UserStore, dictionary: DictionaryStore?, settings: AppSettings) {
         let calendar = Calendar.current
         let now = Date()
+        userStore.withTransaction {
+            seedContent(userStore: userStore, calendar: calendar, now: now)
+        }
+    }
+
+    private static func seedContent(userStore: UserStore, calendar: Calendar, now: Date) {
 
         // Home stats: "You've learned 6 new words and reviewed 35 today."
         for i in 0..<6 {

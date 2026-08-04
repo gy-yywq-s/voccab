@@ -2,9 +2,9 @@ import SwiftUI
 import VocabKit
 
 /// Home — identical zoning to the classic app (greeting/stats, My Words,
-/// word-list tiles, camera promo, bottom lookup bar), re-expressed in the
-/// quiet editorial language: paper surface, serif masthead, ink + hairlines
-/// instead of blobs and cards.
+/// word lists, camera promo, bottom lookup bar) in the Passage language:
+/// white page, centered masthead over a hairline, bold sans section titles
+/// with a short rule, plain rows, pale-blue actions.
 struct NeoHomeView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var path = NavigationPath()
@@ -23,10 +23,10 @@ struct NeoHomeView: View {
                         promoZone
                         Color.clear.frame(height: 110)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                 }
                 .scrollIndicators(.hidden)
-                .background(Neo.paper)
+                .background(Color(uiColor: .systemBackground))
 
                 bottomBar
             }
@@ -50,12 +50,11 @@ struct NeoHomeView: View {
     // MARK: Zones
 
     private var masthead: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
             HStack {
                 Spacer()
                 Text("Voccab")
-                    .font(Neo.masthead)
-                    .foregroundStyle(Neo.ink)
+                    .font(.title3.weight(.semibold))
                     .accessibilityIdentifier("home.greeting")
                 Spacer()
             }
@@ -65,39 +64,38 @@ struct NeoHomeView: View {
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.body)
-                        .foregroundStyle(Neo.graphite)
+                        .foregroundStyle(.secondary)
                         .frame(width: 44, height: 44, alignment: .trailing)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("home.settings")
             }
             NeoHairline()
+                .padding(.horizontal, -20)
         }
         .padding(.top, 6)
     }
 
     private var greetingZone: some View {
         let counts = env.userStore.todayCounts()
-        return VStack(alignment: .leading, spacing: 14) {
+        return VStack(alignment: .leading, spacing: 6) {
             Text(greetingWord)
-                .font(Neo.serif(34, weight: .semibold))
-                .foregroundStyle(Neo.ink)
-            (statText(counts))
-                .font(Neo.sans(16))
-                .foregroundStyle(Neo.graphite)
-                .lineSpacing(3)
+                .font(.largeTitle.weight(.bold))
+            statText(counts)
+                .font(.body)
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.top, 28)
+        .padding(.top, 26)
         .id(env.dataVersion)
     }
 
     private var greetingWord: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12: return "Good morning."
-        case 12..<18: return "Good afternoon."
-        default: return "Good evening."
+        case 5..<12: return "Good morning"
+        case 12..<18: return "Good afternoon"
+        default: return "Good evening"
         }
     }
 
@@ -105,164 +103,162 @@ struct NeoHomeView: View {
         if counts.newWords == 0 && counts.reviewed == 0 {
             return Text("Nothing studied yet today — pick a list below to begin.")
         }
-        return Text("Today you've learned ")
-            + Text("\(counts.newWords)").font(Neo.sans(16, weight: .semibold)).foregroundColor(Neo.ink)
-            + Text(" new words and reviewed ")
-            + Text("\(counts.reviewed)").font(Neo.sans(16, weight: .semibold)).foregroundColor(Neo.ink)
-            + Text(". Keep going.")
+        return Text("\(counts.newWords) new words learned · \(counts.reviewed) reviewed today")
     }
 
     private var myWordsZone: some View {
         let myWords = env.userStore.myWordsList()
-        return VStack(alignment: .leading, spacing: 0) {
-            NeoSectionHeader(title: "My Words")
-                .padding(.top, 34)
-                .padding(.bottom, 10)
+        return VStack(alignment: .leading, spacing: 2) {
+            NeoSectionHeader(title: "My Words") {
+                Button {
+                    showSearch = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("Add")
+                    }
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Neo.blue)
+                }
+                .buttonStyle(NeoPressStyle())
+            }
+            .padding(.top, 30)
+
             Button {
                 path.append(Route.wordList(myWords))
             } label: {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("My Words")
-                            .font(Neo.serif(22, weight: .semibold))
-                            .foregroundStyle(Neo.ink)
-                        Text(myWords.wordCount == 0
-                             ? "Add new words now"
-                             : "\(myWords.wordCount) saved word\(myWords.wordCount == 1 ? "" : "s")")
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Saved words")
                             .font(.subheadline)
-                            .foregroundStyle(Neo.faint)
+                            .foregroundStyle(.secondary)
+                        Text(myWords.wordCount == 0 ? "None yet" : "\(myWords.wordCount) words")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.primary)
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Neo.faint)
+                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 14)
                 .contentShape(Rectangle())
             }
             .buttonStyle(NeoPressStyle())
             .accessibilityIdentifier("home.myWords")
-            NeoHairline()
         }
     }
 
     private var listsZone: some View {
         let lists = env.userStore.lists(includeBuiltin: false)
         return VStack(alignment: .leading, spacing: 0) {
-            NeoSectionHeader(title: "Word Lists")
-                .padding(.top, 30)
-                .padding(.bottom, 4)
+            NeoHairline()
+            NeoSectionHeader(title: "Word lists")
+                .padding(.top, 24)
             if lists.isEmpty {
                 Text("Import a CSV in Settings to create your first list.")
                     .font(.subheadline)
-                    .foregroundStyle(Neo.faint)
+                    .foregroundStyle(.secondary)
                     .padding(.vertical, 14)
             }
-            ForEach(lists) { list in
-                Button {
-                    path.append(Route.wordList(list))
-                } label: {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(list.name)
-                            .font(Neo.serif(20))
-                            .foregroundStyle(Neo.ink)
-                            .lineLimit(1)
-                        Spacer()
-                        Text("\(list.wordCount)")
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(Neo.graphite)
-                        Image(systemName: "chevron.right")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Neo.faint)
+            VStack(spacing: 0) {
+                ForEach(lists) { list in
+                    Button {
+                        path.append(Route.wordList(list))
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(list.name)
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                Text("\(list.wordCount) words")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                        }
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
                     }
-                    .padding(.vertical, 13)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("home.list.\(list.name)")
-                .overlay(alignment: .bottom) {
+                    .buttonStyle(NeoPressStyle())
+                    .accessibilityIdentifier("home.list.\(list.name)")
                     if list.id != lists.last?.id {
-                        Rectangle().fill(Neo.hairline).frame(height: 0.5)
+                        NeoHairline()
                     }
                 }
             }
-            NeoHairline()
+            .padding(.top, 4)
         }
+        .padding(.top, 18)
     }
 
     private var promoZone: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            NeoSectionHeader(title: "Snap Words")
-                .padding(.top, 30)
-            Text("Photograph text and tap any word to look it up — the camera button below starts a capture.")
-                .font(Neo.sans(15))
-                .foregroundStyle(Neo.graphite)
-                .lineSpacing(3)
+        VStack(alignment: .leading, spacing: 10) {
+            NeoHairline()
+            NeoSectionHeader(title: "Snap words")
+                .padding(.top, 24)
+            Text("Photograph text and tap any word to look it up. The camera button below starts a capture.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
                 PromoFigure()
-                    .frame(maxWidth: 250)
+                    .frame(maxWidth: 240)
                 Spacer()
             }
-            .padding(.top, 4)
+            .padding(.top, 6)
         }
+        .padding(.top, 18)
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 0) {
-            NeoHairline()
-            HStack(spacing: 12) {
-                Button {
-                    showSearch = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.subheadline)
-                            .foregroundStyle(Neo.faint)
-                        Text("Lookup words or sentences")
-                            .font(Neo.sans(15))
-                            .foregroundStyle(Neo.faint)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 14)
-                    .frame(height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .fill(Neo.field)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                    .stroke(Neo.hairline, lineWidth: 0.8)
-                            )
-                    )
+        HStack(spacing: 12) {
+            Button {
+                showSearch = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    Text("Lookup words or sentences")
+                        .foregroundStyle(Color(uiColor: .placeholderText))
+                    Spacer()
                 }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("home.search")
-
-                Button {
-                    showCamera = true
-                } label: {
-                    Image(systemName: "camera")
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(Neo.blue)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                .fill(Neo.paleBlue)
-                        )
-                }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("home.camera")
+                .font(.body)
+                .padding(.horizontal, 16)
+                .frame(height: 46)
+                .background(
+                    Capsule().fill(Color(uiColor: .systemBackground))
+                        .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
+                )
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
-            .background(Neo.paper.opacity(0.97))
+            .buttonStyle(NeoPressStyle())
+            .accessibilityIdentifier("home.search")
+
+            Button {
+                showCamera = true
+            } label: {
+                Image(systemName: "camera")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Neo.blue)
+                    .frame(width: 46, height: 46)
+                    .background(Circle().fill(Neo.paleBlue))
+            }
+            .buttonStyle(NeoPressStyle())
+            .accessibilityIdentifier("home.camera")
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
+        .background(.regularMaterial)
     }
 }
 
-/// The camera promo figure: bundled screenshot framed by a hairline.
+/// The camera promo figure, framed by a hairline like an article figure.
 struct PromoFigure: View {
     var body: some View {
         Group {
@@ -271,20 +267,20 @@ struct PromoFigure: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             } else {
-                RoundedRectangle(cornerRadius: 4)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(Color(uiColor: .secondarySystemFill))
                     .frame(height: 320)
                     .overlay {
                         Image(systemName: "camera.viewfinder")
                             .font(.system(size: 40))
-                            .foregroundStyle(Neo.faint)
+                            .foregroundStyle(.secondary)
                     }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .stroke(Neo.hairline, lineWidth: 0.8)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Neo.hairline, lineWidth: 0.5)
         )
     }
 }

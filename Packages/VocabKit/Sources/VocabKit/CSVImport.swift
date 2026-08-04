@@ -117,10 +117,12 @@ public enum CSVImport {
         userStore: UserStore
     ) -> WordList? {
         guard let list = userStore.createList(name: listName) else { return nil }
-        for row in rows {
-            userStore.add(word: row.word, to: list.id)
-            if !row.note.isEmpty {
-                userStore.setNote(row.note, for: row.word)
+        userStore.withTransaction {
+            for row in rows {
+                userStore.add(word: row.word, to: list.id)
+                if !row.note.isEmpty {
+                    userStore.setNote(row.note, for: row.word)
+                }
             }
         }
         return userStore.lists().first(where: { $0.id == list.id })
