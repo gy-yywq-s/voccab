@@ -232,7 +232,6 @@ struct NeoFlashcardView: View {
                                 .padding(.top, 4)
                         }
                     }
-                    .transition(.opacity)
                 }
             }
             .padding(24)

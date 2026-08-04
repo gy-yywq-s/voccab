@@ -198,42 +198,42 @@ struct NeoWordDetailView: View {
     private var metadataLine: some View {
         let dictWord = model.data.dictWord
         let familiarity = model.data.state.familiarity
-        return HStack(spacing: 6) {
-            Group {
-                if let familiarity {
-                    Text("Familiarity \(familiarity)%")
-                        .foregroundStyle(familiarity >= 80 ? Neo.green : Neo.warm)
-                } else {
-                    Text("Familiarity ?")
-                        .foregroundStyle(.secondary)
-                }
-                Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
-                Text((dictWord?.frequencyBand ?? .unknown).label)
-                    .foregroundStyle(.secondary)
-                if let tags = dictWord?.examTags, let label = examTagChipLabel(tags) {
+        return HStack(alignment: .top, spacing: 8) {
+            FlowLayout(spacing: 6) {
+                Group {
+                    if let familiarity {
+                        Text("Familiarity \(familiarity)%")
+                            .foregroundStyle(familiarity >= 80 ? Neo.green : Neo.warm)
+                    } else {
+                        Text("Familiarity ?")
+                            .foregroundStyle(.secondary)
+                    }
                     Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
-                    Text(label)
+                    Text((dictWord?.frequencyBand ?? .unknown).label)
                         .foregroundStyle(.secondary)
+                    if let tags = dictWord?.examTags, let label = examTagChipLabel(tags) {
+                        Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                        Text(label)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    if model.data.listNames.isEmpty {
+                        Button {
+                            model.toggleMyWords()
+                        } label: {
+                            Text("+ Word lists")
+                                .font(.footnote.weight(.medium))
+                                .foregroundStyle(Neo.blue)
+                        }
+                        .buttonStyle(NeoPressStyle())
+                    } else {
+                        ForEach(model.data.listNames, id: \.self) { name in
+                            Text(name)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
-            }
-            .font(.footnote)
-
-            if model.data.listNames.isEmpty {
-                Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel)).font(.footnote)
-                Button {
-                    model.toggleMyWords()
-                } label: {
-                    Text("+ Word lists")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(Neo.blue)
-                }
-                .buttonStyle(NeoPressStyle())
-            } else {
-                Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel)).font(.footnote)
-                Text(model.data.listNames.joined(separator: ", "))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                .font(.footnote)
             }
 
             Spacer(minLength: 0)

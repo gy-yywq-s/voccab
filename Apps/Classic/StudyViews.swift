@@ -176,7 +176,6 @@ struct FlashcardView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 10)
-                    .transition(.opacity)
                 }
             }
             .padding(24)
