@@ -26,6 +26,30 @@ final class RedesignScreenshotTests: XCTestCase {
         walkthrough(app, theme: "dark", full: false)
     }
 
+    /// The dictionary switcher is a row of plain SwiftUI Buttons, so the
+    /// label text is consumed into the button element rather than surfacing
+    /// as a StaticText. Try every plausible query, tapping by coordinate if
+    /// the match isn't hittable; dump the hierarchy when nothing matches.
+    @discardableResult
+    private func tapDictionaryTab(_ app: XCUIApplication, _ name: String) -> Bool {
+        let candidates: [XCUIElement] = [
+            app.buttons["word.tab.\(name)"].firstMatch,
+            app.buttons[name].firstMatch,
+            app.staticTexts[name].firstMatch,
+            app.descendants(matching: .any)["word.tab.\(name)"].firstMatch,
+        ]
+        for element in candidates where element.waitForExistence(timeout: 3) {
+            if element.isHittable {
+                element.tap()
+            } else {
+                element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            }
+            return true
+        }
+        print("VOCCAB-DEBUG: dictionary tab \(name) not found; hierarchy:\n\(app.debugDescription)")
+        return false
+    }
+
     private func walkthrough(_ app: XCUIApplication, theme: String, full: Bool) {
         // Home
         XCTAssertTrue(app.staticTexts["home.greeting"].waitForExistence(timeout: 15))
@@ -57,15 +81,15 @@ final class RedesignScreenshotTests: XCTestCase {
         if full {
             snap("06-word-studyinfo__\(theme)")
 
-            // The styled tab buttons surface their labels, not a button role.
-            if app.staticTexts["English"].waitForExistence(timeout: 5) {
-                app.staticTexts["English"].firstMatch.tap()
+            if tapDictionaryTab(app, "English") {
                 sleep(1)
                 snap("07-word-english__\(theme)")
-                app.staticTexts["Synonyms"].firstMatch.tap()
+            }
+            if tapDictionaryTab(app, "Synonyms") {
                 sleep(1)
                 snap("08-word-synonyms__\(theme)")
-                app.staticTexts["Oxford"].firstMatch.tap()
+            }
+            if tapDictionaryTab(app, "Oxford") {
                 sleep(1)
                 snap("09-word-oxford__\(theme)")
             }
