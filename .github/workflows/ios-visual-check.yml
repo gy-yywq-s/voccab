@@ -1,0 +1,120 @@
+name: iOS Visual Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      scheme:
+        description: "Scheme to test (VoccabClassic | VoccabRedesign | both)"
+        required: false
+        default: "both"
+  push:
+    branches:
+      - "claude/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-check:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: VocabKit unit tests (macOS)
+        run: swift test --package-path Packages/VocabKit 2>&1 | tail -40
+
+      - name: Pick simulator
+        id: sim
+        run: |
+          xcrun simctl list devices available | head -40
+          DEVICE=$(xcrun simctl list devices available | grep -E "iPhone 16 Pro \(" | head -1 | sed -E 's/^ *([^(]+) \(.*/\1/' | xargs)
+          if [ -z "$DEVICE" ]; then
+            DEVICE=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | sed -E 's/^ *([^(]+) \(.*/\1/' | xargs)
+          fi
+          echo "device=$DEVICE" >> "$GITHUB_OUTPUT"
+          echo "Using simulator: $DEVICE"
+
+      - name: UI tests + screenshots (Classic)
+        if: ${{ github.event.inputs.scheme == '' || github.event.inputs.scheme == 'both' || github.event.inputs.scheme == 'VoccabClassic' }}
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          xcodebuild test \
+            -project Voccab.xcodeproj \
+            -scheme VoccabClassic \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
+            -resultBundlePath artifacts/Classic.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee artifacts/classic-build.log | tail -60
+
+      - name: UI tests + screenshots (Redesign)
+        if: ${{ always() && (github.event.inputs.scheme == '' || github.event.inputs.scheme == 'both' || github.event.inputs.scheme == 'VoccabRedesign') }}
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          xcodebuild test \
+            -project Voccab.xcodeproj \
+            -scheme VoccabRedesign \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.device }}" \
+            -resultBundlePath artifacts/Redesign.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee artifacts/redesign-build.log | tail -60
+
+      - name: Export screenshots
+        if: always()
+        run: |
+          set -x
+          mkdir -p shots
+          for bundle in artifacts/Classic.xcresult artifacts/Redesign.xcresult; do
+            [ -d "$bundle" ] || continue
+            name=$(basename "$bundle" .xcresult | tr '[:upper:]' '[:lower:]')
+            out="shots/$name"
+            mkdir -p "$out"
+            xcrun xcresulttool export attachments --path "$bundle" --output-path "$out" || true
+            python3 scripts/rename_attachments.py "$out" || true
+          done
+          find shots -type f | sort
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-visual-results
+          path: |
+            shots
+            artifacts/*.log
+
+      - name: Push screenshots to ci-screenshots branch
+        if: always()
+        run: |
+          set -x
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p /tmp/shots-branch
+          cp -R shots/* /tmp/shots-branch/ 2>/dev/null || true
+          for log in artifacts/*.log; do
+            if [ -f "$log" ]; then
+              { grep -E "error:|error " "$log" | head -120; echo "--- tail ---"; tail -120 "$log"; } > "/tmp/shots-branch/$(basename "$log")" || true
+            fi
+          done
+          echo "run: ${{ github.run_id }} ($(date -u +%Y-%m-%dT%H:%M:%SZ)) commit: ${{ github.sha }}" > /tmp/shots-branch/RUN.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan ci-screenshots
+          git rm -rf --cached . > /dev/null 2>&1 || true
+          find . -mindepth 1 -maxdepth 1 ! -name ".git" -exec rm -rf {} +
+          cp -R /tmp/shots-branch/* .
+          git add -A
+          git commit -m "Screenshots for run ${{ github.run_id }}" || echo "nothing to commit"
+          git push -f origin ci-screenshots
