@@ -89,7 +89,7 @@ def search_word(word):
     try:
         data = bp.api_get({
             "action": "query", "list": "search", "srnamespace": 6,
-            "srlimit": 8,
+            "srlimit": 4,
             "srsearch": f'"{word}" filetype:bitmap ({ART_TERMS})',
         })
     except Exception:
@@ -128,16 +128,22 @@ def process_word(word):
             continue
         import hashlib
         key = hashlib.md5(url.encode()).hexdigest()
+        # OCR on a downscaled copy (huge speedup on dense scans), then map
+        # the box back to full resolution.
+        ocr_img = img.copy()
+        ocr_img.thumbnail((700, 900))
+        scale = img.width / ocr_img.width
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
-            img.save(tmp.name)
+            ocr_img.save(tmp.name)
             try:
-                rows = bp.ocr_words(tmp.name, cache_key=key)
+                rows = bp.ocr_words(tmp.name, cache_key=f"{key}-700")
             except Exception:
                 continue
         found = find_word_box(rows, word)
         if not found:
             continue
         conf, box = found
+        box = tuple(int(v * scale) for v in box)
         result = bp.crop_for_word(img, box)
         if not result:
             continue

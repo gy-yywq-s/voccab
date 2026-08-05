@@ -246,7 +246,7 @@ def ocr_words(image_path, cache_key=None):
     else:
         proc = subprocess.run(
             ["tesseract", str(image_path), "stdout", "--psm", "3", "tsv"],
-            capture_output=True, text=True, timeout=120)
+            capture_output=True, text=True, timeout=40)
         stdout = proc.stdout
         if cached:
             OCR_CACHE.mkdir(parents=True, exist_ok=True)
