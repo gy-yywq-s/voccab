@@ -52,13 +52,14 @@ public enum Formatting {
     }
 
     /// Compact interval text able to express the hour-scale algorithms:
-    /// "5s", "2m", "4h", "3d", "180d".
+    /// "5s", "2m", "4h", "3d", "180d", "4.2y".
     public static func interval(days: Double) -> String {
         let seconds = days * 86_400
         if seconds < 60 { return "\(max(1, Int(seconds.rounded())))s" }
         if seconds < 3600 { return "\(Int((seconds / 60).rounded()))m" }
         if seconds < 86_400 { return "\(Int((seconds / 3600).rounded()))h" }
-        return "\(Int(days.rounded()))d"
+        if days < 365 { return "\(Int(days.rounded()))d" }
+        return String(format: "%.1fy", days / 365)
     }
 
     /// Frequency chip text: "Frequency: TOP 100" / "Frequency: 5K-10K" /

@@ -64,7 +64,7 @@ struct AlgorithmPreviewPage: View {
         HStack(spacing: 12) {
             Text("ALGORITHM")
             Spacer()
-            Text("8 REVIEWS")
+            Text("REVIEWS")
                 .frame(width: Self.sparklineWidth)
             Text("SPAN")
                 .frame(width: Self.spanColumnWidth, alignment: .trailing)
@@ -191,8 +191,8 @@ struct AlgorithmPreviewPage: View {
     // MARK: Layout constants
 
     private static let sparklineWidth: CGFloat = 46
-    private static let spanColumnWidth: CGFloat = 44
-    private static let missColumnWidth: CGFloat = 48
+    private static let spanColumnWidth: CGFloat = 42
+    private static let missColumnWidth: CGFloat = 52
 
     /// Bar height for the sparkline: log10 of the interval in seconds,
     /// normalized against a one-second-to-one-year range.

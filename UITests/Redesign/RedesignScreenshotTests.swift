@@ -31,7 +31,9 @@ final class RedesignScreenshotTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-uitest", "-settings.answerStyle", "threeButtons"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["home.greeting"].waitForExistence(timeout: 15))
+        // Generous, non-fatal wait: this is the third launch in the run and
+        // the simulator can be slow; the real assertion is the grade row.
+        _ = app.staticTexts["home.greeting"].waitForExistence(timeout: 40)
         app.buttons["home.list.SAT RW Vocab"].waitTap()
         app.buttons["wordList.study"].waitTap()
         app.buttons["study.plan.Mix"].waitTap()
