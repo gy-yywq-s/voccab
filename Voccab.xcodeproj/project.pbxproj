@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0513E5ECE3BCCDC79840A1F1 /* AlgorithmSettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEDE2529CB443BFA900EC92 /* AlgorithmSettingsPage.swift */; };
 		0AB21D710E3BB436ABCD9364 /* PromoCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */; };
 		0D30B572751D5FF896374C2A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6CD4DCE15F6990064326553C /* Assets.xcassets */; };
 		1091D785F5C433F5114B16C4 /* AlgorithmPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033A82CA5BC2843F3C14BB07 /* AlgorithmPreview.swift */; };
+		12B485E7E562082A89A845A1 /* AlgorithmSettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEDE2529CB443BFA900EC92 /* AlgorithmSettingsPage.swift */; };
 		1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DFA034A4C4765AD7697D786 /* NeoSettingsView.swift */; };
 		1F1E1A2C33A71F25A3D5C673 /* DataTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1B142BA308657220255187 /* DataTransfer.swift */; };
 		22FBAEBD03321C158895E4F1 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
@@ -55,10 +57,12 @@
 		D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE9A2571DD20459B5C9B8CA1 /* NeoWordDetailView.swift */; };
 		D18A1EEAFC6D86A31C315ABE /* PracticeInputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */; };
 		D25A922D1EFE1067E4833F46 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
+		D35CE19BCDD79F959F17AE0A /* AlgorithmSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C678393EF9769CD300F762A /* AlgorithmSwitch.swift */; };
 		D69FB15DF56B49C0D88CDA84 /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0AE9BEB2FE1101D996F12F4 /* VocabKit */; };
 		DC397606F9BA49B455C41206 /* PageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */; };
 		DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CF31D3814A1989115A3077 /* HomeView.swift */; };
 		DE9A63535FF802FED31CFA19 /* voccab-dict.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */; };
+		E3EB35E92CB4DF8DF5D4A6F4 /* AlgorithmSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C678393EF9769CD300F762A /* AlgorithmSwitch.swift */; };
 		E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */; };
 		ED3441C0306E731ADD838E78 /* DataToolsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */; };
 		F032D56D479EDA9E9D6FA89D /* DataTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1B142BA308657220255187 /* DataTransfer.swift */; };
@@ -89,6 +93,7 @@
 		0D2B56475AF4117F967B717F /* VoccabRedesignUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VoccabRedesignUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A1B142BA308657220255187 /* DataTransfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTransfer.swift; sourceTree = "<group>"; };
 		1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1C678393EF9769CD300F762A /* AlgorithmSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmSwitch.swift; sourceTree = "<group>"; };
 		1EB523406FE50F7D5929C0DB /* NeoWordListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoWordListView.swift; sourceTree = "<group>"; };
 		207DB7AE943E677C21167D87 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		223FB3FADBBBE0562BB97181 /* NeoTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoTheme.swift; sourceTree = "<group>"; };
@@ -103,6 +108,7 @@
 		4D284B7596E89C58ECC5284E /* Routes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
 		5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignScreenshotTests.swift; sourceTree = "<group>"; };
 		5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataToolsPage.swift; sourceTree = "<group>"; };
+		5FEDE2529CB443BFA900EC92 /* AlgorithmSettingsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmSettingsPage.swift; sourceTree = "<group>"; };
 		63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		6C1CD147D93A43C371B04537 /* VoccabClassic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoccabClassic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6CD4DCE15F6990064326553C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -237,6 +243,8 @@
 			isa = PBXGroup;
 			children = (
 				033A82CA5BC2843F3C14BB07 /* AlgorithmPreview.swift */,
+				5FEDE2529CB443BFA900EC92 /* AlgorithmSettingsPage.swift */,
+				1C678393EF9769CD300F762A /* AlgorithmSwitch.swift */,
 				63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */,
 				C7583571466DE107FC55B425 /* CameraLookup.swift */,
 				5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */,
@@ -466,6 +474,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				1091D785F5C433F5114B16C4 /* AlgorithmPreview.swift in Sources */,
+				0513E5ECE3BCCDC79840A1F1 /* AlgorithmSettingsPage.swift in Sources */,
+				E3EB35E92CB4DF8DF5D4A6F4 /* AlgorithmSwitch.swift in Sources */,
 				E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */,
 				908E3489DEFABD8B711906DC /* CameraLookup.swift in Sources */,
 				ED3441C0306E731ADD838E78 /* DataToolsPage.swift in Sources */,
@@ -494,6 +504,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				3D3B576FBECFACD98D5D5ADF /* AlgorithmPreview.swift in Sources */,
+				12B485E7E562082A89A845A1 /* AlgorithmSettingsPage.swift in Sources */,
+				D35CE19BCDD79F959F17AE0A /* AlgorithmSwitch.swift in Sources */,
 				3CF2E9A85C947E76A5AAAB2F /* AppEnvironment.swift in Sources */,
 				316405FDF224695C9CDE6CFF /* CameraLookup.swift in Sources */,
 				3EB3998B5D4A449B41F43D46 /* ClassicApp.swift in Sources */,
