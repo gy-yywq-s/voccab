@@ -235,13 +235,24 @@ class Dict:
         return entry["rank"], entry
 
 
-def ocr_words(image_path):
-    """tesseract TSV -> [(word, conf, (l, t, w, h))]."""
-    proc = subprocess.run(
-        ["tesseract", str(image_path), "stdout", "--psm", "3", "tsv"],
-        capture_output=True, text=True, timeout=120)
+OCR_CACHE = REPO / "Data" / "tools" / "cache" / "ocr"
+
+
+def ocr_words(image_path, cache_key=None):
+    """tesseract TSV -> [(word, conf, (l, t, w, h))], disk-cached."""
+    cached = OCR_CACHE / f"{cache_key}.tsv" if cache_key else None
+    if cached and cached.exists():
+        stdout = cached.read_text()
+    else:
+        proc = subprocess.run(
+            ["tesseract", str(image_path), "stdout", "--psm", "3", "tsv"],
+            capture_output=True, text=True, timeout=120)
+        stdout = proc.stdout
+        if cached:
+            OCR_CACHE.mkdir(parents=True, exist_ok=True)
+            cached.write_text(stdout)
     rows = []
-    for line in proc.stdout.splitlines()[1:]:
+    for line in stdout.splitlines()[1:]:
         parts = line.split("\t")
         if len(parts) != 12 or parts[0] != "5":
             continue
@@ -269,6 +280,10 @@ def pick_word(rows, dictionary, used_counts):
         if not entry or not rank or not entry["translation"]:
             continue
         if not (MIN_RANK <= rank <= MAX_RANK):
+            continue
+        # ECDICT marks proper nouns in the Chinese gloss.
+        if any(marker in entry["translation"] for marker in
+               ("人名", "地名", "姓氏", "教名", "州名", "国名", "山名", "河名", "商标", "·")):
             continue
         score = rank + conf * 10
         if best is None or score > best[0]:
@@ -312,6 +327,8 @@ def fetch_thumb(url):
 
 
 def process_one(title, url, dictionary, used_counts):
+    import hashlib
+    key = hashlib.md5(url.encode()).hexdigest()
     try:
         data = fetch_thumb(url)
         img = Image.open(io.BytesIO(data)).convert("RGB")
@@ -320,7 +337,7 @@ def process_one(title, url, dictionary, used_counts):
     with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
         img.save(tmp.name)
         try:
-            rows = ocr_words(tmp.name)
+            rows = ocr_words(tmp.name, cache_key=key)
         except Exception:
             return None
     picked = pick_word(rows, dictionary, used_counts)
