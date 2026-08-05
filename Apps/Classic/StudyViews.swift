@@ -230,38 +230,65 @@ struct FlashcardView: View {
                 .frame(height: 4)
                 .accessibilityIdentifier("study.progress")
 
-                HStack(spacing: 14) {
-                    Button {
-                        answerTapped(false)
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "questionmark.circle.fill")
-                            Text("I Don't Know")
+                Group {
+                    if env.settings.answerStyle == .graded {
+                        HStack(spacing: 10) {
+                            classicGrade(.again, text: ClassicTheme.dontKnowButtonText,
+                                         fill: ClassicTheme.dontKnowButtonBackground)
+                            classicGrade(.hard, text: .orange, fill: Color.orange.opacity(0.15))
+                            classicGrade(.good, text: ClassicTheme.knowButtonText,
+                                         fill: ClassicTheme.knowButtonBackground)
+                            classicGrade(.easy, text: .green, fill: Color.green.opacity(0.15))
                         }
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(ClassicTheme.dontKnowButtonText)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(Capsule().fill(ClassicTheme.dontKnowButtonBackground))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("study.dontKnow")
+                    } else {
+                        VStack(spacing: 6) {
+                            HStack(spacing: 14) {
+                                Button {
+                                    answerTapped(.again)
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "questionmark.circle.fill")
+                                        Text("I Don't Know")
+                                    }
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(ClassicTheme.dontKnowButtonText)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 54)
+                                    .background(Capsule().fill(ClassicTheme.dontKnowButtonBackground))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("study.dontKnow")
 
-                    Button {
-                        answerTapped(true)
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                            Text("I Know")
+                                Button {
+                                    answerTapped(.good)
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                        Text("I Know")
+                                    }
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundStyle(ClassicTheme.knowButtonText)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 54)
+                                    .background(Capsule().fill(ClassicTheme.knowButtonBackground))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityIdentifier("study.know")
+                            }
+                            if env.settings.answerStyle == .refine, model.revealed {
+                                HStack {
+                                    Button("Barely — Hard") { answerTapped(.hard) }
+                                        .font(.footnote.weight(.medium))
+                                        .foregroundStyle(.orange)
+                                    Spacer()
+                                    Button("Trivial — Easy") { answerTapped(.easy) }
+                                        .font(.footnote.weight(.medium))
+                                        .foregroundStyle(.green)
+                                }
+                                .padding(.horizontal, 6)
+                            }
                         }
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(ClassicTheme.knowButtonText)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(Capsule().fill(ClassicTheme.knowButtonBackground))
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("study.know")
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 14)
@@ -271,16 +298,31 @@ struct FlashcardView: View {
         .background(Color(uiColor: .secondarySystemBackground).opacity(0.6))
     }
 
+    private func classicGrade(_ grade: ReviewGrade, text: Color, fill: Color) -> some View {
+        Button {
+            answerTapped(grade)
+        } label: {
+            Text(grade.label)
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(text)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(Capsule().fill(fill))
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("study.grade.\(grade.rawValue)")
+    }
+
     /// First tap reveals the answer; the next tap commits it (so the user
     /// always sees the definition before moving on).
-    @State private var pendingAnswer: Bool?
+    @State private var pendingGrade: ReviewGrade?
 
-    private func answerTapped(_ knew: Bool) {
+    private func answerTapped(_ grade: ReviewGrade) {
         if model.revealed {
-            withAnimation { model.answer(pendingAnswer ?? knew) }
-            pendingAnswer = nil
+            withAnimation { model.answer(grade: pendingGrade ?? grade) }
+            pendingGrade = nil
         } else {
-            pendingAnswer = knew
+            pendingGrade = grade
             withAnimation { model.reveal() }
         }
     }

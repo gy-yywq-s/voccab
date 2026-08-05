@@ -136,7 +136,7 @@ struct NeoFlashcardView: View {
     @EnvironmentObject private var env: AppEnvironment
     @ObservedObject var model: StudyModel
     @Environment(\.dismiss) private var dismiss
-    @State private var pendingAnswer: Bool?
+    @State private var pendingGrade: ReviewGrade?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -272,50 +272,15 @@ struct NeoFlashcardView: View {
     private var bottomControls: some View {
         Group {
             if let session = model.session, !session.isFinished {
-                HStack(spacing: 12) {
-                    Button {
-                        answerTapped(false)
-                    } label: {
-                        HStack {
-                            Text("I Don't Know")
-                                .font(.system(size: 18, weight: .semibold))
-                            Spacer()
-                            Image(systemName: "questionmark")
-                                .font(.subheadline.weight(.medium))
+                VStack(spacing: 8) {
+                    if env.settings.answerStyle == .graded {
+                        gradeRow
+                    } else {
+                        binaryRow
+                        if env.settings.answerStyle == .refine, model.revealed {
+                            refineRow
                         }
-                        .foregroundStyle(Neo.red)
-                        .padding(.horizontal, 16)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Neo.red.opacity(0.08))
-                        )
                     }
-                    .buttonStyle(NeoPressStyle())
-                    .accessibilityIdentifier("study.dontKnow")
-
-                    Button {
-                        answerTapped(true)
-                    } label: {
-                        HStack {
-                            Text("I Know")
-                                .font(.system(size: 18, weight: .semibold))
-                            Spacer()
-                            Image(systemName: "checkmark")
-                                .font(.subheadline.weight(.medium))
-                        }
-                        .foregroundStyle(Neo.blue)
-                        .padding(.horizontal, 16)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Neo.paleBlue)
-                        )
-                    }
-                    .buttonStyle(NeoPressStyle())
-                    .accessibilityIdentifier("study.know")
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -324,12 +289,104 @@ struct NeoFlashcardView: View {
         }
     }
 
-    private func answerTapped(_ knew: Bool) {
+    private var binaryRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                answerTapped(.again)
+            } label: {
+                HStack {
+                    Text("I Don't Know")
+                        .font(.system(size: 18, weight: .semibold))
+                    Spacer()
+                    Image(systemName: "questionmark")
+                        .font(.subheadline.weight(.medium))
+                }
+                .foregroundStyle(Neo.red)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Neo.red.opacity(0.08))
+                )
+            }
+            .buttonStyle(NeoPressStyle())
+            .accessibilityIdentifier("study.dontKnow")
+
+            Button {
+                answerTapped(.good)
+            } label: {
+                HStack {
+                    Text("I Know")
+                        .font(.system(size: 18, weight: .semibold))
+                    Spacer()
+                    Image(systemName: "checkmark")
+                        .font(.subheadline.weight(.medium))
+                }
+                .foregroundStyle(Neo.blue)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Neo.paleBlue)
+                )
+            }
+            .buttonStyle(NeoPressStyle())
+            .accessibilityIdentifier("study.know")
+        }
+    }
+
+    /// Optional post-reveal refinement in "Simple + refine" mode.
+    private var refineRow: some View {
+        HStack(spacing: 12) {
+            Button("Knew it, barely — Hard") { answerTapped(.hard) }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(Neo.warm)
+                .accessibilityIdentifier("study.refineHard")
+            Spacer()
+            Button("Trivial — Easy") { answerTapped(.easy) }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("study.refineEasy")
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private var gradeRow: some View {
+        HStack(spacing: 8) {
+            gradeButton(.again, tint: Neo.red, fill: Neo.red.opacity(0.08))
+            gradeButton(.hard, tint: Neo.warm, fill: Neo.warm.opacity(0.10))
+            gradeButton(.good, tint: Neo.blue, fill: Neo.paleBlue)
+            gradeButton(.easy, tint: Color(red: 0.13, green: 0.5, blue: 0.42),
+                        fill: Color(red: 0.13, green: 0.5, blue: 0.42).opacity(0.10))
+        }
+    }
+
+    private func gradeButton(_ grade: ReviewGrade, tint: Color, fill: Color) -> some View {
+        Button {
+            answerTapped(grade)
+        } label: {
+            Text(grade.label)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(fill)
+                )
+        }
+        .buttonStyle(NeoPressStyle())
+        .accessibilityIdentifier("study.grade.\(grade.rawValue)")
+    }
+
+    private func answerTapped(_ grade: ReviewGrade) {
         if model.revealed {
-            withAnimation { model.answer(pendingAnswer ?? knew) }
-            pendingAnswer = nil
+            withAnimation { model.answer(grade: pendingGrade ?? grade) }
+            pendingGrade = nil
         } else {
-            pendingAnswer = knew
+            pendingGrade = grade
             withAnimation { model.reveal() }
         }
     }

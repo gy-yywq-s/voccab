@@ -20,6 +20,52 @@ public enum PronunciationAccent: String, CaseIterable, Codable, Sendable {
     }
 }
 
+/// How the flashcard collects your answer.
+public enum AnswerStyle: String, CaseIterable, Codable, Sendable {
+    case simple       // two buttons: I Know / I Don't Know (default)
+    case graded       // four buttons: Again / Hard / Good / Easy
+    case refine       // two buttons, then a brief optional Hard/Easy refine
+
+    public var label: String {
+        switch self {
+        case .simple: return "Simple (2 buttons)"
+        case .graded: return "Graded (4 buttons)"
+        case .refine: return "Simple + refine"
+        }
+    }
+
+    public var summary: String {
+        switch self {
+        case .simple: return "I Know / I Don't Know. Fastest; grades are inferred (know = Good)."
+        case .graded: return "Again / Hard / Good / Easy. Richer signal for every algorithm."
+        case .refine: return "Answer with two buttons, then optionally tap Hard or Easy for a moment to refine."
+        }
+    }
+}
+
+/// When a word stops being scheduled for review.
+public enum GraduationPolicy: String, CaseIterable, Codable, Sendable {
+    case byAlgorithm     // interval outgrows the horizon / ladder completed
+    case byFamiliarity   // legacy: familiarity >= target graduates the word
+    case never
+
+    public var label: String {
+        switch self {
+        case .byAlgorithm: return "By algorithm"
+        case .byFamiliarity: return "By familiarity"
+        case .never: return "Never"
+        }
+    }
+
+    public var summary: String {
+        switch self {
+        case .byAlgorithm: return "A word graduates when its review interval exceeds 180 days — the algorithm decides."
+        case .byFamiliarity: return "A word graduates at the target familiarity (the original app's counter rule)."
+        case .never: return "Words keep cycling forever, just at ever-longer intervals."
+        }
+    }
+}
+
 /// How pronunciation audio is produced.
 public enum PronunciationSource: String, CaseIterable, Codable, Sendable {
     case system       // on-device text-to-speech
@@ -90,6 +136,27 @@ public final class AppSettings {
         static let enabledDictionaries = "settings.enabledDictionaries"
         static let scheduler = "settings.scheduler"
         static let pronunciationSource = "settings.pronunciationSource"
+        static let answerStyle = "settings.answerStyle"
+        static let graduationPolicy = "settings.graduationPolicy"
+        static let recordExtendedData = "settings.recordExtendedData"
+    }
+
+    public var answerStyle: AnswerStyle {
+        get { defaults.string(forKey: Key.answerStyle).flatMap(AnswerStyle.init) ?? .simple }
+        set { defaults.set(newValue.rawValue, forKey: Key.answerStyle) }
+    }
+
+    public var graduationPolicy: GraduationPolicy {
+        get { defaults.string(forKey: Key.graduationPolicy).flatMap(GraduationPolicy.init) ?? .byAlgorithm }
+        set { defaults.set(newValue.rawValue, forKey: Key.graduationPolicy) }
+    }
+
+    /// Log grade, response time, and interval context with every review —
+    /// the raw material future per-user tuning needs. On by default; the
+    /// user can turn it off.
+    public var recordExtendedData: Bool {
+        get { defaults.object(forKey: Key.recordExtendedData) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: Key.recordExtendedData) }
     }
 
     /// System TTS vs downloaded human recordings.

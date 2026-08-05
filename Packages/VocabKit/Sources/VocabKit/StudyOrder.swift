@@ -12,6 +12,7 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
     case alphabeticalAZ
     case alphabeticalZA
     case random
+    case forgottenFirst
 
     public var label: String {
         switch self {
@@ -24,6 +25,7 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
         case .alphabeticalAZ: return "Alphabetical (A-Z)"
         case .alphabeticalZA: return "Alphabetical (Z-A)"
         case .random: return "Random"
+        case .forgottenFirst: return "Most Forgotten First"
         }
     }
 
@@ -38,6 +40,7 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
         case .alphabeticalAZ: return "A-Z"
         case .alphabeticalZA: return "Z-A"
         case .random: return "Random"
+        case .forgottenFirst: return "Forgotten First"
         }
     }
 
@@ -82,6 +85,16 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
         case .random:
             var generator = SplitMix64(seed: randomSeed)
             return items.shuffled(using: &generator)
+        case .forgottenFirst:
+            // Lowest estimated recall probability first (Ebisu's practical
+            // payoff, computed with the FSRS curve). Unmodeled words sort
+            // as fully forgotten so they surface early.
+            let now = Date()
+            return items.sorted {
+                let a = $0.estimatedRetrievability(now: now) ?? 0
+                let b = $1.estimatedRetrievability(now: now) ?? 0
+                return a == b ? $0.word.lowercased() < $1.word.lowercased() : a < b
+            }
         }
     }
 
@@ -112,14 +125,28 @@ public struct StudyItem: Hashable, Codable, Sendable {
     public var familiarity: Int?
     public var nextPlannedAt: Date?
     public var isNew: Bool
+    // Optional so paused sessions from older builds still decode.
+    public var stability: Double?
+    public var lastStudiedAt: Date?
 
     public init(word: String, listPosition: Int, rank: Int, familiarity: Int?,
-                nextPlannedAt: Date?, isNew: Bool) {
+                nextPlannedAt: Date?, isNew: Bool,
+                stability: Double? = nil, lastStudiedAt: Date? = nil) {
         self.word = word
         self.listPosition = listPosition
         self.rank = rank
         self.familiarity = familiarity
         self.nextPlannedAt = nextPlannedAt
         self.isNew = isNew
+        self.stability = stability
+        self.lastStudiedAt = lastStudiedAt
+    }
+
+    /// Estimated probability the word is still remembered right now,
+    /// via the FSRS forgetting curve; nil when never modeled.
+    public func estimatedRetrievability(now: Date = Date()) -> Double? {
+        guard let stability, stability > 0, let lastStudiedAt else { return nil }
+        let days = max(0, now.timeIntervalSince(lastStudiedAt) / 86400)
+        return FSRSScheduler.retrievability(days: days, stability: stability)
     }
 }

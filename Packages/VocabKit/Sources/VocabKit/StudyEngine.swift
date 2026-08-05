@@ -44,6 +44,25 @@ public enum StudyEngine {
     /// - new words: never-studied words in the list (daily-goal-capped for Mix)
     /// - review words: studied words that are due and below the target
     ///   familiarity
+    /// A word graduates by algorithm once its interval outgrows this horizon.
+    public static let graduationIntervalDays: Double = 180
+
+    /// Whether this word has graduated (left the review pool) under the
+    /// chosen policy.
+    public static func isGraduated(
+        _ state: WordState, policy: GraduationPolicy, targetFamiliarity: Int
+    ) -> Bool {
+        guard state.timesStudied > 0 else { return false }
+        switch policy {
+        case .never:
+            return false
+        case .byFamiliarity:
+            return (state.familiarity ?? 0) >= targetFamiliarity
+        case .byAlgorithm:
+            return (state.intervalDays ?? 0) >= graduationIntervalDays
+        }
+    }
+
     public static func plans(
         listWords: [String],
         states: [String: WordState],
@@ -53,6 +72,7 @@ public enum StudyEngine {
         targetFamiliarity: Int,
         order: StudyOrder,
         alreadyStudiedToday: (newWords: Int, reviewed: Int),
+        graduationPolicy: GraduationPolicy = .byFamiliarity,
         now: Date = Date()
     ) -> [SessionPlan] {
         var newItems: [StudyItem] = []
@@ -67,11 +87,14 @@ public enum StudyEngine {
                 rank: rank,
                 familiarity: state.familiarity,
                 nextPlannedAt: state.nextPlannedAt,
-                isNew: state.timesStudied == 0
+                isNew: state.timesStudied == 0,
+                stability: state.stability,
+                lastStudiedAt: state.lastStudiedAt
             )
             if state.timesStudied == 0 {
                 newItems.append(item)
-            } else if (state.familiarity ?? 0) < targetFamiliarity && SRS.isDue(state, now: now) {
+            } else if !isGraduated(state, policy: graduationPolicy, targetFamiliarity: targetFamiliarity)
+                        && SRS.isDue(state, now: now) {
                 reviewItems.append(item)
             }
         }
@@ -104,13 +127,13 @@ public enum StudyEngine {
         )
     }
 
-    /// Applies an answer. "I Don't Know" re-queues the card near the end of
-    /// the session so it comes back before the session finishes.
-    public static func answer(_ knew: Bool, session: inout StudySession, state: inout WordState,
+    /// Applies a graded answer. Again re-queues the card near the end of the
+    /// session so it comes back before the session finishes.
+    public static func answer(grade: ReviewGrade, session: inout StudySession, state: inout WordState,
                               scheduler: any Scheduler = CirclesScheduler(), now: Date = Date()) {
         guard let item = session.current else { return }
-        scheduler.apply(answer: knew, to: &state, now: now)
-        if knew {
+        scheduler.apply(grade: grade, to: &state, now: now)
+        if grade.isPass {
             session.completedWords.append(item.word)
             session.position += 1
         } else {
@@ -120,6 +143,13 @@ public enum StudyEngine {
             let insertAt = min(session.queue.count, session.position + max(3, (session.queue.count - session.position) / 2))
             session.queue.insert(requeued, at: insertAt)
         }
+    }
+
+    /// Binary shim: know = Good, forgot = Again.
+    public static func answer(_ knew: Bool, session: inout StudySession, state: inout WordState,
+                              scheduler: any Scheduler = CirclesScheduler(), now: Date = Date()) {
+        answer(grade: .from(binary: knew), session: &session, state: &state,
+               scheduler: scheduler, now: now)
     }
 
     // MARK: - Persistence
