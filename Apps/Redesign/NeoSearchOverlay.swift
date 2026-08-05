@@ -154,7 +154,7 @@ struct NeoSearchOverlay: View {
     }
 
     private func previewBlock(_ word: DictWord) -> some View {
-        let state = env.userStore.state(of: word.word)
+        let recall = env.userStore.state(of: word.word).predictedRecall()
         let lists = env.userStore.listNames(containing: word.word)
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -179,11 +179,11 @@ struct NeoSearchOverlay: View {
             }
             HStack(spacing: 6) {
                 Group {
-                    if let familiarity = state.familiarity {
-                        Text("Familiarity \(familiarity)%")
+                    if let recall {
+                        Text("Recall \(Int((recall * 100).rounded()))%")
                             .foregroundStyle(Neo.warm)
                     } else {
-                        Text("Familiarity ?")
+                        Text("Recall ?")
                             .foregroundStyle(.secondary)
                     }
                     Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))

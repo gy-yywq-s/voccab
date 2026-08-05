@@ -92,7 +92,6 @@ enum DataTransfer {
             "pronunciationSource": settings.pronunciationSource.rawValue,
             "dailyGoalNew": String(settings.dailyGoalNew),
             "dailyGoalReview": String(settings.dailyGoalReview),
-            "targetFamiliarity": String(settings.targetFamiliarity),
             "recordExtendedData": String(settings.recordExtendedData),
             "enabledDictionaries": settings.enabledDictionaries.map(\.rawValue).joined(separator: ","),
         ]
@@ -108,7 +107,6 @@ enum DataTransfer {
         if let v = json["pronunciationSource"].flatMap(PronunciationSource.init) { settings.pronunciationSource = v }
         if let v = json["dailyGoalNew"].flatMap({ Int($0) }) { settings.dailyGoalNew = v }
         if let v = json["dailyGoalReview"].flatMap({ Int($0) }) { settings.dailyGoalReview = v }
-        if let v = json["targetFamiliarity"].flatMap({ Int($0) }) { settings.targetFamiliarity = v }
         if let v = json["recordExtendedData"].flatMap({ Bool($0) }) { settings.recordExtendedData = v }
         if let v = json["enabledDictionaries"] {
             settings.enabledDictionaries = v.split(separator: ",").compactMap { DictionarySource(rawValue: String($0)) }
@@ -139,9 +137,12 @@ enum DataTransfer {
     - `list_words.csv` — list membership. Columns: list_id (→ lists.id),
       word, position, archived (0/1), added_at (Unix seconds).
     - `word_state.csv` — one row per word you've touched. Columns: word,
-      familiarity (0–100 or empty), note, times_studied, last_studied_at,
-      next_planned_at (Unix seconds), memory_circle, interval_days,
-      ease_factor (SM-2), stability + difficulty (FSRS).
+      familiarity (legacy, unused — kept only so old exports round-trip),
+      note, times_studied, last_studied_at, next_planned_at (Unix seconds),
+      memory_circle, interval_days, ease_factor (SM-2), stability +
+      difficulty (FSRS), ebisu_alpha + ebisu_beta + ebisu_halflife (the
+      Ebisu recall observer: Beta(α, β) belief anchored at the halflife
+      in hours; drives the predicted-recall percentages).
     - `study_log.csv` — every review. Columns: id, word, studied_at (Unix
       seconds), knew (0/1), was_new (0/1), grade (1 Again / 2 Hard /
       3 Good / 4 Easy; empty for old binary rows), response_ms,

@@ -8,7 +8,6 @@ struct SettingsView: View {
     @State private var voiceStatus = ""
     @State private var goalNew = 15
     @State private var goalReview = 30
-    @State private var target = 90
     @State private var order: StudyOrder = .listOrder
     @State private var scheduler: SchedulerKind = .circles
     @State private var enabledDictionaries: Set<DictionarySource> = []
@@ -69,16 +68,6 @@ struct SettingsView: View {
                     }
                 }
                 .accessibilityIdentifier("settings.dailyGoal")
-
-                Picker(selection: $target) {
-                    ForEach([70, 80, 90, 100], id: \.self) { value in
-                        Text(">=\(value)%").tag(value)
-                    }
-                } label: {
-                    Label("Target Familiarity", systemImage: "archivebox")
-                }
-                .onChange(of: target) { env.settings.targetFamiliarity = target }
-                .accessibilityIdentifier("settings.targetFamiliarity")
 
                 // The headline upgrade: default recitation order.
                 Picker(selection: $order) {
@@ -256,7 +245,6 @@ struct SettingsView: View {
         pronunciationSource = env.settings.pronunciationSource
         goalNew = env.settings.dailyGoalNew
         goalReview = env.settings.dailyGoalReview
-        target = env.settings.targetFamiliarity
         order = env.settings.studyOrder
         scheduler = env.settings.scheduler
         enabledDictionaries = Set(env.settings.enabledDictionaries)

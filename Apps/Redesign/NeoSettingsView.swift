@@ -17,7 +17,6 @@ struct NeoSettingsView: View {
     }
     @State private var goalNew = 15
     @State private var goalReview = 30
-    @State private var target = 90
     @State private var order: StudyOrder = .listOrder
     @State private var scheduler: SchedulerKind = .circles
     @State private var enabledDictionaries: Set<DictionarySource> = []
@@ -77,16 +76,6 @@ struct NeoSettingsView: View {
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.dailyGoal")
-                NeoHairline()
-                menuRow("Target Familiarity", value: ">=\(target)%") {
-                    ForEach([70, 80, 90, 100], id: \.self) { value in
-                        Button(">=\(value)%") {
-                            target = value
-                            env.settings.targetFamiliarity = value
-                        }
-                    }
-                }
-                .accessibilityIdentifier("settings.targetFamiliarity")
                 NeoHairline()
                 menuRow("Order", value: order.shortLabel) {
                     ForEach(StudyOrder.allCases, id: \.self) { option in
@@ -331,7 +320,6 @@ struct NeoSettingsView: View {
         pronunciationSource = env.settings.pronunciationSource
         goalNew = env.settings.dailyGoalNew
         goalReview = env.settings.dailyGoalReview
-        target = env.settings.targetFamiliarity
         order = env.settings.studyOrder
         scheduler = env.settings.scheduler
         enabledDictionaries = Set(env.settings.enabledDictionaries)

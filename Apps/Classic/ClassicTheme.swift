@@ -41,11 +41,11 @@ enum ClassicTheme {
     )
 
     // Tag chips.
-    static let familiarityChip = dynamic(
+    static let recallChip = dynamic(
         light: UIColor(red: 0.66, green: 0.34, blue: 0.16, alpha: 1.0),
         dark: UIColor(red: 0.55, green: 0.29, blue: 0.14, alpha: 1.0)
     )
-    static let familiarityUnknownChip = dynamic(
+    static let recallUnknownChip = dynamic(
         light: UIColor(red: 0.55, green: 0.55, blue: 0.57, alpha: 1.0),
         dark: UIColor(red: 0.35, green: 0.35, blue: 0.37, alpha: 1.0)
     )

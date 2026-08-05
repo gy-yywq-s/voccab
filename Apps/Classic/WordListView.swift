@@ -94,7 +94,7 @@ struct WordListView: View {
         Group {
             if batchMarkMode {
                 Menu {
-                    familiarityMenuButtons(for: row.word)
+                    knownWordMenuButtons(for: row.word)
                 } label: {
                     rowLabel(row)
                 }
@@ -138,7 +138,7 @@ struct WordListView: View {
             }
             if batchMarkMode {
                 Spacer()
-                Text(row.familiarity.map { "\($0)%" } ?? "?")
+                Text(row.recallPercentText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -146,11 +146,12 @@ struct WordListView: View {
         .padding(.vertical, 6)
     }
 
+    /// Batch-mark: "I know this word" seeding at rung 1-5.
     @ViewBuilder
-    private func familiarityMenuButtons(for word: String) -> some View {
-        ForEach(WordDetailModel.familiarityMenu, id: \.value) { item in
+    private func knownWordMenuButtons(for word: String) -> some View {
+        ForEach(WordDetailModel.knownWordMenu, id: \.rung) { item in
             Button {
-                env.userStore.setFamiliarity(item.value, for: word)
+                env.userStore.seedKnownWord(word, rung: item.rung)
                 env.touch()
             } label: {
                 Label(item.label, systemImage: item.symbol)
@@ -169,7 +170,7 @@ struct WordListView: View {
                         }
                     }
                 }
-                sortChip(.familiarity) {
+                sortChip(.recall) {
                     ForEach(FamiliarityFilter.allCases, id: \.self) { filter in
                         Button(filter.label) {
                             model.familiarityFilter = filter
@@ -227,7 +228,7 @@ struct WordListView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isActive ? ClassicTheme.wordChipBackground : Color(uiColor: .secondarySystemFill))
         )
-        .accessibilityIdentifier("wordList.sort.\(key.rawValue)")
+        .accessibilityIdentifier("wordList.sort.\(key.accessibilityName)")
     }
 
     @ToolbarContentBuilder

@@ -72,7 +72,7 @@ final class AppEnvironment: ObservableObject {
     }
 }
 
-/// Deterministic state for screenshot tests: fixed familiarities, study log
+/// Deterministic state for screenshot tests: fixed recall models, study log
 /// counts matching the reference video, and a paused-free state.
 enum UITestSeeder {
     @MainActor
@@ -96,33 +96,35 @@ enum UITestSeeder {
 
         // Word states shown in the reference recording.
         var some = WordState(word: "some")
-        some.familiarity = 20
         some.note = "特别义： certain， 如 some people = certain people"
         some.timesStudied = 2
         some.lastStudiedAt = now.addingTimeInterval(-3 * 3600)
         some.nextPlannedAt = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))
         some.memoryCircle = 2
+        some.ebisuModel = EbisuModel()
         userStore.save(state: some)
 
         var indicative = WordState(word: "indicative")
         indicative.note = "adj. 表明……的"
         userStore.save(state: indicative)
 
-        // A due review set with varied familiarity for sort/filter screenshots.
-        let familiarWords: [(String, Int, Int)] = [
-            ("adverse", 10, 2), ("breeze", 10, 1), ("conceive", 10, 1),
-            ("concession", 10, 3), ("convey", 10, 2), ("defy", 10, 1),
-            ("distinguished", 10, 2), ("flourish", 10, 1), ("formidable", 10, 1),
-            ("induce", 30, 2), ("remedy", 30, 1), ("trophy", 50, 2),
-            ("underscore", 50, 1), ("thrill", 70, 1), ("integral", 70, 2),
+        // A due review set with varied Ebisu halflives (hours), so predicted
+        // recall spreads across the buckets for sort/filter screenshots.
+        // All were last studied 96 hours ago.
+        let recallWords: [(String, Double, Int)] = [
+            ("adverse", 12, 2), ("breeze", 12, 1), ("conceive", 12, 1),
+            ("concession", 12, 3), ("convey", 12, 2), ("defy", 12, 1),
+            ("distinguished", 12, 2), ("flourish", 12, 1), ("formidable", 12, 1),
+            ("induce", 48, 2), ("remedy", 48, 1), ("trophy", 120, 2),
+            ("underscore", 120, 1), ("thrill", 480, 1), ("integral", 480, 2),
         ]
-        for (word, familiarity, circle) in familiarWords {
+        for (word, halflifeHours, circle) in recallWords {
             var state = WordState(word: word)
-            state.familiarity = familiarity
             state.timesStudied = circle
             state.lastStudiedAt = now.addingTimeInterval(-4 * 86400)
             state.nextPlannedAt = calendar.date(byAdding: .day, value: -4, to: calendar.startOfDay(for: now))
             state.memoryCircle = circle
+            state.ebisuModel = EbisuModel(halflifeHours: halflifeHours)
             userStore.save(state: state)
         }
 

@@ -60,7 +60,7 @@ struct NeoWordDetailView: View {
                 chineseDefinitions
                 noteBlock
                 NeoSectionHeader(title: "Progress") {
-                    Text(model.data.state.familiarity.map { "\($0)%" } ?? "Not set")
+                    Text(Formatting.recallChip(model.recall))
                         .font(Neo.bodyFont)
                         .foregroundStyle(.secondary)
                 }
@@ -274,16 +274,13 @@ struct NeoWordDetailView: View {
         }
     }
 
-    /// The Study section: a six-step segmented drag control (the reference
-    /// "reasoning effort" pattern) for familiarity, then the schedule facts
-    /// as scannable label/value rows.
+    /// The Study section: a compact "I know this word" seeding control, then
+    /// the schedule facts as scannable label/value rows.
     private var studyBlock: some View {
         let state = model.data.state
         return VStack(alignment: .leading, spacing: 14) {
-            NeoFamiliaritySegments(value: state.familiarity) { newValue in
-                model.setFamiliarity(newValue)
-            }
-            .padding(.top, 12)
+            knownWordRow
+                .padding(.top, 12)
 
             VStack(spacing: 0) {
                 factRow("Practiced", state.timesStudied == 0 ? "never" : "\(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s")")
@@ -299,6 +296,41 @@ struct NeoWordDetailView: View {
             }
         }
         .accessibilityIdentifier("word.studyInfo")
+    }
+
+    /// "I know this word": a quiet hairline menu row seeding the scheduler
+    /// at rung 1-5 (5 = strongest).
+    private var knownWordRow: some View {
+        HStack {
+            Text("I know this word")
+                .font(Neo.bodyFont)
+            Spacer()
+            Menu {
+                ForEach(WordDetailModel.knownWordMenu, id: \.rung) { item in
+                    Button {
+                        model.setKnownLevel(rung: item.rung)
+                    } label: {
+                        Label(item.label, systemImage: item.symbol)
+                    }
+                }
+            } label: {
+                HStack(spacing: 5) {
+                    Text("How well?")
+                        .font(Neo.caption)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption2.weight(.semibold))
+                }
+                .foregroundStyle(Neo.blue)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Neo.hairline, lineWidth: 0.7)
+                )
+            }
+        }
+        // Identifier kept from the old familiarity control for UITests.
+        .accessibilityIdentifier("word.familiaritySlider")
     }
 
     private func factRow(_ label: String, _ value: String, last: Bool = false) -> some View {
@@ -320,7 +352,7 @@ struct NeoWordDetailView: View {
     }
 
     // MARK: Dictionary tabs — a low, thin custom switcher, visually
-    // subordinate to (and distinct from) the blue familiarity segments.
+    // subordinate to the study block above it.
 
     private var allTabs: [(DictionarySource, String)] {
         [(DictionarySource.chinese, "Related")] + dictionaryTabs.map { ($0, shortLabel($0)) }
@@ -576,15 +608,15 @@ struct NeoWordDetailView: View {
                     Label("Edit note", systemImage: "square.and.pencil")
                 }
                 Menu {
-                    ForEach(WordDetailModel.familiarityMenu, id: \.value) { item in
+                    ForEach(WordDetailModel.knownWordMenu, id: \.rung) { item in
                         Button {
-                            model.setFamiliarity(item.value)
+                            model.setKnownLevel(rung: item.rung)
                         } label: {
                             Label(item.label, systemImage: item.symbol)
                         }
                     }
                 } label: {
-                    Label("Feel Familiar?", systemImage: "square.and.pencil")
+                    Label("I Know This Word", systemImage: "square.and.pencil")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
@@ -594,73 +626,3 @@ struct NeoWordDetailView: View {
     }
 }
 
-/// Familiarity as a six-step segmented drag control, styled after the
-/// reference "reasoning effort" segments: neutral gray track, thin dividers,
-/// selected white segment with a light shadow. Drag slides the selection;
-/// it snaps and commits on release. Tapping a segment commits directly.
-struct NeoFamiliaritySegments: View {
-    let value: Int?
-    let onCommit: (Int) -> Void
-
-    private static let steps = [0, 20, 40, 60, 80, 100]
-    @State private var dragIndex: Int? = nil
-
-    private var selectedIndex: Int? {
-        if let dragIndex { return dragIndex }
-        guard let value else { return nil }
-        return Self.steps.enumerated().min(by: { abs($0.element - value) < abs($1.element - value) })?.offset
-    }
-
-    var body: some View {
-        GeometryReader { proxy in
-            let segmentWidth = proxy.size.width / CGFloat(Self.steps.count)
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Neo.paleBlue)
-                HStack(spacing: 0) {
-                    ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, _ in
-                        if index > 0 {
-                            Rectangle()
-                                .fill(Neo.blue.opacity(0.22))
-                                .frame(width: 0.7, height: 14)
-                        }
-                        Color.clear
-                            .frame(width: segmentWidth - (index > 0 ? 0.7 : 0))
-                    }
-                }
-                if let selected = selectedIndex {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(uiColor: .systemBackground))
-                        .shadow(color: Neo.blue.opacity(0.25), radius: 2.5, y: 1)
-                        .frame(width: segmentWidth - 6, height: 34)
-                        .offset(x: CGFloat(selected) * segmentWidth + 3)
-                        .animation(.easeOut(duration: 0.15), value: selected)
-                }
-                HStack(spacing: 0) {
-                    ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, step in
-                        Text("\(step)")
-                            .font(.system(size: 14, weight: index == selectedIndex ? .semibold : .regular))
-                            .foregroundStyle(index == selectedIndex ? Neo.blue : Neo.blue.opacity(0.55))
-                            .frame(width: segmentWidth, height: 40)
-                    }
-                }
-            }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { gesture in
-                        let index = min(Self.steps.count - 1, max(0, Int(gesture.location.x / segmentWidth)))
-                        dragIndex = index
-                    }
-                    .onEnded { _ in
-                        if let index = dragIndex {
-                            onCommit(Self.steps[index])
-                        }
-                        dragIndex = nil
-                    }
-            )
-        }
-        .frame(height: 40)
-        .accessibilityIdentifier("word.familiaritySlider")
-    }
-}

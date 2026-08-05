@@ -208,11 +208,11 @@ struct WordDetailView: View {
 
     private var tagRow: some View {
         let dictWord = model.data.dictWord
-        let familiarity = model.data.state.familiarity
+        let recall = model.recall
         return FlowLayout(spacing: 8) {
             TagChip(
-                text: Formatting.familiarityChip(familiarity),
-                background: familiarity == nil ? ClassicTheme.familiarityUnknownChip : ClassicTheme.familiarityChip
+                text: Formatting.recallChip(recall),
+                background: recall == nil ? ClassicTheme.recallUnknownChip : ClassicTheme.recallChip
             )
             TagChip(
                 text: Formatting.frequencyChip(dictWord?.frequencyBand ?? .unknown),
@@ -247,14 +247,28 @@ struct WordDetailView: View {
     private var studyInfoPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                Text("Set Familiarity:")
+                (Text("Recall: ").bold()
+                    + Text(model.recall.map { "\(Int(($0 * 100).rounded()))%" } ?? "?"))
                     .font(.body)
-                FamiliaritySlider(value: model.data.state.familiarity ?? 0) { newValue in
-                    model.setFamiliarity(newValue)
+                Spacer()
+                // "I know this word": seeds the scheduler at rung 1-5.
+                Menu {
+                    ForEach(WordDetailModel.knownWordMenu, id: \.rung) { item in
+                        Button {
+                            model.setKnownLevel(rung: item.rung)
+                        } label: {
+                            Label(item.label, systemImage: item.symbol)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Text("I know this word")
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption)
+                    }
+                    .font(.body.weight(.medium))
                 }
-                Text("\(model.data.state.familiarity ?? 0)%")
-                    .font(.body)
-                    .frame(width: 52, alignment: .trailing)
+                .accessibilityIdentifier("word.familiaritySlider")
             }
             let state = model.data.state
             Group {
@@ -534,41 +548,21 @@ struct WordDetailView: View {
                     Label("Edit note", systemImage: "square.and.pencil")
                 }
                 Menu {
-                    ForEach(WordDetailModel.familiarityMenu, id: \.value) { item in
+                    ForEach(WordDetailModel.knownWordMenu, id: \.rung) { item in
                         Button {
-                            model.setFamiliarity(item.value)
+                            model.setKnownLevel(rung: item.rung)
                         } label: {
                             Label(item.label, systemImage: item.symbol)
                         }
                     }
                 } label: {
-                    Label("Feel Familiar?", systemImage: "square.and.pencil")
+                    Label("I Know This Word", systemImage: "square.and.pencil")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
             .accessibilityIdentifier("word.menu")
         }
-    }
-}
-
-/// Discrete 20%-step slider matching the original "Set Familiarity" control.
-struct FamiliaritySlider: View {
-    @State private var sliderValue: Double
-    private let onCommit: (Int) -> Void
-
-    init(value: Int, onCommit: @escaping (Int) -> Void) {
-        _sliderValue = State(initialValue: Double(value))
-        self.onCommit = onCommit
-    }
-
-    var body: some View {
-        Slider(value: $sliderValue, in: 0...100, step: 20) { editing in
-            if !editing {
-                onCommit(Int(sliderValue))
-            }
-        }
-        .accessibilityIdentifier("word.familiaritySlider")
     }
 }
 

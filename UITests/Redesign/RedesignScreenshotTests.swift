@@ -62,7 +62,7 @@ final class RedesignScreenshotTests: XCTestCase {
         snap("02-list-frequency__\(theme)")
 
         if full {
-            sortControl.buttons["Familiarity"].waitTap()
+            sortControl.buttons["Recall"].waitTap()
             sleep(1)
             snap("03-list-familiarity__\(theme)")
             sortControl.buttons["Review"].waitTap()

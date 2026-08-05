@@ -122,6 +122,7 @@ struct FlashcardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            undoRow
             Spacer()
             if let item = model.session?.current {
                 card(for: item)
@@ -135,6 +136,27 @@ struct FlashcardView: View {
         .background(Color(uiColor: .systemBackground))
         .accessibilityIdentifier("study.flashcard")
         .onDisappear { model.pause() }
+    }
+
+    /// Transient roll-back of the last answer, shown only right after one.
+    @ViewBuilder
+    private var undoRow: some View {
+        if model.canUndo, model.session?.isFinished == false {
+            HStack {
+                Spacer()
+                Button {
+                    withAnimation { model.undoLast() }
+                } label: {
+                    Label("Undo", systemImage: "arrow.uturn.backward")
+                        .font(.subheadline.weight(.medium))
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                .accessibilityIdentifier("study.undo")
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 8)
+        }
     }
 
     private func card(for item: StudyItem) -> some View {

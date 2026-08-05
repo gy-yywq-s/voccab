@@ -149,7 +149,7 @@ struct SearchOverlay: View {
     }
 
     private func previewCard(_ word: DictWord) -> some View {
-        let state = env.userStore.state(of: word.word)
+        let recall = env.userStore.state(of: word.word).predictedRecall()
         let lists = env.userStore.listNames(containing: word.word)
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
@@ -178,8 +178,8 @@ struct SearchOverlay: View {
             }
             FlowLayout(spacing: 8) {
                 TagChip(
-                    text: Formatting.familiarityChip(state.familiarity),
-                    background: state.familiarity == nil ? ClassicTheme.familiarityUnknownChip : ClassicTheme.familiarityChip
+                    text: Formatting.recallChip(recall),
+                    background: recall == nil ? ClassicTheme.recallUnknownChip : ClassicTheme.recallChip
                 )
                 TagChip(
                     text: Formatting.frequencyChip(word.frequencyBand),

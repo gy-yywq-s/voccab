@@ -164,6 +164,22 @@ struct NeoFlashcardView: View {
                         Text("\(session.position + 1) of \(session.totalCount)")
                             .font(.footnote.monospacedDigit())
                             .foregroundStyle(.secondary)
+                        if model.canUndo {
+                            Button {
+                                withAnimation { model.undoLast() }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.uturn.backward")
+                                        .font(.caption2.weight(.semibold))
+                                    Text("Undo")
+                                        .font(.footnote)
+                                }
+                                .foregroundStyle(Neo.blue)
+                            }
+                            .buttonStyle(NeoPressStyle())
+                            .accessibilityIdentifier("study.undo")
+                            .padding(.leading, 8)
+                        }
                         Spacer()
                         Text(session.order.shortLabel)
                             .font(.footnote)

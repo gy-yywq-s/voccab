@@ -80,7 +80,7 @@ struct NeoWordListView: View {
         HStack(spacing: 10) {
             Picker("Sort", selection: sortBinding) {
                 Text("Frequency").tag(WordListSortKey.frequency)
-                Text("Familiarity").tag(WordListSortKey.familiarity)
+                Text("Recall").tag(WordListSortKey.recall)
                 Text("Review").tag(WordListSortKey.plannedReview)
             }
             .pickerStyle(.segmented)
@@ -192,9 +192,10 @@ struct NeoWordListView: View {
         Group {
             if batchMarkMode {
                 Menu {
-                    ForEach(WordDetailModel.familiarityMenu, id: \.value) { item in
+                    // Batch-mark: "I know this word" seeding at rung 1-5.
+                    ForEach(WordDetailModel.knownWordMenu, id: \.rung) { item in
                         Button {
-                            env.userStore.setFamiliarity(item.value, for: row.word)
+                            env.userStore.seedKnownWord(row.word, rung: item.rung)
                             env.touch()
                         } label: {
                             Label(item.label, systemImage: item.symbol)
@@ -243,8 +244,8 @@ struct NeoWordListView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                if let familiarity = row.familiarity {
-                    Text("Familiarity \(familiarity)%")
+                if row.recall != nil {
+                    Text("Recall \(row.recallPercentText)")
                         .font(Neo.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -268,8 +269,8 @@ struct NeoWordListView: View {
         switch model.sortKey {
         case .frequency:
             return row.rank > 0 ? "#\(row.rank)" : ""
-        case .familiarity:
-            return row.familiarity.map { "\($0)%" } ?? "?"
+        case .recall:
+            return row.recallPercentText
         case .plannedReview:
             return row.nextPlannedAt.map { Formatting.relative($0) } ?? ""
         }

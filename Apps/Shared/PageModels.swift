@@ -9,17 +9,29 @@ import VocabKit
 
 enum WordListSortKey: String, CaseIterable {
     case frequency = "Frequency"
-    case familiarity = "Familiarity"
+    case recall = "Recall"
     case plannedReview = "Planned Review"
+
+    /// UITests address the sort controls by their original names, so the
+    /// identifier string stays frozen even though the label changed.
+    var accessibilityName: String {
+        self == .recall ? "Familiarity" : rawValue
+    }
 }
 
 struct WordRowInfo: Identifiable, Hashable {
     var id: String { word }
     var word: String
     var rank: Int
-    var familiarity: Int?
+    /// Ebisu-predicted recall probability (0...1); nil = never studied.
+    var recall: Double?
     var nextPlannedAt: Date?
     var archived: Bool
+
+    /// "82%" or "?" for never-studied words.
+    var recallPercentText: String {
+        recall.map { "\(Int(($0 * 100).rounded()))%" } ?? "?"
+    }
 }
 
 struct WordListSection: Identifiable, Hashable {
@@ -71,13 +83,14 @@ final class WordListModel: ObservableObject {
         let dictWords = env.dictionary?.lookup(words: words) ?? [:]
         totalCount = words.count
 
+        let now = Date()
         var rows: [WordRowInfo] = words.map { word in
             let key = word.lowercased()
             let state = states[key]
             return WordRowInfo(
                 word: word,
                 rank: dictWords[key]?.rank ?? 0,
-                familiarity: state?.familiarity,
+                recall: state?.predictedRecall(now: now),
                 nextPlannedAt: state?.nextPlannedAt,
                 archived: archived.contains(key)
             )
@@ -88,7 +101,7 @@ final class WordListModel: ObservableObject {
             rows = rows.filter { $0.word.lowercased().contains(query) }
         }
         rows = rows.filter { frequencyFilter.matches(rank: $0.rank) }
-        rows = rows.filter { familiarityFilter.matches(familiarity: $0.familiarity) }
+        rows = rows.filter { familiarityFilter.matches(recall: $0.recall) }
 
         sections = Self.group(rows: rows, by: sortKey, ascending: ascending)
         pausedSession = env.userStore.pausedSession(listID: list.id).flatMap(StudyEngine.decode)
@@ -114,8 +127,11 @@ final class WordListModel: ObservableObject {
                 }
                 return WordListSection(title: band.label, rows: inBand)
             }
-        case .familiarity:
-            let grouped = Dictionary(grouping: rows) { $0.familiarity.map { ($0 / 10) * 10 } }
+        case .recall:
+            // 10%-wide recall buckets; never-studied words group separately.
+            let grouped = Dictionary(grouping: rows) { row in
+                row.recall.map { min(100, Int(($0 * 100).rounded()) / 10 * 10) }
+            }
             let keys = grouped.keys.sorted { a, b in
                 switch (a, b) {
                 case (nil, _): return false
@@ -125,7 +141,7 @@ final class WordListModel: ObservableObject {
             }
             let ordered = ascending ? keys : Array(keys.reversed())
             return ordered.map { bucket in
-                let title = bucket.map { "\($0)%" } ?? "Unknown"
+                let title = bucket.map { "Recall \($0)%" } ?? "Never Studied"
                 let inBucket = grouped[bucket]!.sorted { $0.word.lowercased() < $1.word.lowercased() }
                 return WordListSection(title: title, rows: inBucket)
             }
@@ -246,10 +262,17 @@ final class WordDetailModel: ObservableObject {
         reload()
     }
 
-    func setFamiliarity(_ value: Int?) {
-        env.userStore.setFamiliarity(value, for: displayWord)
+    /// "I know this word" seeding: rung 1-5 feeds the scheduler a starting
+    /// strength instead of overriding any stored score.
+    func setKnownLevel(rung: Int) {
+        env.userStore.seedKnownWord(displayWord, rung: rung)
         env.touch()
         reload()
+    }
+
+    /// Ebisu-predicted recall probability for the word right now.
+    var recall: Double? {
+        data.state.predictedRecall()
     }
 
     func setNote(_ note: String) {
@@ -262,13 +285,14 @@ final class WordDetailModel: ObservableObject {
         env.speech.speak(displayWord, accent: env.settings.pronunciationAccent, source: env.settings.pronunciationSource)
     }
 
-    /// The "Feel Familiar?" quick menu, matching the original.
-    static let familiarityMenu: [(label: String, value: Int, symbol: String)] = [
-        ("100% Proficient", 100, "flag"),
-        ("80% Familiar", 80, "checkmark"),
-        ("60% Partially", 60, "clock"),
-        ("40% Somewhat", 40, "questionmark"),
-        ("0% Unknown", 0, "xmark"),
+    /// The "I know this word" quick menu: each rung seeds the scheduler with
+    /// a matching starting strength (5 = strongest).
+    static let knownWordMenu: [(label: String, rung: Int, symbol: String)] = [
+        ("Very well", 5, "flag"),
+        ("Well", 4, "checkmark"),
+        ("Moderately", 3, "clock"),
+        ("Somewhat", 2, "questionmark"),
+        ("A little", 1, "circle"),
     ]
 }
 
@@ -286,6 +310,11 @@ final class StudyModel: ObservableObject {
     @Published var revealed = false
     @Published var order: StudyOrder
     @Published private(set) var todayCounts: (newWords: Int, reviewed: Int) = (0, 0)
+    @Published private(set) var canUndo = false
+
+    /// Single-level undo: everything the last answer changed, captured just
+    /// before it was applied.
+    private var undoSnapshot: (word: String, state: WordState, session: StudySession)?
 
     init(list: WordList, candidateWords: [String], env: AppEnvironment) {
         self.list = list
@@ -309,7 +338,6 @@ final class StudyModel: ObservableObject {
             dictWords: dictWords,
             dailyGoalNew: env.settings.dailyGoalNew,
             dailyGoalReview: env.settings.dailyGoalReview,
-            targetFamiliarity: env.settings.targetFamiliarity,
             order: order,
             alreadyStudiedToday: todayCounts,
             graduationPolicy: env.settings.graduationPolicy,
@@ -331,6 +359,7 @@ final class StudyModel: ObservableObject {
     func start(plan: SessionPlan) {
         session = StudyEngine.startSession(listID: list.id, plan: plan, order: order)
         revealed = false
+        clearUndo()
         cardShownAt = Date()
         persist()
     }
@@ -355,6 +384,7 @@ final class StudyModel: ObservableObject {
     func answer(grade: ReviewGrade) {
         guard var s = session, let item = s.current else { return }
         var state = env.userStore.state(of: item.word)
+        let snapshot = (word: item.word, state: state, session: s)
         let wasNew = state.timesStudied == 0
         let elapsedDays = state.lastStudiedAt.map { max(0, Date().timeIntervalSince($0) / 86400) }
         let scheduledDays = state.intervalDays
@@ -372,6 +402,12 @@ final class StudyModel: ObservableObject {
         }
         session = s
         revealed = false
+        if s.isFinished {
+            clearUndo()
+        } else {
+            undoSnapshot = snapshot
+            canUndo = true
+        }
         cardShownAt = Date()
         persist()
         env.touch()
@@ -379,6 +415,25 @@ final class StudyModel: ObservableObject {
 
     func answer(_ knew: Bool) {
         answer(grade: .from(binary: knew))
+    }
+
+    /// Rolls back the last answer: restores the pre-answer session and word
+    /// state and removes the log row it wrote. Single-level.
+    func undoLast() {
+        guard let snapshot = undoSnapshot else { return }
+        env.userStore.save(state: snapshot.state)
+        env.userStore.deleteLastLog(word: snapshot.word)
+        session = snapshot.session
+        revealed = false
+        clearUndo()
+        cardShownAt = Date()
+        persist()
+        env.touch()
+    }
+
+    private func clearUndo() {
+        undoSnapshot = nil
+        canUndo = false
     }
 
     func pause() {
@@ -389,6 +444,7 @@ final class StudyModel: ObservableObject {
         env.userStore.clearPausedSession(listID: list.id)
         session = nil
         revealed = false
+        clearUndo()
         reloadPlans()
         env.touch()
     }
