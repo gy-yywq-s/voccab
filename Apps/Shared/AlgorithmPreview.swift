@@ -20,7 +20,7 @@ struct AlgorithmPreviewPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Every row runs the real scheduler on one story: five correct answers, one miss, two recoveries. Bars show the wait after each review (red = the miss). Tap a row for the full timeline.")
+                Text("Every row runs the real scheduler on one story: five correct answers, one miss, two recoveries. Bars show the wait after each review (red = the miss). PERFECT is the total span of eight straight passes; 1 MISS is what the same eight reviews cover after that single miss. Tap a row for the full timeline.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)
@@ -66,9 +66,9 @@ struct AlgorithmPreviewPage: View {
             Spacer()
             Text("REVIEWS")
                 .frame(width: Self.sparklineWidth)
-            Text("SPAN")
+            Text("PERFECT")
                 .frame(width: Self.spanColumnWidth, alignment: .trailing)
-            Text("ONE MISS")
+            Text("1 MISS")
                 .frame(width: Self.missColumnWidth, alignment: .trailing)
         }
         .font(.caption2.weight(.semibold))
@@ -101,13 +101,14 @@ struct AlgorithmPreviewPage: View {
                     Spacer(minLength: 4)
                     sparkline(sim.steps)
                         .frame(width: Self.sparklineWidth)
-                    Text(Formatting.interval(days: sim.totalDays))
+                    Text(Formatting.interval(days: sim.perfectTotalDays))
                         .font(.footnote.monospacedDigit().weight(.semibold))
                         .foregroundStyle(.primary)
                         .frame(width: Self.spanColumnWidth, alignment: .trailing)
-                    Text(Self.missCostText(sim.missCostDays))
+                    Text(Formatting.interval(days: sim.missTotalDays))
                         .font(.footnote.monospacedDigit())
-                        .foregroundStyle(sim.missCostDays > 0.01 ? Color.red : Color.secondary)
+                        .foregroundStyle(sim.missTotalDays < sim.perfectTotalDays * 0.98
+                                         ? Color.red : Color.secondary)
                         .frame(width: Self.missColumnWidth, alignment: .trailing)
                 }
                 .padding(.vertical, 12)
@@ -160,7 +161,7 @@ struct AlgorithmPreviewPage: View {
                     }
                 }
             }
-            Text("Next review after each answer · \(Formatting.interval(days: sim.totalDays)) across 8 reviews · the miss cost \(Formatting.interval(days: sim.missCostDays))")
+            Text("Next review after each answer · perfect run spans \(Formatting.interval(days: sim.perfectTotalDays)); the one miss cuts it to \(Formatting.interval(days: sim.missTotalDays))")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
 
@@ -202,10 +203,6 @@ struct AlgorithmPreviewPage: View {
         return 3 + CGFloat(fraction) * 21
     }
 
-    private static func missCostText(_ costDays: Double) -> String {
-        costDays > 0.01 ? "−\(Formatting.interval(days: costDays))" : "±0"
-    }
-
     // MARK: Simulation
 
     struct Step {
@@ -215,19 +212,18 @@ struct AlgorithmPreviewPage: View {
 
     struct Sim {
         let steps: [Step]
-        /// Sum of all eight intervals, in (fractional) days.
-        let totalDays: Double
-        /// How much total span the single miss cost, compared with the same
-        /// story reviewed perfectly (positive = span lost).
-        let missCostDays: Double
+        /// Total span of the story WITH the one miss, in (fractional) days.
+        let missTotalDays: Double
+        /// Total span of the same eight reviews answered perfectly.
+        let perfectTotalDays: Double
     }
 
     static func simulation(for kind: SchedulerKind) -> Sim {
         let withMiss = simulate(kind, story: [true, true, true, true, true, false, true, true])
         let perfect = simulate(kind, story: Array(repeating: true, count: 8))
-        let total = withMiss.map(\.intervalDays).reduce(0, +)
-        let perfectTotal = perfect.map(\.intervalDays).reduce(0, +)
-        return Sim(steps: withMiss, totalDays: total, missCostDays: max(0, perfectTotal - total))
+        return Sim(steps: withMiss,
+                   missTotalDays: withMiss.map(\.intervalDays).reduce(0, +),
+                   perfectTotalDays: perfect.map(\.intervalDays).reduce(0, +))
     }
 
     /// Runs the actual scheduler on a review story with a virtual clock that
