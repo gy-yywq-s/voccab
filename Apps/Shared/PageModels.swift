@@ -400,6 +400,11 @@ final class SearchModel: ObservableObject {
         if let exact = preview {
             chips.removeAll { $0.word.lowercased() == exact.word.lowercased() }
         }
+        // Inflected lookup ("hearts"): surface the base word first.
+        if let base = preview?.baseForm, let baseWord = env.dictionary?.lookup(base) {
+            chips.removeAll { $0.word.lowercased() == baseWord.word.lowercased() }
+            chips.insert(baseWord, at: 0)
+        }
         similar = chips
     }
 

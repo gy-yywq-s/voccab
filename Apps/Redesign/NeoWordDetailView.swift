@@ -116,6 +116,22 @@ struct NeoWordDetailView: View {
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("word.speak")
+
+                // Inflected form: link straight to the base word.
+                if let base = model.data.dictWord?.baseForm {
+                    NavigationLink(value: Route.wordDetail(word: base, context: [])) {
+                        HStack(spacing: 4) {
+                            Text("form of")
+                                .foregroundStyle(.secondary)
+                            Text(base)
+                                .foregroundStyle(Neo.blue)
+                                .underline()
+                        }
+                        .font(Neo.caption)
+                    }
+                    .buttonStyle(NeoPressStyle())
+                    .accessibilityIdentifier("word.baseForm")
+                }
             }
             classificationCaption
                 .padding(.top, 2)

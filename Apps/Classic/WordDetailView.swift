@@ -104,6 +104,17 @@ struct WordDetailView: View {
                             .foregroundStyle(.tint)
                     }
                     .accessibilityIdentifier("word.speak")
+
+                    // Inflected form: link straight to the base word.
+                    if let base = model.data.dictWord?.baseForm {
+                        NavigationLink(value: Route.wordDetail(word: base, context: [])) {
+                            (Text("form of ").foregroundStyle(.secondary)
+                                + Text(base).foregroundStyle(.blue).underline())
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("word.baseForm")
+                    }
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     if let lines = model.data.dictWord?.translationLines, !lines.isEmpty {
