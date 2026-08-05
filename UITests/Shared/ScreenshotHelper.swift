@@ -19,7 +19,9 @@ extension XCTestCase {
 
 extension XCUIElement {
     @discardableResult
-    func waitTap(timeout: TimeInterval = 8) -> Bool {
+    /// Default is generous: CI simulators can stall for tens of seconds, and
+    /// a silently missed tap cascades into every downstream assertion.
+    func waitTap(timeout: TimeInterval = 25) -> Bool {
         guard waitForExistence(timeout: timeout) else { return false }
         tap()
         return true
