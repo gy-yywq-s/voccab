@@ -25,3 +25,22 @@ extension XCUIElement {
         return true
     }
 }
+
+extension XCTestCase {
+    /// Polls every plausible surfacing of the graded answer row (identifier
+    /// or visible label, button or consumed static text) — SwiftUI styled
+    /// buttons expose differently per frontend.
+    func waitForGradeRow(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if app.buttons["study.grade.1"].exists
+                || app.buttons["Again"].exists
+                || app.staticTexts["Again"].exists
+                || app.descendants(matching: .any)["study.grade.1"].firstMatch.exists {
+                return true
+            }
+            usleep(500_000)
+        }
+        return false
+    }
+}

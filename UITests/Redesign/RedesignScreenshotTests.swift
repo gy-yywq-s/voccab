@@ -31,15 +31,15 @@ final class RedesignScreenshotTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-uitest", "-settings.answerStyle", "threeButtons"]
         app.launch()
-        // Generous, non-fatal wait: this is the third launch in the run and
-        // the simulator can be slow; the real assertion is the grade row.
-        _ = app.staticTexts["home.greeting"].waitForExistence(timeout: 40)
-        app.buttons["home.list.SAT RW Vocab"].waitTap()
-        app.buttons["wordList.study"].waitTap()
-        app.buttons["study.plan.Mix"].waitTap()
-        XCTAssertTrue(app.buttons["study.grade.1"].waitForExistence(timeout: 25)
-            || app.staticTexts["Again"].waitForExistence(timeout: 25))
+        // Generous waits everywhere: this is the third launch in the run and
+        // the simulator can be very slow; the screenshot is the evidence.
+        _ = app.staticTexts["home.greeting"].waitForExistence(timeout: 60)
+        app.buttons["home.list.SAT RW Vocab"].waitTap(timeout: 30)
+        app.buttons["wordList.study"].waitTap(timeout: 30)
+        app.buttons["study.plan.Mix"].waitTap(timeout: 30)
+        let found = waitForGradeRow(app, timeout: 60)
         snap("21-study-3buttons__light")
+        XCTAssertTrue(found)
     }
 
     /// The dictionary switcher is a row of plain SwiftUI Buttons, so the
