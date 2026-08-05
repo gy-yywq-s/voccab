@@ -24,7 +24,7 @@ public struct FSRSScheduler: Scheduler {
     ]
     static let factor = 19.0 / 81.0
     static let decay = -0.5
-    static let targetRetention = 0.9
+    public static let targetRetention = 0.9
 
     /// Retrievability after `days` for a word with stability `s`.
     public static func retrievability(days: Double, stability: Double) -> Double {
