@@ -132,12 +132,20 @@ struct WordDetailView: View {
             .padding(16)
 
             if !model.data.state.note.isEmpty {
-                (Text("Note: ").bold() + Text(model.data.state.note))
-                    .font(.title3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(ClassicTheme.noteBackground)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("NOTE")
+                        .font(.caption.weight(.semibold))
+                        .tracking(1.2)
+                        .foregroundStyle(.secondary)
+                    Text(Formatting.tidy(model.data.state.note))
+                        .font(.body)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(ClassicTheme.noteBackground)
             }
 
             tagRow

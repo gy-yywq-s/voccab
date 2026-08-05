@@ -239,16 +239,25 @@ struct NeoWordDetailView: View {
     @ViewBuilder
     private var noteBlock: some View {
         if !model.data.state.note.isEmpty {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("note")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text(Formatting.tidy(model.data.state.note))
-                    .font(.body)
+            // Reading-first: primary-color text on a quiet warm block; the
+            // small tracked label sits close so it reads as one unit.
+            VStack(alignment: .leading, spacing: 6) {
+                Text("NOTE")
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(1.4)
                     .foregroundStyle(Neo.warm)
-                    .lineSpacing(3)
+                Text(Formatting.tidy(model.data.state.note))
+                    .font(Neo.bodyFont)
+                    .foregroundStyle(.primary)
+                    .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Neo.warm.opacity(0.09))
+            )
             .padding(.top, 14)
         }
     }

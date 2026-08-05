@@ -96,42 +96,47 @@ private struct FlattenedReferenceView: UIViewControllerRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     final class Coordinator {
-        private var observation: NSKeyValueObservation?
+        private var timer: Timer?
 
-        /// Finds the controller's internal scroll view once it exists,
-        /// disables its own scrolling, and mirrors its content height out so
-        /// the SwiftUI frame grows to fit — one page, one scroll.
+        deinit { timer?.invalidate() }
+
+        /// Flattens the controller into the page: polls for its internal
+        /// scroll views (the dictionary content loads progressively and the
+        /// hierarchy changes), disables scrolling on EVERY one found, and
+        /// mirrors the tallest content height out so the SwiftUI frame grows
+        /// to fit — one page, one scroll.
         func flatten(_ controller: UIViewController, into height: Binding<CGFloat>) {
-            func attempt(retries: Int) {
-                guard retries > 0 else { return }
-                guard let scrollView = Self.findScrollView(in: controller.view) else {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        attempt(retries: retries - 1)
-                    }
+            timer?.invalidate()
+            var ticks = 0
+            timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak controller] timer in
+                ticks += 1
+                if ticks > 24 { timer.invalidate() }
+                guard let controller else {
+                    timer.invalidate()
                     return
                 }
-                scrollView.isScrollEnabled = false
-                observation = scrollView.observe(\.contentSize, options: [.initial, .new]) { scrollView, _ in
-                    let newHeight = scrollView.contentSize.height
-                    guard newHeight > 60 else { return }
-                    DispatchQueue.main.async {
-                        if abs(height.wrappedValue - (newHeight + 24)) > 2 {
-                            height.wrappedValue = newHeight + 24
-                        }
-                    }
+                let scrollViews = Self.allScrollViews(in: controller.view)
+                var tallest: CGFloat = 0
+                for scrollView in scrollViews {
+                    scrollView.isScrollEnabled = false
+                    scrollView.showsVerticalScrollIndicator = false
+                    tallest = max(tallest, scrollView.contentSize.height)
                 }
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                attempt(retries: 8)
+                guard tallest > 100 else { return }
+                let newHeight = tallest + 24
+                if abs(height.wrappedValue - newHeight) > 4 {
+                    height.wrappedValue = newHeight
+                }
             }
         }
 
-        private static func findScrollView(in view: UIView) -> UIScrollView? {
-            if let scrollView = view as? UIScrollView { return scrollView }
+        private static func allScrollViews(in view: UIView) -> [UIScrollView] {
+            var found: [UIScrollView] = []
+            if let scrollView = view as? UIScrollView { found.append(scrollView) }
             for subview in view.subviews {
-                if let found = findScrollView(in: subview) { return found }
+                found.append(contentsOf: allScrollViews(in: subview))
             }
-            return nil
+            return found
         }
     }
 }
