@@ -205,12 +205,30 @@ class Dict:
     def lookup(self, word):
         with self.lock:
             row = self.conn.execute(
-                "SELECT word, frq, bnc, translation FROM words WHERE word = ? COLLATE NOCASE",
+                "SELECT word, frq, bnc, translation, exchange FROM words WHERE word = ? COLLATE NOCASE",
                 (word,)).fetchone()
         if not row:
             return None
         rank = row[1] if row[1] else row[2]
-        return {"word": row[0], "rank": rank, "translation": row[3]}
+        return {"word": row[0], "rank": rank, "translation": row[3], "exchange": row[4]}
+
+    def effective_rank(self, word):
+        """Difficulty rank for filtering: an inflected form must be judged
+        by its BASE form's rank — 'hearts' ranks 47370 as a corpus token but
+        is just 'heart' (rank 460) wearing an -s."""
+        entry = self.lookup(word)
+        if not entry:
+            return None, None
+        base = None
+        for part in (entry["exchange"] or "").split("/"):
+            if part.startswith("0:"):
+                base = part[2:].strip().lower()
+        if base and base != word.lower():
+            base_entry = self.lookup(base)
+            if base_entry and base_entry["rank"]:
+                return base_entry["rank"], entry
+            return None, entry  # inflection of an unranked base: too murky
+        return entry["rank"], entry
 
 
 def ocr_words(image_path):
@@ -243,12 +261,12 @@ def pick_word(rows, dictionary, used_counts):
         lower = clean.lower()
         if lower in BLACKLIST or used_counts.get(lower, 0) >= MAX_WORD_REUSE:
             continue
-        entry = dictionary.lookup(lower)
-        if not entry or not entry["rank"] or not entry["translation"]:
+        rank, entry = dictionary.effective_rank(lower)
+        if not entry or not rank or not entry["translation"]:
             continue
-        if not (MIN_RANK <= entry["rank"] <= MAX_RANK):
+        if not (MIN_RANK <= rank <= MAX_RANK):
             continue
-        score = entry["rank"] + conf * 10
+        score = rank + conf * 10
         if best is None or score > best[0]:
             best = (score, lower, conf, box)
     return best
@@ -340,9 +358,10 @@ def write_assets(slides):
     SWIFT_OUT.write_text("\n".join(lines))
 
 
-def load_existing():
-    """Reload previously accepted slides (minus curated-out words) so a
-    top-up pass only has to find the remainder."""
+def load_existing(dictionary=None):
+    """Reload previously accepted slides (minus curated-out words and words
+    that fail the current base-form rank rule) so a top-up pass only has to
+    find the remainder."""
     manifest_path = REPO / "Data" / "tools" / "promo_manifest.json"
     if not manifest_path.exists():
         return []
@@ -350,6 +369,11 @@ def load_existing():
     for i, entry in enumerate(json.loads(manifest_path.read_text())):
         if entry["word"] in CURATED_OUT:
             continue
+        if dictionary is not None:
+            rank, _ = dictionary.effective_rank(entry["word"])
+            if not rank or not (MIN_RANK <= rank <= MAX_RANK):
+                print(f"  audit drop: {entry['word']} (effective rank {rank})")
+                continue
         name = f"Promo{i + 1:03d}"
         jpg = ASSET_DIR / f"{name}.imageset" / f"{name}.jpg"
         if not jpg.exists():
@@ -370,12 +394,11 @@ def main():
     args = parser.parse_args()
 
     BLACKLIST |= CURATED_OUT
-    existing = load_existing() if args.merge else []
+    dictionary = Dict()
+    existing = load_existing(dictionary) if args.merge else []
     if args.merge:
         ROOT_CATS = TOPUP_CATS
         print(f"merge mode: keeping {len(existing)} curated slides")
-
-    dictionary = Dict()
     print("Harvesting category members…")
     titles = harvest_titles()
     print(f"  {len(titles)} candidate files")
