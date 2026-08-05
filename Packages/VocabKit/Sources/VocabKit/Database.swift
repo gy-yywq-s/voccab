@@ -49,6 +49,16 @@ public final class Database {
     public struct Row {
         fileprivate var values: [String: Value]
 
+        /// Raw value as a string (nil for NULL) — used by data export.
+        public func stringValue(_ column: String) -> String? {
+            switch values[column] {
+            case .int(let v)?: return String(v)
+            case .real(let v)?: return String(v)
+            case .text(let v)?: return v
+            default: return nil
+            }
+        }
+
         public func int(_ column: String) -> Int {
             if case .int(let v)? = values[column] { return Int(v) }
             if case .real(let v)? = values[column] { return Int(v) }

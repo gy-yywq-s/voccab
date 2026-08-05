@@ -118,6 +118,15 @@ struct SettingsView: View {
                 Text(scheduler.summary)
             }
 
+            Section("Data") {
+                NavigationLink {
+                    DataToolsPage()
+                } label: {
+                    Label("Export · Import · Clear", systemImage: "externaldrive")
+                }
+                .accessibilityIdentifier("settings.data")
+            }
+
             Section("About") {
                 HStack {
                     Label("Version", systemImage: "info.circle")

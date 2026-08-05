@@ -427,3 +427,50 @@ public final class UserStore {
         try? db.execute("DELETE FROM session_state WHERE list_id = ?", [.int(Int64(listID))])
     }
 }
+
+// MARK: - Data transfer (export / import / wipe)
+
+extension UserStore {
+    /// Tables included in a full data export, in restore order.
+    public static let exportableTables = [
+        "lists", "list_words", "word_state", "study_log",
+        "search_history", "session_state",
+    ]
+
+    /// Full table dump as (column names, rows of stringified values).
+    public func exportTable(_ table: String) -> (columns: [String], rows: [[String?]]) {
+        guard Self.exportableTables.contains(table) else { return ([], []) }
+        let info = (try? db.execute("PRAGMA table_info(\(table))")) ?? []
+        let columns = info.map { $0.text("name") }
+        let rows = (try? db.execute("SELECT * FROM \(table)")) ?? []
+        return (columns, rows.map { row in columns.map { row.stringValue($0) } })
+    }
+
+    /// Replaces a table's contents from an export. Unknown columns are
+    /// dropped so newer exports restore into older schemas and vice versa.
+    public func importTable(_ table: String, columns: [String], rows: [[String?]]) {
+        guard Self.exportableTables.contains(table), !columns.isEmpty else { return }
+        let info = (try? db.execute("PRAGMA table_info(\(table))")) ?? []
+        let known = Set(info.map { $0.text("name") })
+        let kept = columns.enumerated().filter { known.contains($0.element) }
+        guard !kept.isEmpty else { return }
+        try? db.execute("DELETE FROM \(table)")
+        let names = kept.map(\.element).joined(separator: ",")
+        let placeholders = Array(repeating: "?", count: kept.count).joined(separator: ",")
+        withTransaction {
+            for row in rows {
+                let values: [Database.Value] = kept.map { index, _ in
+                    index < row.count ? (row[index].map { .text($0) } ?? .null) : .null
+                }
+                try? db.execute("INSERT OR REPLACE INTO \(table) (\(names)) VALUES (\(placeholders))", values)
+            }
+        }
+    }
+
+    /// Erases every user table. The bundled dictionary is untouched.
+    public func clearAllData() {
+        for table in Self.exportableTables {
+            try? db.execute("DELETE FROM \(table)")
+        }
+    }
+}

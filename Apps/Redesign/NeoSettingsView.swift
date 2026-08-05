@@ -137,6 +137,17 @@ struct NeoSettingsView: View {
                 .accessibilityIdentifier("settings.practiceInput")
                 NeoHairline()
 
+                NeoSectionHeader(title: "Data")
+                    .padding(.top, 28)
+                NavigationLink {
+                    DataToolsPage()
+                } label: {
+                    valueRow("Export · Import · Clear", value: "", chevron: true)
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.data")
+                NeoHairline()
+
                 NeoSectionHeader(title: "About")
                     .padding(.top, 28)
                 valueRow("Version",
