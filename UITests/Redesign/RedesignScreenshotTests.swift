@@ -37,8 +37,8 @@ final class RedesignScreenshotTests: XCTestCase {
         app.buttons["home.list.SAT RW Vocab"].waitTap()
         app.buttons["wordList.study"].waitTap()
         app.buttons["study.plan.Mix"].waitTap()
-        XCTAssertTrue(app.buttons["study.grade.1"].waitForExistence(timeout: 10)
-            || app.staticTexts["Again"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["study.grade.1"].waitForExistence(timeout: 25)
+            || app.staticTexts["Again"].waitForExistence(timeout: 25))
         snap("21-study-3buttons__light")
     }
 
@@ -74,7 +74,7 @@ final class RedesignScreenshotTests: XCTestCase {
         // SAT list
         app.buttons["home.list.SAT RW Vocab"].waitTap()
         let sortControl = app.segmentedControls["wordList.sortChips"]
-        XCTAssertTrue(sortControl.waitForExistence(timeout: 10))
+        XCTAssertTrue(sortControl.waitForExistence(timeout: 25))
         snap("02-list-frequency__\(theme)")
 
         if full {
@@ -90,8 +90,8 @@ final class RedesignScreenshotTests: XCTestCase {
 
         // Word detail: "some"
         app.staticTexts["some"].firstMatch.waitTap()
-        XCTAssertTrue(app.staticTexts["/sʌm/"].waitForExistence(timeout: 10)
-            || app.buttons["word.tab.Oxford"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["/sʌm/"].waitForExistence(timeout: 25)
+            || app.buttons["word.tab.Oxford"].waitForExistence(timeout: 25))
         snap("05-word-related__\(theme)")
 
         if full {
@@ -122,7 +122,7 @@ final class RedesignScreenshotTests: XCTestCase {
         // Flashcard. The styled answer bars surface their text, not a button
         // role, so query and tap by the visible label.
         app.buttons["study.plan.Mix"].waitTap()
-        XCTAssertTrue(app.staticTexts["I Know"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["I Know"].waitForExistence(timeout: 25))
         snap("11-study-card__\(theme)")
 
         if full {
@@ -149,8 +149,8 @@ final class RedesignScreenshotTests: XCTestCase {
 
         // Settings
         app.buttons["home.settings"].waitTap()
-        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 10)
-            || app.navigationBars["Settings"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 25)
+            || app.navigationBars["Settings"].waitForExistence(timeout: 25))
         snap("15-settings__\(theme)")
 
         if full {

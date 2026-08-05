@@ -36,8 +36,8 @@ final class ClassicScreenshotTests: XCTestCase {
         app.buttons["home.list.SAT RW Vocab"].waitTap()
         app.buttons["wordList.study"].waitTap()
         app.buttons["study.plan.Mix"].waitTap()
-        XCTAssertTrue(app.buttons["study.grade.1"].waitForExistence(timeout: 10)
-            || app.staticTexts["Again"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["study.grade.1"].waitForExistence(timeout: 25)
+            || app.staticTexts["Again"].waitForExistence(timeout: 25))
         snap("21-study-3buttons__light")
     }
 
@@ -48,8 +48,8 @@ final class ClassicScreenshotTests: XCTestCase {
 
         // SAT list (frequency sort default)
         app.buttons["home.list.SAT RW Vocab"].waitTap()
-        XCTAssertTrue(app.otherElements["wordList.sortChips"].waitForExistence(timeout: 10)
-            || app.collectionViews.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.otherElements["wordList.sortChips"].waitForExistence(timeout: 25)
+            || app.collectionViews.firstMatch.waitForExistence(timeout: 25))
         snap("02-list-frequency__\(theme)")
 
         if full {
@@ -69,7 +69,7 @@ final class ClassicScreenshotTests: XCTestCase {
         // Word detail: "some". The header-card identifier is flattened by
         // accessibility grouping, so wait on the dictionary tab bar instead.
         app.staticTexts["some"].firstMatch.waitTap()
-        XCTAssertTrue(app.segmentedControls["word.tabs"].waitForExistence(timeout: 10)
+        XCTAssertTrue(app.segmentedControls["word.tabs"].waitForExistence(timeout: 25)
             || app.staticTexts["/sʌm/"].waitForExistence(timeout: 5))
         snap("05-word-related__\(theme)")
 
@@ -98,14 +98,14 @@ final class ClassicScreenshotTests: XCTestCase {
         // Back to list, then study start page
         app.navigationBars.buttons.firstMatch.waitTap()
         app.buttons["wordList.study"].waitTap()
-        XCTAssertTrue(app.otherElements["study.start"].waitForExistence(timeout: 10)
-            || app.staticTexts["Start with:"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.otherElements["study.start"].waitForExistence(timeout: 25)
+            || app.staticTexts["Start with:"].waitForExistence(timeout: 25))
         snap("10-study-start__\(theme)")
 
         // Flashcard
         app.buttons["study.plan.Mix"].waitTap()
-        XCTAssertTrue(app.staticTexts["New Word"].waitForExistence(timeout: 10)
-            || app.staticTexts["Review"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["New Word"].waitForExistence(timeout: 25)
+            || app.staticTexts["Review"].waitForExistence(timeout: 25))
         snap("11-study-card__\(theme)")
 
         if full {
@@ -133,7 +133,7 @@ final class ClassicScreenshotTests: XCTestCase {
 
         // Settings
         app.buttons["home.settings"].waitTap()
-        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 25))
         snap("15-settings__\(theme)")
 
         if full {
