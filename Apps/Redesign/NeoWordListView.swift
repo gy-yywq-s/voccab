@@ -211,17 +211,21 @@ struct NeoWordListView: View {
             }
         }
         .contextMenu {
-            Button {
-                env.userStore.setArchived(!row.archived, word: row.word, in: model.list.id)
-                env.touch()
-            } label: {
-                Label(row.archived ? "Unarchive" : "Archive", systemImage: "archivebox")
-            }
-            Button(role: .destructive) {
-                env.userStore.remove(word: row.word, from: model.list.id)
-                env.touch()
-            } label: {
-                Label("Remove from list", systemImage: "trash")
+            // Membership edits target one concrete list, so they are hidden
+            // on the aggregate view.
+            if model.list.id != WordList.aggregateID {
+                Button {
+                    env.userStore.setArchived(!row.archived, word: row.word, in: model.list.id)
+                    env.touch()
+                } label: {
+                    Label(row.archived ? "Unarchive" : "Archive", systemImage: "archivebox")
+                }
+                Button(role: .destructive) {
+                    env.userStore.remove(word: row.word, from: model.list.id)
+                    env.touch()
+                } label: {
+                    Label("Remove from list", systemImage: "trash")
+                }
             }
         }
     }
@@ -298,7 +302,19 @@ struct NeoWordListView: View {
                         Label("End Session", systemImage: "xmark.circle")
                     }
                 }
-                if !model.list.isBuiltin {
+                if model.list.id != WordList.aggregateID {
+                    Button {
+                        env.userStore.moveList(id: model.list.id, up: true)
+                        env.touch()
+                    } label: {
+                        Label("Move Up", systemImage: "arrow.up")
+                    }
+                    Button {
+                        env.userStore.moveList(id: model.list.id, up: false)
+                        env.touch()
+                    } label: {
+                        Label("Move Down", systemImage: "arrow.down")
+                    }
                     Button {
                         renameText = model.list.name
                         showRename = true

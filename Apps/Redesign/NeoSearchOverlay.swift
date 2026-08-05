@@ -8,6 +8,9 @@ struct NeoSearchOverlay: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: SearchModel
     @FocusState private var focused: Bool
+    @State private var showNewListPrompt = false
+    @State private var newListName = ""
+    @State private var newListWord: String?
     let onOpenWord: (String, [String]) -> Void
 
     init(env: AppEnvironment, initialQuery: String = "", onOpenWord: @escaping (String, [String]) -> Void) {
@@ -78,6 +81,19 @@ struct NeoSearchOverlay: View {
         }
         .background(Color(uiColor: .systemBackground))
         .onAppear { focused = true }
+        .alert("New List", isPresented: $showNewListPrompt) {
+            TextField("List name", text: $newListName)
+            Button("Add") {
+                let trimmed = newListName.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let word = newListWord, !trimmed.isEmpty,
+                   let list = env.userStore.createList(name: trimmed) {
+                    env.userStore.add(word: word, to: list.id)
+                    env.touch()
+                }
+                newListWord = nil
+            }
+            Button("Cancel", role: .cancel) { newListWord = nil }
+        }
     }
 
     private var history: some View {
@@ -120,6 +136,10 @@ struct NeoSearchOverlay: View {
                     previewBlock(preview)
                 }
                 .buttonStyle(NeoPressStyle())
+                .overlay(alignment: .topTrailing) {
+                    addToListMenu(for: preview.word)
+                        .padding(6)
+                }
                 .accessibilityIdentifier("search.preview")
             } else {
                 Text("No results")
@@ -148,9 +168,8 @@ struct NeoSearchOverlay: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: "arrow.up.right")
-                    .font(.subheadline)
-                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                // Space held for the add-to-list menu overlaid on the card.
+                Color.clear.frame(width: 32, height: 26)
             }
             ForEach(word.translationLines.prefix(3), id: \.self) { line in
                 Text(line)
@@ -186,6 +205,48 @@ struct NeoSearchOverlay: View {
                 .fill(Color(uiColor: .systemBackground))
                 .shadow(color: .black.opacity(0.10), radius: 8, y: 2)
         )
+    }
+
+    private func addToListMenu(for word: String) -> some View {
+        Menu {
+            addToListItems(for: word)
+        } label: {
+            Image(systemName: env.userStore.listNames(containing: word).isEmpty
+                  ? "plus.circle" : "checkmark.circle.fill")
+                .font(.title3)
+                .foregroundStyle(Neo.blue)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityIdentifier("search.addToList")
+    }
+
+    @ViewBuilder
+    private func addToListItems(for word: String) -> some View {
+        ForEach(env.userStore.lists()) { list in
+            Button {
+                if env.userStore.isWord(word, in: list.id) {
+                    env.userStore.remove(word: word, from: list.id)
+                } else {
+                    env.userStore.add(word: word, to: list.id)
+                }
+                env.touch()
+            } label: {
+                if env.userStore.isWord(word, in: list.id) {
+                    Label(list.name, systemImage: "checkmark")
+                } else {
+                    Text(list.name)
+                }
+            }
+        }
+        Divider()
+        Button {
+            newListWord = word
+            newListName = ""
+            showNewListPrompt = true
+        } label: {
+            Label("New List…", systemImage: "plus")
+        }
     }
 
     private var searchField: some View {

@@ -106,7 +106,7 @@ final class ClassicScreenshotTests: XCTestCase {
             snap("13-list-continue__\(theme)")
         }
 
-        // Back home, My Words empty state
+        // Back home, All Words aggregate page (snap name kept for CI diffing)
         app.navigationBars.buttons.firstMatch.waitTap()
         if full {
             app.buttons["home.myWords"].waitTap()
@@ -121,11 +121,12 @@ final class ClassicScreenshotTests: XCTestCase {
         snap("15-settings__\(theme)")
 
         if full {
-            // Import words page
-            app.buttons["settings.import"].waitTap()
+            app.navigationBars.buttons.firstMatch.waitTap()
+
+            // Import words page, reached from the home word-lists tiles
+            app.buttons["home.import"].waitTap()
             sleep(1)
             snap("16-import__\(theme)")
-            app.navigationBars.buttons.firstMatch.waitTap()
             app.navigationBars.buttons.firstMatch.waitTap()
 
             // Search overlay: history then live result

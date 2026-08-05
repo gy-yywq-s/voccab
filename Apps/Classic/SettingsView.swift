@@ -16,13 +16,6 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            Section("Word List") {
-                NavigationLink(value: Route.importWords) {
-                    Label("Import Words", systemImage: "square.and.arrow.down")
-                }
-                .accessibilityIdentifier("settings.import")
-            }
-
             Section("Word") {
                 Picker(selection: $accent) {
                     ForEach(PronunciationAccent.allCases, id: \.self) { accent in
@@ -111,6 +104,14 @@ struct SettingsView: View {
                     Label("Compare Algorithms", systemImage: "chart.line.uptrend.xyaxis")
                 }
                 .accessibilityIdentifier("settings.algPreview")
+
+                NavigationLink {
+                    PracticeInputPage()
+                } label: {
+                    Label("Practice Input", systemImage: "hand.tap")
+                        .badge(env.settings.answerStyle.label)
+                }
+                .accessibilityIdentifier("settings.practiceInput")
             } header: {
                 Text("Practice")
             } footer: {

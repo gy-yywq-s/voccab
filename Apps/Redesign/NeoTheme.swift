@@ -3,9 +3,9 @@ import SwiftUI
 /// Voccab Neo design language — native-first iOS, calibrated against the
 /// Passage reference screens: pure system background, SF type for all
 /// interface text (serif reserved for dictionary headwords as content),
-/// bold sans section titles with a short leading rule, hairline separators,
-/// pale-blue task actions, a deep-navy commit, and native controls
-/// (toggles, segmented pickers, wheel sheets) everywhere else.
+/// bold sans section titles, hairline separators, pale-blue task actions,
+/// a deep-navy commit, and native controls (toggles, segmented pickers,
+/// wheel sheets) everywhere else.
 enum Neo {
 
     static func dynamic(light: UIColor, dark: UIColor) -> Color {
@@ -43,10 +43,6 @@ enum Neo {
 
     // Boundaries.
     static let hairline = Color(uiColor: .separator)
-    static let sectionRule = dynamic(
-        light: UIColor(white: 0.25, alpha: 1),
-        dark: UIColor(white: 0.75, alpha: 1)
-    )
 
     /// Serif appears exactly once in the app: the masthead wordmark,
     /// mirroring Passage's type allocation. Everything else is SF.
@@ -103,8 +99,9 @@ struct NeoBeginBar: View {
 
 // MARK: - Shared pieces
 
-/// Passage-style section heading: short dark rule above a bold sans title,
-/// with an optional trailing action slot aligned to the title baseline.
+/// Section heading: bold sans title carrying hierarchy through size and
+/// spacing alone, with an optional trailing action slot aligned to the
+/// title baseline.
 struct NeoSectionHeader<Trailing: View>: View {
     var title: String
     @ViewBuilder var trailing: () -> Trailing
@@ -115,16 +112,11 @@ struct NeoSectionHeader<Trailing: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Rectangle()
-                .fill(Neo.sectionRule)
-                .frame(width: 28, height: 2)
-            HStack(alignment: .firstTextBaseline) {
-                Text(title)
-                    .font(Neo.sectionTitle)
-                Spacer()
-                trailing()
-            }
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(Neo.sectionTitle)
+            Spacer()
+            trailing()
         }
     }
 }

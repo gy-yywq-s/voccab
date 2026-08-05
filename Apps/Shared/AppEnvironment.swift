@@ -38,11 +38,15 @@ final class AppEnvironment: ObservableObject {
                 .appendingPathComponent("voccab-user.sqlite").path))
         settings = AppSettings()
 
-        // Production launches start empty — the user imports their own lists.
         // Only UI tests get the embedded deterministic walkthrough content.
         if Self.isUITest {
             seedUITestList()
             UITestSeeder.seed(userStore: userStore, dictionary: dictionary, settings: settings)
+        }
+        // First launch with no lists at all: create a starter list so word
+        // pages have somewhere to save into.
+        if userStore.lists().isEmpty {
+            userStore.createList(name: "Notebook")
         }
         warmUpAfterLaunch()
     }

@@ -1,7 +1,7 @@
 import SwiftUI
 import VocabKit
 
-/// Settings — same sections (Word List / Word / Study / About) styled after
+/// Settings — same sections (Word / Practice / About) styled after
 /// the Passage "Reading settings" reference: bold sans sub-headings, plain
 /// rows with hairlines, inline trailing values, native toggles, wheel sheet
 /// for the daily goal. Autosave everywhere.
@@ -26,17 +26,8 @@ struct NeoSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                NeoSectionHeader(title: "Word list")
-                    .padding(.top, 20)
-                NavigationLink(value: Route.importWords) {
-                    valueRow("Import Words", value: "CSV · TSV · text", chevron: true)
-                }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("settings.import")
-                NeoHairline()
-
                 NeoSectionHeader(title: "Word")
-                    .padding(.top, 28)
+                    .padding(.top, 20)
                 menuRow("Pronunciation", value: accent.label) {
                     ForEach(PronunciationAccent.allCases, id: \.self) { option in
                         Button(option.label) {
@@ -136,6 +127,14 @@ struct NeoSettingsView: View {
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.algPreview")
+                NeoHairline()
+                NavigationLink {
+                    PracticeInputPage()
+                } label: {
+                    valueRow("Practice Input", value: env.settings.answerStyle.label, chevron: true)
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.practiceInput")
                 NeoHairline()
 
                 NeoSectionHeader(title: "About")

@@ -320,22 +320,70 @@ final class UserStoreTests: XCTestCase {
         return try UserStore(databasePath: dir.appendingPathComponent("user.sqlite").path)
     }
 
-    func testMyWordsExists() throws {
+    /// Default-list creation lives in the app layer, not in UserStore init.
+    func testFreshStoreHasNoLists() throws {
         let store = try makeStore()
-        let lists = store.lists()
-        XCTAssertEqual(lists.count, 1)
-        XCTAssertTrue(lists[0].isBuiltin)
-        XCTAssertEqual(lists[0].name, "My Words")
+        XCTAssertTrue(store.lists().isEmpty)
     }
 
     func testAddRemoveWords() throws {
         let store = try makeStore()
-        let myWords = store.myWordsList()
-        store.add(word: "hello", to: myWords.id)
-        XCTAssertTrue(store.isWord("hello", in: myWords.id))
-        XCTAssertEqual(store.listNames(containing: "hello"), ["My Words"])
-        store.remove(word: "hello", from: myWords.id)
-        XCTAssertFalse(store.isWord("hello", in: myWords.id))
+        let list = try XCTUnwrap(store.createList(name: "Notebook"))
+        store.add(word: "hello", to: list.id)
+        XCTAssertTrue(store.isWord("hello", in: list.id))
+        XCTAssertEqual(store.listNames(containing: "hello"), ["Notebook"])
+        store.remove(word: "hello", from: list.id)
+        XCTAssertFalse(store.isWord("hello", in: list.id))
+    }
+
+    func testMoveListOrdering() throws {
+        let store = try makeStore()
+        let a = try XCTUnwrap(store.createList(name: "A"))
+        let b = try XCTUnwrap(store.createList(name: "B"))
+        let c = try XCTUnwrap(store.createList(name: "C"))
+        XCTAssertEqual(store.lists().map(\.name), ["A", "B", "C"])
+
+        store.moveList(id: c.id, up: true)
+        XCTAssertEqual(store.lists().map(\.name), ["A", "C", "B"])
+        store.moveList(id: a.id, up: false)
+        XCTAssertEqual(store.lists().map(\.name), ["C", "A", "B"])
+
+        // Edges are no-ops.
+        store.moveList(id: c.id, up: true)
+        XCTAssertEqual(store.lists().map(\.name), ["C", "A", "B"])
+        store.moveList(id: b.id, up: false)
+        XCTAssertEqual(store.lists().map(\.name), ["C", "A", "B"])
+    }
+
+    func testAggregateUnionAndCount() throws {
+        let store = try makeStore()
+        let first = try XCTUnwrap(store.createList(name: "First"))
+        let second = try XCTUnwrap(store.createList(name: "Second"))
+        store.add(word: "alpha", to: first.id)
+        store.add(word: "beta", to: first.id)
+        store.add(word: "Alpha", to: second.id)   // same word, different case
+        store.add(word: "gamma", to: second.id)
+
+        XCTAssertEqual(store.allWordsCount(), 3)
+        let union = store.words(in: WordList.aggregateID)
+        XCTAssertEqual(union.map { $0.lowercased() }, ["alpha", "beta", "gamma"])
+
+        // Archived in one list but active in another stays in the aggregate.
+        store.setArchived(true, word: "alpha", in: first.id)
+        XCTAssertEqual(store.words(in: WordList.aggregateID).count, 3)
+        XCTAssertTrue(store.archivedWords(in: WordList.aggregateID).isEmpty)
+
+        // Archived everywhere drops out of the active aggregate.
+        store.setArchived(true, word: "alpha", in: second.id)
+        XCTAssertEqual(store.words(in: WordList.aggregateID).map { $0.lowercased() }, ["beta", "gamma"])
+        XCTAssertEqual(store.allWordsCount(), 2)
+        XCTAssertEqual(store.archivedWords(in: WordList.aggregateID), ["alpha"])
+        XCTAssertEqual(store.words(in: WordList.aggregateID, includeArchived: true).count, 3)
+
+        // The aggregate is read-only for membership edits.
+        store.add(word: "delta", to: WordList.aggregateID)
+        store.remove(word: "beta", from: WordList.aggregateID)
+        XCTAssertEqual(store.allWordsCount(), 2)
     }
 
     func testArchiving() throws {

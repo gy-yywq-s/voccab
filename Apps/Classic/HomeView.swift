@@ -7,6 +7,8 @@ struct HomeView: View {
     @State private var showSearch = false
     @State private var showCamera = false
     @State private var searchInitialQuery = ""
+    @State private var showNewListPrompt = false
+    @State private var newListName = ""
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -33,6 +35,17 @@ struct HomeView: View {
                     .accessibilityIdentifier("home.settings")
                 }
             }
+            .alert("New List", isPresented: $showNewListPrompt) {
+                TextField("List name", text: $newListName)
+                Button("Create") {
+                    let trimmed = newListName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmed.isEmpty {
+                        env.userStore.createList(name: trimmed)
+                        env.touch()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
             .classicDestinations(env: env)
             .fullScreenCover(isPresented: $showSearch) {
                 SearchOverlay(env: env, initialQuery: searchInitialQuery) { word, context in
@@ -54,9 +67,9 @@ struct HomeView: View {
                 .padding(.top, 100)
             statsText
                 .padding(.top, 44)
-            myWordsCard
-                .padding(.top, 18)
             listTiles
+                .padding(.top, 18)
+            allWordsCard
                 .padding(.top, 26)
             promo
                 .padding(.top, 36)
@@ -95,21 +108,22 @@ struct HomeView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private var myWordsCard: some View {
-        let myWords = env.userStore.myWordsList()
+    /// The aggregate of every list, replacing the old builtin "My Words".
+    private var allWordsCard: some View {
+        let count = env.userStore.allWordsCount()
         return Button {
-            path.append(Route.wordList(myWords))
+            path.append(Route.wordList(.aggregate))
         } label: {
             HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 4) {
-                        Text("Add New Words Now!")
+                        Text(count == 0 ? "No words saved yet" : "\(count) words in your lists")
                         Image(systemName: "chevron.right")
                             .font(.subheadline.weight(.semibold))
                     }
                     .font(.body)
                     .foregroundStyle(.secondary)
-                    Text("My Words")
+                    Text("All Words")
                         .font(.title.weight(.bold))
                         .foregroundStyle(.primary)
                 }
@@ -140,7 +154,7 @@ struct HomeView: View {
     }
 
     private var listTiles: some View {
-        let lists = env.userStore.lists(includeBuiltin: false)
+        let lists = env.userStore.lists()
         let columns = [GridItem(.adaptive(minimum: 110, maximum: 140), spacing: 16, alignment: .topLeading)]
         return LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
             ForEach(lists) { list in
@@ -168,7 +182,41 @@ struct HomeView: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("home.list.\(list.name)")
             }
+            Button {
+                newListName = ""
+                showNewListPrompt = true
+            } label: {
+                actionTile(title: "New List", systemImage: "plus")
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("home.newList")
+            Button {
+                path.append(Route.importWords)
+            } label: {
+                actionTile(title: "Import Words", systemImage: "square.and.arrow.down")
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("home.import")
         }
+    }
+
+    private func actionTile(title: String, systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Spacer(minLength: 0)
+            Image(systemName: systemImage)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(ClassicTheme.tileTitle)
+            Text(title)
+                .font(.headline.weight(.bold))
+                .lineLimit(2)
+                .foregroundStyle(ClassicTheme.tileTitle)
+        }
+        .padding(14)
+        .frame(width: 122, height: 122, alignment: .bottomLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemFill))
+        )
     }
 
     private var promo: some View {

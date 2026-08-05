@@ -46,6 +46,8 @@ struct NeoWordDetailView: View {
     @State private var tab: DictionarySource = .chinese
     @State private var showNoteEditor = false
     @State private var noteText = ""
+    @State private var showNewListPrompt = false
+    @State private var newListName = ""
 
     private var dictionaryTabs: [DictionarySource] {
         env.settings.enabledDictionaries.filter { $0 != .chinese }
@@ -86,6 +88,11 @@ struct NeoWordDetailView: View {
             Button("Save") { model.setNote(noteText) }
             Button("Cancel", role: .cancel) {}
         }
+        .alert("New List", isPresented: $showNewListPrompt) {
+            TextField("List name", text: $newListName)
+            Button("Add") { model.addToNewList(named: newListName) }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     // MARK: Header zone
@@ -98,7 +105,7 @@ struct NeoWordDetailView: View {
                     .minimumScaleFactor(0.5)
                     .lineLimit(2)
                 Spacer()
-                myWordsControl
+                addToListControl
             }
             HStack(spacing: 8) {
                 if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
@@ -149,14 +156,13 @@ struct NeoWordDetailView: View {
                 Text((dictWord?.frequencyBand ?? .unknown).label)
                 if model.data.listNames.isEmpty {
                     Text("·")
-                    Button {
-                        model.toggleMyWords()
+                    Menu {
+                        listMenuItems
                     } label: {
                         Text("+ Word lists")
                             .font(Neo.caption.weight(.medium))
                             .foregroundStyle(Neo.blue)
                     }
-                    .buttonStyle(NeoPressStyle())
                 } else {
                     ForEach(model.data.listNames, id: \.self) { name in
                         Text("·")
@@ -169,34 +175,40 @@ struct NeoWordDetailView: View {
         }
     }
 
-    private var myWordsControl: some View {
-        Group {
-            if model.data.isInMyWords {
-                Menu {
-                    Button(role: .destructive) {
-                        model.toggleMyWords()
-                    } label: {
-                        Label("Delete from My Words", systemImage: "minus.circle")
-                    }
-                } label: {
-                    Image(systemName: "bookmark.fill")
-                        .font(.title3)
-                        .foregroundStyle(Neo.blue)
-                        .frame(width: 44, height: 44, alignment: .topTrailing)
-                }
-            } else {
-                Button {
-                    model.toggleMyWords()
-                } label: {
-                    Image(systemName: "bookmark")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 44, height: 44, alignment: .topTrailing)
-                }
-                .buttonStyle(NeoPressStyle())
-            }
+    private var addToListControl: some View {
+        Menu {
+            listMenuItems
+        } label: {
+            Image(systemName: model.isInAnyList ? "bookmark.fill" : "bookmark")
+                .font(.title3)
+                .foregroundStyle(model.isInAnyList ? Neo.blue : Color.secondary)
+                .frame(width: 44, height: 44, alignment: .topTrailing)
         }
         .accessibilityIdentifier("word.addToMyWords")
+    }
+
+    /// Menu entries shared by the bookmark control and the "+ Word lists"
+    /// chip: one toggle per list, then a new-list prompt.
+    @ViewBuilder
+    private var listMenuItems: some View {
+        ForEach(model.data.allLists) { list in
+            Button {
+                model.toggleMembership(of: list)
+            } label: {
+                if model.isMember(of: list) {
+                    Label(list.name, systemImage: "checkmark")
+                } else {
+                    Text(list.name)
+                }
+            }
+        }
+        Divider()
+        Button {
+            newListName = ""
+            showNewListPrompt = true
+        } label: {
+            Label("New List…", systemImage: "plus")
+        }
     }
 
     private var chineseDefinitions: some View {
@@ -260,41 +272,6 @@ struct NeoWordDetailView: View {
             )
             .padding(.top, 14)
         }
-    }
-
-    /// Tags as one quiet metadata line (Curio temperament): plain text
-    /// separated by dots, color only where it carries state.
-    private var metadataLine: some View {
-        let dictWord = model.data.dictWord
-        return HStack(alignment: .top, spacing: 8) {
-            FlowLayout(spacing: 6) {
-                Group {
-                    Text((dictWord?.frequencyBand ?? .unknown).label)
-                        .foregroundStyle(.secondary)
-                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
-                    if model.data.listNames.isEmpty {
-                        Button {
-                            model.toggleMyWords()
-                        } label: {
-                            Text("+ Word lists")
-                                .font(.footnote.weight(.medium))
-                                .foregroundStyle(Neo.blue)
-                        }
-                        .buttonStyle(NeoPressStyle())
-                    } else {
-                        ForEach(model.data.listNames, id: \.self) { name in
-                            Text(name)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .font(.footnote)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(.top, 12)
-        .padding(.bottom, 2)
     }
 
     /// The Study section: a six-step segmented drag control (the reference

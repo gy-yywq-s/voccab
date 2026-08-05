@@ -1,16 +1,18 @@
 import SwiftUI
 import VocabKit
 
-/// Home — identical zoning to the classic app (greeting/stats, My Words,
-/// word lists, camera promo, bottom lookup bar) in the Passage language:
-/// white page, centered masthead over a hairline, bold sans section titles
-/// with a short rule, plain rows, pale-blue actions.
+/// Home — identical zoning to the classic app (greeting/stats, word lists,
+/// All Words aggregate, camera promo, bottom lookup bar) in the Passage
+/// language: white page, centered masthead over a hairline, bold sans
+/// section titles, plain rows, pale-blue actions.
 struct NeoHomeView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var path = NavigationPath()
     @State private var showSearch = false
     @State private var showCamera = false
     @State private var searchInitialQuery = ""
+    @State private var showNewListPrompt = false
+    @State private var newListName = ""
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -19,8 +21,8 @@ struct NeoHomeView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         masthead
                         greetingZone
-                        myWordsZone
                         listsZone
+                        allWordsZone
                         promoZone
                         Color.clear.frame(height: 110)
                     }
@@ -32,6 +34,17 @@ struct NeoHomeView: View {
                 bottomBar
             }
             .toolbar(.hidden, for: .navigationBar)
+            .alert("New List", isPresented: $showNewListPrompt) {
+                TextField("List name", text: $newListName)
+                Button("Create") {
+                    let trimmed = newListName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmed.isEmpty {
+                        env.userStore.createList(name: trimmed)
+                        env.touch()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
             .neoDestinations(env: env)
             .fullScreenCover(isPresented: $showSearch) {
                 NeoSearchOverlay(env: env, initialQuery: searchInitialQuery) { word, context in
@@ -117,74 +130,32 @@ struct NeoHomeView: View {
         return Text("\(counts.newWords) new · \(counts.reviewed) revisited today — nice pace.")
     }
 
-    private var myWordsZone: some View {
-        let myWords = env.userStore.myWordsList()
-        return VStack(alignment: .leading, spacing: 2) {
-            NeoSectionHeader(title: "My Words") {
+    /// Word lists — the primary zone: user lists in their own order, a
+    /// new-list action, and an always-visible import row.
+    private var listsZone: some View {
+        let lists = env.userStore.lists()
+        return VStack(alignment: .leading, spacing: 0) {
+            NeoSectionHeader(title: "Word lists") {
                 Button {
-                    showSearch = true
+                    newListName = ""
+                    showNewListPrompt = true
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "plus")
-                        Text("Add")
+                        Text("New List")
                     }
                     .font(.body.weight(.medium))
                     .foregroundStyle(Neo.blue)
                 }
                 .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("home.newList")
             }
             .padding(.top, 30)
-
-            Button {
-                path.append(Route.wordList(myWords))
-            } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Saved words")
-                            .font(Neo.caption)
-                            .foregroundStyle(.secondary)
-                        Text(myWords.wordCount == 0 ? "None yet" : "\(myWords.wordCount) words")
-                            .font(Neo.rowTitle)
-                            .foregroundStyle(.primary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
-                }
-                .padding(.vertical, 14)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(NeoPressStyle())
-            .accessibilityIdentifier("home.myWords")
-        }
-    }
-
-    private var listsZone: some View {
-        let lists = env.userStore.lists(includeBuiltin: false)
-        return VStack(alignment: .leading, spacing: 0) {
-            NeoHairline()
-            NeoSectionHeader(title: "Word lists")
-                .padding(.top, 24)
             if lists.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("No word lists yet. Import your own vocabulary to get started.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Button {
-                        path.append(Route.importWords)
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.down")
-                            Text("Import words")
-                        }
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(Neo.blue)
-                    }
-                    .buttonStyle(NeoPressStyle())
-                    .accessibilityIdentifier("home.import")
-                }
-                .padding(.vertical, 14)
+                Text("No word lists yet. Create one or import your own vocabulary.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 14)
             }
             VStack(spacing: 0) {
                 ForEach(lists) { list in
@@ -211,12 +182,60 @@ struct NeoHomeView: View {
                     }
                     .buttonStyle(NeoPressStyle())
                     .accessibilityIdentifier("home.list.\(list.name)")
-                    if list.id != lists.last?.id {
-                        NeoHairline()
-                    }
+                    NeoHairline()
                 }
             }
             .padding(.top, 4)
+            Button {
+                path.append(Route.importWords)
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.subheadline.weight(.medium))
+                    Text("Import Words")
+                        .font(.body.weight(.medium))
+                    Spacer()
+                }
+                .foregroundStyle(Neo.blue)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(NeoPressStyle())
+            .accessibilityIdentifier("home.import")
+        }
+        .padding(.top, 2)
+    }
+
+    /// All Words — the aggregate of every list, replacing the old builtin
+    /// "My Words" collection.
+    private var allWordsZone: some View {
+        let count = env.userStore.allWordsCount()
+        return VStack(alignment: .leading, spacing: 0) {
+            NeoHairline()
+            NeoSectionHeader(title: "All Words")
+                .padding(.top, 24)
+            Button {
+                path.append(Route.wordList(.aggregate))
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Every word across your lists")
+                            .font(Neo.caption)
+                            .foregroundStyle(.secondary)
+                        Text(count == 0 ? "None yet" : "\(count) words")
+                            .font(Neo.rowTitle)
+                            .foregroundStyle(.primary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                }
+                .padding(.vertical, 14)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(NeoPressStyle())
+            .accessibilityIdentifier("home.myWords")
         }
         .padding(.top, 18)
     }

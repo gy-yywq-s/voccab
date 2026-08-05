@@ -4,7 +4,6 @@ import Foundation
 /// notes, study log, search history, and paused study sessions.
 public final class UserStore {
     private let db: Database
-    public static let myWordsName = "My Words"
 
     public init(databasePath: String) throws {
         try FileManager.default.createDirectory(
@@ -21,7 +20,8 @@ public final class UserStore {
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
                 is_builtin INTEGER NOT NULL DEFAULT 0,
-                created_at REAL NOT NULL
+                created_at REAL NOT NULL,
+                position INTEGER NOT NULL DEFAULT 0
             )
         """)
         try db.execute("""
@@ -72,11 +72,16 @@ public final class UserStore {
         for column in ["interval_days REAL", "ease_factor REAL", "stability REAL", "difficulty REAL"] {
             _ = try? db.execute("ALTER TABLE word_state ADD COLUMN \(column)")
         }
-        // Built-in favorites list.
-        try db.execute(
-            "INSERT OR IGNORE INTO lists (name, is_builtin, created_at) VALUES (?, 1, ?)",
-            [.text(Self.myWordsName), .real(Date().timeIntervalSince1970)]
-        )
+        // Word-lists restructure: user-ordered lists, and the old builtin
+        // "My Words" becomes an ordinary list (the aggregate view replaced it).
+        _ = try? db.execute("ALTER TABLE lists ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
+        // Extended per-review data (nullable; recorded when the user allows
+        // it) — the raw material for future per-user tuning.
+        for column in ["grade INTEGER", "response_ms INTEGER",
+                       "elapsed_days REAL", "scheduled_days REAL"] {
+            _ = try? db.execute("ALTER TABLE study_log ADD COLUMN \(column)")
+        }
+        try db.execute("UPDATE lists SET is_builtin = 0 WHERE is_builtin = 1")
     }
 
     /// Groups many writes into one SQLite transaction (one fsync instead of
@@ -89,23 +94,17 @@ public final class UserStore {
 
     // MARK: - Lists
 
-    public func lists(includeBuiltin: Bool = true) -> [WordList] {
+    public func lists() -> [WordList] {
         let rows = (try? db.execute("""
             SELECT l.id, l.name, l.is_builtin,
                    (SELECT COUNT(*) FROM list_words w WHERE w.list_id = l.id AND w.archived = 0) AS word_count
             FROM lists l
-            ORDER BY l.is_builtin DESC, l.created_at
+            ORDER BY l.position, l.created_at
         """)) ?? []
-        return rows.compactMap { row in
-            let isBuiltin = row.int("is_builtin") == 1
-            if !includeBuiltin && isBuiltin { return nil }
-            return WordList(id: row.int("id"), name: row.text("name"),
-                            isBuiltin: isBuiltin, wordCount: row.int("word_count"))
+        return rows.map { row in
+            WordList(id: row.int("id"), name: row.text("name"),
+                     isBuiltin: row.int("is_builtin") == 1, wordCount: row.int("word_count"))
         }
-    }
-
-    public func myWordsList() -> WordList {
-        lists().first(where: { $0.isBuiltin }) ?? WordList(id: 1, name: Self.myWordsName, isBuiltin: true, wordCount: 0)
     }
 
     @discardableResult
@@ -116,11 +115,40 @@ public final class UserStore {
             candidate = "\(name) \(counter)"
             counter += 1
         }
+        let position = ((try? db.execute(
+            "SELECT COALESCE(MAX(position), 0) AS p FROM lists"
+        ))?.first?.int("p") ?? 0) + 1
         try? db.execute(
-            "INSERT INTO lists (name, is_builtin, created_at) VALUES (?, 0, ?)",
-            [.text(candidate), .real(Date().timeIntervalSince1970)]
+            "INSERT INTO lists (name, is_builtin, created_at, position) VALUES (?, 0, ?, ?)",
+            [.text(candidate), .real(Date().timeIntervalSince1970), .int(Int64(position))]
         )
         return lists().first(where: { $0.name == candidate })
+    }
+
+    /// Swaps a list's position with its neighbor in display order. Rows
+    /// predating the position column all carry 0, so the current display
+    /// order is materialized into distinct positions before the first swap.
+    public func moveList(id: Int, up: Bool) {
+        var rows = orderedListRows()
+        if Set(rows.map { $0.int("position") }).count != rows.count {
+            for (index, row) in rows.enumerated() {
+                try? db.execute("UPDATE lists SET position = ? WHERE id = ?",
+                                [.int(Int64(index + 1)), .int(Int64(row.int("id")))])
+            }
+            rows = orderedListRows()
+        }
+        guard let index = rows.firstIndex(where: { $0.int("id") == id }) else { return }
+        let neighborIndex = up ? index - 1 : index + 1
+        guard rows.indices.contains(neighborIndex) else { return }
+        let row = rows[index], neighbor = rows[neighborIndex]
+        try? db.execute("UPDATE lists SET position = ? WHERE id = ?",
+                        [.int(Int64(neighbor.int("position"))), .int(Int64(row.int("id")))])
+        try? db.execute("UPDATE lists SET position = ? WHERE id = ?",
+                        [.int(Int64(row.int("position"))), .int(Int64(neighbor.int("id")))])
+    }
+
+    private func orderedListRows() -> [Database.Row] {
+        (try? db.execute("SELECT id, position FROM lists ORDER BY position, created_at")) ?? []
     }
 
     public func renameList(id: Int, to name: String) {
@@ -136,6 +164,19 @@ public final class UserStore {
     // MARK: - List membership
 
     public func words(in listID: Int, includeArchived: Bool = false) -> [String] {
+        if listID == WordList.aggregateID {
+            // Distinct union across all lists, in list display order then
+            // first-added order.
+            let sql = """
+                SELECT w.word FROM list_words w
+                JOIN lists l ON l.id = w.list_id
+                \(includeArchived ? "" : "WHERE w.archived = 0")
+                GROUP BY w.word
+                ORDER BY MIN(l.position), MIN(w.added_at)
+            """
+            let rows = (try? db.execute(sql)) ?? []
+            return rows.map { $0.text("word") }
+        }
         let sql = includeArchived
             ? "SELECT word FROM list_words WHERE list_id = ? ORDER BY position, added_at"
             : "SELECT word FROM list_words WHERE list_id = ? AND archived = 0 ORDER BY position, added_at"
@@ -144,13 +185,30 @@ public final class UserStore {
     }
 
     public func archivedWords(in listID: Int) -> Set<String> {
+        if listID == WordList.aggregateID {
+            // A word only reads as archived in the aggregate when it is
+            // archived in every list containing it.
+            let rows = (try? db.execute(
+                "SELECT word FROM list_words GROUP BY word HAVING MIN(archived) = 1"
+            )) ?? []
+            return Set(rows.map { $0.text("word").lowercased() })
+        }
         let rows = (try? db.execute(
             "SELECT word FROM list_words WHERE list_id = ? AND archived = 1", [.int(Int64(listID))]
         )) ?? []
         return Set(rows.map { $0.text("word").lowercased() })
     }
 
+    /// Distinct non-archived words across every list (the aggregate count).
+    public func allWordsCount() -> Int {
+        let rows = (try? db.execute(
+            "SELECT COUNT(DISTINCT word) AS c FROM list_words WHERE archived = 0"
+        )) ?? []
+        return rows.first?.int("c") ?? 0
+    }
+
     public func add(word: String, to listID: Int) {
+        guard listID != WordList.aggregateID else { return }
         let position = ((try? db.execute(
             "SELECT COALESCE(MAX(position), 0) AS p FROM list_words WHERE list_id = ?", [.int(Int64(listID))]
         ))?.first?.int("p") ?? 0) + 1
@@ -161,6 +219,7 @@ public final class UserStore {
     }
 
     public func remove(word: String, from listID: Int) {
+        guard listID != WordList.aggregateID else { return }
         try? db.execute("DELETE FROM list_words WHERE list_id = ? AND word = ?", [.int(Int64(listID)), .text(word)])
     }
 
@@ -266,6 +325,23 @@ public final class UserStore {
     public func setFamiliarity(_ value: Int?, for word: String) {
         var s = state(of: word)
         s.familiarity = value.map { min(100, max(0, $0)) }
+        // A manual familiarity is information FOR the scheduler, not an
+        // override of it: seed the scheduling state to the matching rung so
+        // the algorithm takes over from the right starting point.
+        if let familiarity = s.familiarity {
+            let rung = max(1, familiarity / 20)          // 20%->1 … 100%->5
+            if s.timesStudied == 0 { s.timesStudied = 1 }
+            s.memoryCircle = max(s.memoryCircle, rung)
+            let seededInterval = Double(SRS.intervalDays(circle: rung))
+            if (s.intervalDays ?? 0) < seededInterval {
+                s.intervalDays = seededInterval
+                s.stability = max(s.stability ?? 0, seededInterval)
+                s.lastStudiedAt = s.lastStudiedAt ?? Date()
+                s.nextPlannedAt = Calendar.current.date(
+                    byAdding: .day, value: Int(seededInterval),
+                    to: Calendar.current.startOfDay(for: Date()))
+            }
+        }
         save(state: s)
     }
 
@@ -277,10 +353,20 @@ public final class UserStore {
 
     // MARK: - Study log / stats
 
-    public func logStudy(word: String, knew: Bool, wasNew: Bool, at date: Date = Date()) {
+    public func logStudy(word: String, knew: Bool, wasNew: Bool, at date: Date = Date(),
+                         grade: Int? = nil, responseMs: Int? = nil,
+                         elapsedDays: Double? = nil, scheduledDays: Double? = nil) {
         try? db.execute(
-            "INSERT INTO study_log (word, studied_at, knew, was_new) VALUES (?,?,?,?)",
-            [.text(word), .real(date.timeIntervalSince1970), .int(knew ? 1 : 0), .int(wasNew ? 1 : 0)]
+            """
+            INSERT INTO study_log (word, studied_at, knew, was_new,
+                                   grade, response_ms, elapsed_days, scheduled_days)
+            VALUES (?,?,?,?,?,?,?,?)
+            """,
+            [.text(word), .real(date.timeIntervalSince1970), .int(knew ? 1 : 0), .int(wasNew ? 1 : 0),
+             grade.map { .int(Int64($0)) } ?? .null,
+             responseMs.map { .int(Int64($0)) } ?? .null,
+             elapsedDays.map { .real($0) } ?? .null,
+             scheduledDays.map { .real($0) } ?? .null]
         )
     }
 

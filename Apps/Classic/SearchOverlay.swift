@@ -8,6 +8,9 @@ struct SearchOverlay: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: SearchModel
     @FocusState private var focused: Bool
+    @State private var showNewListPrompt = false
+    @State private var newListName = ""
+    @State private var newListWord: String?
     let onOpenWord: (String, [String]) -> Void
 
     init(env: AppEnvironment, initialQuery: String = "", onOpenWord: @escaping (String, [String]) -> Void) {
@@ -70,6 +73,19 @@ struct SearchOverlay: View {
         }
         .background(.thinMaterial)
         .onAppear { focused = true }
+        .alert("New List", isPresented: $showNewListPrompt) {
+            TextField("List name", text: $newListName)
+            Button("Add") {
+                let trimmed = newListName.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let word = newListWord, !trimmed.isEmpty,
+                   let list = env.userStore.createList(name: trimmed) {
+                    env.userStore.add(word: word, to: list.id)
+                    env.touch()
+                }
+                newListWord = nil
+            }
+            Button("Cancel", role: .cancel) { newListWord = nil }
+        }
     }
 
     private var history: some View {
@@ -115,6 +131,10 @@ struct SearchOverlay: View {
                     previewCard(preview)
                 }
                 .buttonStyle(.plain)
+                .overlay(alignment: .topTrailing) {
+                    addToListMenu(for: preview.word)
+                        .padding(8)
+                }
                 .accessibilityIdentifier("search.preview")
             } else {
                 Text("No results")
@@ -137,9 +157,8 @@ struct SearchOverlay: View {
                     .font(ClassicTheme.serifWord(size: 36))
                     .minimumScaleFactor(0.5)
                 Spacer()
-                Image(systemName: "plus.circle")
-                    .font(.title2)
-                    .foregroundStyle(.tint)
+                // Space held for the add-to-list menu overlaid on the card.
+                Color.clear.frame(width: 36, height: 32)
             }
             HStack(spacing: 10) {
                 if !word.phonetic.isEmpty {
@@ -179,6 +198,48 @@ struct SearchOverlay: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(ClassicTheme.cardBackground)
         )
+    }
+
+    private func addToListMenu(for word: String) -> some View {
+        Menu {
+            addToListItems(for: word)
+        } label: {
+            Image(systemName: env.userStore.listNames(containing: word).isEmpty
+                  ? "plus.circle" : "checkmark.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.tint)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityIdentifier("search.addToList")
+    }
+
+    @ViewBuilder
+    private func addToListItems(for word: String) -> some View {
+        ForEach(env.userStore.lists()) { list in
+            Button {
+                if env.userStore.isWord(word, in: list.id) {
+                    env.userStore.remove(word: word, from: list.id)
+                } else {
+                    env.userStore.add(word: word, to: list.id)
+                }
+                env.touch()
+            } label: {
+                if env.userStore.isWord(word, in: list.id) {
+                    Label(list.name, systemImage: "checkmark")
+                } else {
+                    Text(list.name)
+                }
+            }
+        }
+        Divider()
+        Button {
+            newListWord = word
+            newListName = ""
+            showNewListPrompt = true
+        } label: {
+            Label("New List…", systemImage: "plus")
+        }
     }
 
     private var searchField: some View {

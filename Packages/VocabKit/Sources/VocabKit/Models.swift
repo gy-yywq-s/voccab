@@ -256,7 +256,7 @@ public struct WordNetSense: Hashable, Sendable {
     }
 }
 
-/// A user word list ("My Words" or an imported list).
+/// A user word list (created by hand or imported).
 public struct WordList: Identifiable, Hashable, Sendable {
     public var id: Int
     public var name: String
@@ -269,6 +269,16 @@ public struct WordList: Identifiable, Hashable, Sendable {
         self.isBuiltin = isBuiltin
         self.wordCount = wordCount
     }
+
+    /// Sentinel id for the virtual "All Words" aggregate; UserStore's
+    /// membership queries treat it as the distinct union of every list.
+    public static let aggregateID = -1
+
+    /// The virtual aggregate list. `isBuiltin` keeps rename/delete off in
+    /// the UI; the live word count comes from `UserStore.allWordsCount()`.
+    public static let aggregate = WordList(
+        id: aggregateID, name: "All Words", isBuiltin: true, wordCount: 0
+    )
 }
 
 /// Per-word user state.

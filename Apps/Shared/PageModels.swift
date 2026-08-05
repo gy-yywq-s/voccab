@@ -157,7 +157,8 @@ struct WordDetailData {
     var dictWord: DictWord?
     var state: WordState
     var listNames: [String]
-    var isInMyWords: Bool
+    var allLists: [WordList]
+    var memberListIDs: Set<Int>
     var related: [(label: String, words: [String])]
     var senses: [WordNetSense]
     var oxford: [String]?
@@ -200,12 +201,13 @@ final class WordDetailModel: ObservableObject {
     static func load(word: String, env: AppEnvironment) -> WordDetailData {
         let dictWord = env.dictionary?.lookup(word)
         let state = env.userStore.state(of: word)
-        let myWords = env.userStore.myWordsList()
+        let allLists = env.userStore.lists()
         return WordDetailData(
             dictWord: dictWord,
             state: state,
             listNames: env.userStore.listNames(containing: word),
-            isInMyWords: env.userStore.isWord(word, in: myWords.id),
+            allLists: allLists,
+            memberListIDs: Set(allLists.filter { env.userStore.isWord(word, in: $0.id) }.map(\.id)),
             related: dictWord.map { env.dictionary?.relatedForms(of: $0) ?? [] } ?? [],
             senses: env.dictionary?.senses(for: word) ?? [],
             oxford: env.dictionary?.oxfordEntry(for: word),
@@ -220,13 +222,26 @@ final class WordDetailModel: ObservableObject {
 
     var displayWord: String { data.dictWord?.word ?? word }
 
-    func toggleMyWords() {
-        let myWords = env.userStore.myWordsList()
-        if data.isInMyWords {
-            env.userStore.remove(word: displayWord, from: myWords.id)
+    var isInAnyList: Bool { !data.memberListIDs.isEmpty }
+
+    func isMember(of list: WordList) -> Bool {
+        data.memberListIDs.contains(list.id)
+    }
+
+    func toggleMembership(of list: WordList) {
+        if isMember(of: list) {
+            env.userStore.remove(word: displayWord, from: list.id)
         } else {
-            env.userStore.add(word: displayWord, to: myWords.id)
+            env.userStore.add(word: displayWord, to: list.id)
         }
+        env.touch()
+        reload()
+    }
+
+    func addToNewList(named name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let list = env.userStore.createList(name: trimmed) else { return }
+        env.userStore.add(word: displayWord, to: list.id)
         env.touch()
         reload()
     }
@@ -296,7 +311,8 @@ final class StudyModel: ObservableObject {
             dailyGoalReview: env.settings.dailyGoalReview,
             targetFamiliarity: env.settings.targetFamiliarity,
             order: order,
-            alreadyStudiedToday: todayCounts
+            alreadyStudiedToday: todayCounts,
+            graduationPolicy: env.settings.graduationPolicy
         )
     }
 
@@ -313,8 +329,12 @@ final class StudyModel: ObservableObject {
     func start(plan: SessionPlan) {
         session = StudyEngine.startSession(listID: list.id, plan: plan, order: order)
         revealed = false
+        cardShownAt = Date()
         persist()
     }
+
+    /// When the current card first appeared, for response-time recording.
+    private var cardShownAt = Date()
 
     func currentDictWord() -> DictWord? {
         guard let word = session?.current?.word else { return nil }
@@ -330,17 +350,33 @@ final class StudyModel: ObservableObject {
         revealed = true
     }
 
-    func answer(_ knew: Bool) {
+    func answer(grade: ReviewGrade) {
         guard var s = session, let item = s.current else { return }
         var state = env.userStore.state(of: item.word)
         let wasNew = state.timesStudied == 0
-        StudyEngine.answer(knew, session: &s, state: &state, scheduler: env.settings.scheduler.scheduler)
+        let elapsedDays = state.lastStudiedAt.map { max(0, Date().timeIntervalSince($0) / 86400) }
+        let scheduledDays = state.intervalDays
+        StudyEngine.answer(grade: grade, session: &s, state: &state,
+                           scheduler: env.settings.scheduler.scheduler)
         env.userStore.save(state: state)
-        env.userStore.logStudy(word: item.word, knew: knew, wasNew: wasNew)
+        if env.settings.recordExtendedData {
+            let responseMs = min(600_000, Int(Date().timeIntervalSince(cardShownAt) * 1000))
+            env.userStore.logStudy(
+                word: item.word, knew: grade.isPass, wasNew: wasNew,
+                grade: grade.rawValue, responseMs: responseMs,
+                elapsedDays: elapsedDays, scheduledDays: scheduledDays)
+        } else {
+            env.userStore.logStudy(word: item.word, knew: grade.isPass, wasNew: wasNew)
+        }
         session = s
         revealed = false
+        cardShownAt = Date()
         persist()
         env.touch()
+    }
+
+    func answer(_ knew: Bool) {
+        answer(grade: .from(binary: knew))
     }
 
     func pause() {

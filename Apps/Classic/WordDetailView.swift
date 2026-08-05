@@ -44,6 +44,8 @@ struct WordDetailView: View {
     @State private var tab: DictionarySource = .chinese
     @State private var showNoteEditor = false
     @State private var noteText = ""
+    @State private var showNewListPrompt = false
+    @State private var newListName = ""
 
     private var visibleTabs: [DictionarySource] {
         var tabs: [DictionarySource] = [.chinese]  // header card is Chinese; "Related" is always first tab
@@ -75,6 +77,11 @@ struct WordDetailView: View {
         .alert("Edit note", isPresented: $showNoteEditor) {
             TextField("Note", text: $noteText, axis: .vertical)
             Button("Save") { model.setNote(noteText) }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert("New List", isPresented: $showNewListPrompt) {
+            TextField("List name", text: $newListName)
+            Button("Add") { model.addToNewList(named: newListName) }
             Button("Cancel", role: .cancel) {}
         }
     }
@@ -159,30 +166,44 @@ struct WordDetailView: View {
     }
 
     private var addButton: some View {
-        Group {
-            if model.data.isInMyWords {
-                Menu {
-                    Button(role: .destructive) {
-                        model.toggleMyWords()
-                    } label: {
-                        Label("Delete from My Words", systemImage: "minus.circle")
-                    }
-                } label: {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(ClassicTheme.studyButtonText)
-                }
+        Menu {
+            listMenuItems
+        } label: {
+            if model.isInAnyList {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(ClassicTheme.studyButtonText)
             } else {
-                Button {
-                    model.toggleMyWords()
-                } label: {
-                    Image(systemName: "plus.circle")
-                        .font(.title2)
-                        .foregroundStyle(.tint)
-                }
+                Image(systemName: "plus.circle")
+                    .font(.title2)
+                    .foregroundStyle(.tint)
             }
         }
         .accessibilityIdentifier("word.addToMyWords")
+    }
+
+    /// Menu entries shared by the add button and the "+ Word lists" chip:
+    /// one toggle per list, then a new-list prompt.
+    @ViewBuilder
+    private var listMenuItems: some View {
+        ForEach(model.data.allLists) { list in
+            Button {
+                model.toggleMembership(of: list)
+            } label: {
+                if model.isMember(of: list) {
+                    Label(list.name, systemImage: "checkmark")
+                } else {
+                    Text(list.name)
+                }
+            }
+        }
+        Divider()
+        Button {
+            newListName = ""
+            showNewListPrompt = true
+        } label: {
+            Label("New List…", systemImage: "plus")
+        }
     }
 
     private var tagRow: some View {
@@ -198,8 +219,11 @@ struct WordDetailView: View {
                 background: ClassicTheme.frequencyChip
             )
             if model.data.listNames.isEmpty {
-                TagChip(text: "+ Word lists", background: ClassicTheme.listChip)
-                    .onTapGesture { model.toggleMyWords() }
+                Menu {
+                    listMenuItems
+                } label: {
+                    TagChip(text: "+ Word lists", background: ClassicTheme.listChip)
+                }
             } else {
                 let first = model.data.listNames[0]
                 let extra = model.data.listNames.count - 1
