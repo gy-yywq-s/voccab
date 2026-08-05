@@ -9,3 +9,4 @@ Data/tools/cache/
 Data/tools/promo_run.log
 Data/tools/promo_progress.json
 Data/tools/preview/
+Data/tools/__pycache__/

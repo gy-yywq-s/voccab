@@ -88,9 +88,8 @@ def strip_gutenberg(text):
     return text
 
 
-def sentences_with(text, word):
-    """Sentences containing the exact word, cleaned for typesetting."""
-    flat = re.sub(r"\s+", " ", text)
+def sentences_with(flat, word):
+    """Sentences containing the exact word (text pre-flattened once)."""
     results = []
     for match in re.finditer(rf"[^.!?]*\b{re.escape(word)}\b[^.!?]*[.!?]", flat, re.I):
         sentence = match.group(0).strip()
@@ -185,7 +184,7 @@ def main():
     for book in BOOKS:
         text = strip_gutenberg(fetch_book(book[0]))
         if len(text) > 10000:
-            corpora.append((book, text))
+            corpora.append((book, re.sub(r"\s+", " ", text)))
         print(f"  {book[1]}: {len(text)//1000}k chars", flush=True)
 
     PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
