@@ -191,6 +191,23 @@ def main():
     for old in PREVIEW_DIR.glob("*.jpg"):
         old.unlink()
 
+    # One pass over all corpora: split into sentences, index by contained
+    # pool word. Turns per-word scanning (quadratic) into O(1) lookups.
+    wanted = set(words)
+    index = {}
+    for book, flat in corpora:
+        for raw in re.split(r"(?<=[.!?]) ", flat):
+            sentence = re.sub(r"^[^A-Z\u201c\"']+", "", raw.strip())
+            if not (60 <= len(sentence) <= 220):
+                continue
+            if sentence.count('"') % 2 or "_" in sentence or "CHAPTER" in sentence:
+                continue
+            for token in set(re.findall(r"[A-Za-z]+", sentence)):
+                lower = token.lower()
+                if lower in wanted:
+                    index.setdefault(lower, []).append((book, sentence))
+    print(f"sentence index: {len(index)} of {len(words)} words covered", flush=True)
+
     progress_path = REPO / "Data" / "tools" / "promo_progress.json"
     rng = random.Random(11)
     slides = []
@@ -200,14 +217,11 @@ def main():
         if len(slides) >= args.target:
             break
         attempted += 1
-        candidates = []
-        for book, text in corpora:
-            for sentence in sentences_with(text, word)[:3]:
-                candidates.append((book, sentence))
+        candidates = index.get(word, [])
         if not candidates:
             continue
         # spread across authors: least-used book first, then shorter sentence
-        candidates.sort(key=lambda c: (used_books.get(c[0][0], 0), len(c[1])))
+        candidates = sorted(candidates, key=lambda c: (used_books.get(c[0][0], 0), len(c[1])))
         book, sentence = candidates[0]
         img, box = render_card(sentence, word, book, len(slides))
         if box is None:
