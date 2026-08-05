@@ -63,11 +63,12 @@ CURATED_OUT = {
     "holbrook", "harwood", "sioux", "euclid", "bessemer", "phillips",
     "newbury", "howard", "mason", "lyndon", "macbeth", "michigan",
     "brooklyn", "cairo", "lexington", "jefferson", "capitol", "yankee",
-    "greek", "southside", "fontana", "niagara",
+    "greek", "southside", "fontana", "niagara", "berlin",
 }
 
 # Additional text-rich public-domain pools for top-up passes.
 TOPUP_CATS = [
+    "Category:American Red Cross posters",
     "Category:United States Army recruiting posters",
     "Category:United States Navy recruiting posters",
     "Category:United States Marine Corps recruiting posters",
