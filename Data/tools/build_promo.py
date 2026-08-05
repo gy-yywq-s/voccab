@@ -60,8 +60,11 @@ ROOT_CATS = [
     "Category:American Red Cross posters",
     "Category:Liberty bond posters",
     "Category:Art Nouveau posters",
+    "Category:Title pages of books",
+    "Category:Broadsides in the United States",
+    "Category:19th-century sheet music covers",
 ]
-MAX_FILES = 1500
+MAX_FILES = 2500
 THUMB_WIDTH = 1000
 OUT_W, OUT_H = 900, 1200
 MIN_CONF = 75
@@ -162,7 +165,8 @@ def harvest_titles():
                       if t.lower().endswith((".jpg", ".jpeg", ".png", ".tif", ".tiff"))]
             if depth < 2:
                 queue += [(sub, depth + 1) for sub in category_members(cat, "subcat")
-                          if "poster" in sub.lower()]
+                          if any(k in sub.lower() for k in
+                                 ("poster", "sheet music", "cover", "title page", "broadside"))]
         except Exception as e:
             print(f"  category failed: {cat}: {e}", file=sys.stderr)
     # dedupe preserving order
@@ -292,9 +296,24 @@ def crop_for_word(img, box):
     return crop, norm
 
 
+THUMB_CACHE = REPO / "Data" / "tools" / "cache" / "thumbs"
+
+
+def fetch_thumb(url):
+    """Disk-cached thumb download so reruns only fetch new images."""
+    import hashlib
+    THUMB_CACHE.mkdir(parents=True, exist_ok=True)
+    path = THUMB_CACHE / hashlib.md5(url.encode()).hexdigest()
+    if path.exists():
+        return path.read_bytes()
+    data = fetch(url)
+    path.write_bytes(data)
+    return data
+
+
 def process_one(title, url, dictionary, used_counts):
     try:
-        data = fetch(url)
+        data = fetch_thumb(url)
         img = Image.open(io.BytesIO(data)).convert("RGB")
     except Exception:
         return None
@@ -411,10 +430,24 @@ def main():
         used_counts[slide["word"]] = used_counts.get(slide["word"], 0) + 1
     existing_titles = {s["title"] for s in slides}
     items = [(t, u) for t, u in urls.items() if t not in existing_titles]
+
+    # Live progress file — write-through so it's readable mid-run.
+    progress_path = REPO / "Data" / "tools" / "promo_progress.json"
+    processed = [0]
+
+    def write_progress():
+        progress_path.write_text(json.dumps({
+            "processed": processed[0], "queued": len(items),
+            "accepted": len(slides), "target": args.target,
+            "words": [s["word"] for s in slides],
+        }, ensure_ascii=False))
     with futures.ThreadPoolExecutor(max_workers=8) as pool:
         pending = {pool.submit(process_one, t, u, dictionary, used_counts): t
                    for t, u in items}
         for future in futures.as_completed(pending):
+            processed[0] += 1
+            if processed[0] % 10 == 0:
+                write_progress()
             if len(slides) >= args.target:
                 break
             result = future.result()
@@ -425,7 +458,8 @@ def main():
                 continue
             used_counts[word] = used_counts.get(word, 0) + 1
             slides.append(result)
-            print(f"  [{len(slides):3d}] {word:<16} conf={result['conf']:.0f}  {result['title']}")
+            write_progress()
+            print(f"  [{len(slides):3d}] {word:<16} conf={result['conf']:.0f}  {result['title']}", flush=True)
 
     slides = slides[:args.target]
     print(f"Accepted {len(slides)} slides; writing assets…")
