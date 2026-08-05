@@ -240,6 +240,14 @@ struct FlashcardView: View {
                                          fill: ClassicTheme.knowButtonBackground)
                             classicGrade(.easy, text: .green, fill: Color.green.opacity(0.15))
                         }
+                    } else if env.settings.answerStyle == .threeButtons {
+                        HStack(spacing: 10) {
+                            classicGrade(.again, text: ClassicTheme.dontKnowButtonText,
+                                         fill: ClassicTheme.dontKnowButtonBackground)
+                            classicGrade(.good, text: ClassicTheme.knowButtonText,
+                                         fill: ClassicTheme.knowButtonBackground)
+                            classicGrade(.easy, text: .green, fill: Color.green.opacity(0.15))
+                        }
                     } else {
                         VStack(spacing: 6) {
                             HStack(spacing: 14) {

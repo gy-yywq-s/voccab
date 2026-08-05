@@ -23,12 +23,14 @@ public enum PronunciationAccent: String, CaseIterable, Codable, Sendable {
 /// How the flashcard collects your answer.
 public enum AnswerStyle: String, CaseIterable, Codable, Sendable {
     case simple       // two buttons: I Know / I Don't Know (default)
+    case threeButtons // three buttons: Again / Good / Easy
     case graded       // four buttons: Again / Hard / Good / Easy
     case refine       // two buttons, then a brief optional Hard/Easy refine
 
     public var label: String {
         switch self {
         case .simple: return "Simple (2 buttons)"
+        case .threeButtons: return "Graded (3 buttons)"
         case .graded: return "Graded (4 buttons)"
         case .refine: return "Simple + refine"
         }
@@ -37,6 +39,7 @@ public enum AnswerStyle: String, CaseIterable, Codable, Sendable {
     public var summary: String {
         switch self {
         case .simple: return "I Know / I Don't Know. Fastest; grades are inferred (know = Good)."
+        case .threeButtons: return "Again / Good / Easy. One quick call: missed it, knew it, or knew it cold — without the Hard/Good hair-split."
         case .graded: return "Again / Hard / Good / Easy. Richer signal for every algorithm."
         case .refine: return "Answer with two buttons, then optionally tap Hard or Easy for a moment to refine."
         }

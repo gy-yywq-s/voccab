@@ -273,9 +273,12 @@ struct NeoFlashcardView: View {
         Group {
             if let session = model.session, !session.isFinished {
                 VStack(spacing: 8) {
-                    if env.settings.answerStyle == .graded {
+                    switch env.settings.answerStyle {
+                    case .graded:
                         gradeRow
-                    } else {
+                    case .threeButtons:
+                        triageRow
+                    case .simple, .refine:
                         binaryRow
                         if env.settings.answerStyle == .refine, model.revealed {
                             refineRow
@@ -357,6 +360,16 @@ struct NeoFlashcardView: View {
         HStack(spacing: 8) {
             gradeButton(.again, tint: Neo.red, fill: Neo.red.opacity(0.08))
             gradeButton(.hard, tint: Neo.warm, fill: Neo.warm.opacity(0.10))
+            gradeButton(.good, tint: Neo.blue, fill: Neo.paleBlue)
+            gradeButton(.easy, tint: Color(red: 0.13, green: 0.5, blue: 0.42),
+                        fill: Color(red: 0.13, green: 0.5, blue: 0.42).opacity(0.10))
+        }
+    }
+
+    /// Three-button mode: the graded set minus Hard.
+    private var triageRow: some View {
+        HStack(spacing: 8) {
+            gradeButton(.again, tint: Neo.red, fill: Neo.red.opacity(0.08))
             gradeButton(.good, tint: Neo.blue, fill: Neo.paleBlue)
             gradeButton(.easy, tint: Color(red: 0.13, green: 0.5, blue: 0.42),
                         fill: Color(red: 0.13, green: 0.5, blue: 0.42).opacity(0.10))
