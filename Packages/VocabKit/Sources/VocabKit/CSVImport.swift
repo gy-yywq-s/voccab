@@ -220,7 +220,16 @@ public enum CSVImport {
         if let existingListID {
             targetID = existingListID
         } else {
-            guard let list = userStore.createList(name: listName) else { return nil }
+            // Auto-suffix instead of failing when the name is taken.
+            var name = listName
+            var attempt = 2
+            var created = userStore.createList(name: name)
+            while created == nil && attempt <= 20 {
+                name = "\(listName) (\(attempt))"
+                created = userStore.createList(name: name)
+                attempt += 1
+            }
+            guard let list = created else { return nil }
             targetID = list.id
         }
         userStore.withTransaction {

@@ -378,7 +378,7 @@ struct ImportWordsView: View {
                 rows, listName: listName, userStore: env.userStore,
                 mergeInto: mergeTarget?.id)
             if importedList == nil {
-                errorMessage = "A list named “\(listName)” already exists — pick it under “Add to” to merge instead."
+                errorMessage = "Could not create a list for this import."
             }
             env.touch()
         } catch {
