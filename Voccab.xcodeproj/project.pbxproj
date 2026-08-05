@@ -47,9 +47,11 @@
 		AB4AA0CEA5861FB4D6F8854F /* NeoTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223FB3FADBBBE0562BB97181 /* NeoTheme.swift */; };
 		B0606B2267121371E306FF2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */; };
 		B17E25EBECA1D54E156610CB /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D284B7596E89C58ECC5284E /* Routes.swift */; };
+		B430B39DB272D4291A3D9313 /* PracticeInputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */; };
 		BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */; };
 		BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
 		D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE9A2571DD20459B5C9B8CA1 /* NeoWordDetailView.swift */; };
+		D18A1EEAFC6D86A31C315ABE /* PracticeInputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */; };
 		D25A922D1EFE1067E4833F46 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
 		D69FB15DF56B49C0D88CDA84 /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = C0AE9BEB2FE1101D996F12F4 /* VocabKit */; };
 		DC397606F9BA49B455C41206 /* PageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */; };
@@ -115,6 +117,7 @@
 		D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoStudyViews.swift; sourceTree = "<group>"; };
 		D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "voccab-dict.sqlite"; sourceTree = "<group>"; };
 		DB602BB69CE1BA53DD7CDB33 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeInputSettings.swift; sourceTree = "<group>"; };
 		E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "voccab-extras.sqlite"; sourceTree = "<group>"; };
 		F3033400849322EE17506565 /* RedesignApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignApp.swift; sourceTree = "<group>"; };
 		F69AC979915B5150FF744F4B /* DictionaryPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryPreview.swift; sourceTree = "<group>"; };
@@ -232,6 +235,7 @@
 				C7583571466DE107FC55B425 /* CameraLookup.swift */,
 				F69AC979915B5150FF744F4B /* DictionaryPreview.swift */,
 				36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */,
+				DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */,
 				44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */,
 				C0DB0F2FA6BEA5C03827DD89 /* PromoCarousel.swift */,
 				2243D01A5745BAE8AE79EEFF /* PromoData.swift */,
@@ -465,6 +469,7 @@
 				D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */,
 				A35263C7302D5F0AAA9C5023 /* NeoWordListView.swift in Sources */,
 				3B7652494C4F6A5D419BEDAA /* PageModels.swift in Sources */,
+				B430B39DB272D4291A3D9313 /* PracticeInputSettings.swift in Sources */,
 				0AB21D710E3BB436ABCD9364 /* PromoCarousel.swift in Sources */,
 				7B89DF6CB6A79D68D598D67D /* PromoData.swift in Sources */,
 				232FF4B3386D1556BA0003CB /* RedesignApp.swift in Sources */,
@@ -486,6 +491,7 @@
 				F3018AD883473481A56EB7A7 /* DictionaryPreview.swift in Sources */,
 				DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */,
 				DC397606F9BA49B455C41206 /* PageModels.swift in Sources */,
+				D18A1EEAFC6D86A31C315ABE /* PracticeInputSettings.swift in Sources */,
 				38DF09E152DA33150577826A /* PromoCarousel.swift in Sources */,
 				6A7067E734C171678F4A6332 /* PromoData.swift in Sources */,
 				8A58B93ADA92E81A99376DD9 /* Routes.swift in Sources */,
