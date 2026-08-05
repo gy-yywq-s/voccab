@@ -186,18 +186,11 @@ struct NeoFlashcardView: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, 20)
-                    GeometryReader { proxy in
-                        ZStack(alignment: .leading) {
-                            Rectangle().fill(Color(uiColor: .systemFill))
-                            Rectangle()
-                                .fill(Neo.blue)
-                                .frame(width: max(3, proxy.size.width * session.progress))
-                        }
-                    }
-                    .frame(height: 3)
-                    .clipShape(Capsule())
-                    .padding(.horizontal, 20)
-                    .accessibilityIdentifier("study.progress")
+                    SegmentedProgressBar(completed: session.position,
+                                         total: session.totalCount,
+                                         tint: Neo.blue)
+                        .padding(.horizontal, 20)
+                        .accessibilityIdentifier("study.progress")
                 }
                 .padding(.top, 8)
             }
@@ -250,15 +243,26 @@ struct NeoFlashcardView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     if let note = model.currentState()?.note, !note.isEmpty {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("note")
-                                .font(Neo.caption)
-                                .foregroundStyle(.secondary)
+                        // Same reading-first note treatment as the word page:
+                        // tracked label + primary text on a quiet warm block.
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("NOTE")
+                                .font(.system(size: 11, weight: .semibold))
+                                .tracking(1.4)
+                                .foregroundStyle(Neo.warm)
                             Text(Formatting.tidy(note))
                                 .font(Neo.bodyFont)
-                                .foregroundStyle(Neo.warm)
+                                .foregroundStyle(.primary)
+                                .lineSpacing(4)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding(.top, 6)
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(Neo.warm.opacity(0.09))
+                        )
+                        .padding(.top, 10)
                     }
                 }
             }

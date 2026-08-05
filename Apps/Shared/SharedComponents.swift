@@ -140,3 +140,40 @@ private struct FlattenedReferenceView: UIViewControllerRepresentable {
         }
     }
 }
+
+/// Segmented ("cells") session progress bar shared by both frontends: one
+/// cell per card up to a cap; past the cap, cells stand for equal groups of
+/// cards and fill fractionally, so the bar always reads "how many done, how
+/// many left" at a glance.
+struct SegmentedProgressBar: View {
+    let completed: Int
+    let total: Int
+    var tint: Color = .accentColor
+    var track: Color = Color(uiColor: .systemFill)
+
+    private static let maxCells = 20
+
+    var body: some View {
+        let cells = max(1, min(total, Self.maxCells))
+        let perCell = Double(max(1, total)) / Double(cells)
+        HStack(spacing: 3) {
+            ForEach(0..<cells, id: \.self) { index in
+                let start = Double(index) * perCell
+                let fraction = min(1, max(0, (Double(completed) - start) / perCell))
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .fill(track)
+                        if fraction > 0 {
+                            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                .fill(tint)
+                                .frame(width: max(2, proxy.size.width * fraction))
+                        }
+                    }
+                }
+            }
+        }
+        .frame(height: 6)
+        .animation(.easeInOut(duration: 0.2), value: completed)
+    }
+}

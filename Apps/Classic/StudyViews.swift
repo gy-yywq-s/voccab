@@ -191,10 +191,25 @@ struct FlashcardView: View {
                                 .font(.title3)
                         }
                         if let note = model.currentState()?.note, !note.isEmpty {
-                            (Text("Note: ").bold() + Text(note))
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 4)
+                            // Same note treatment as the word page header card.
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("NOTE")
+                                    .font(.caption.weight(.semibold))
+                                    .tracking(1.2)
+                                    .foregroundStyle(.secondary)
+                                Text(Formatting.tidy(note))
+                                    .font(.body)
+                                    .lineSpacing(3)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(ClassicTheme.noteBackground)
+                            )
+                            .padding(.top, 6)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -237,20 +252,12 @@ struct FlashcardView: View {
     private var bottomControls: some View {
         VStack(spacing: 0) {
             if let session = model.session, !session.isFinished {
-                GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Rectangle()
-                            .fill(Color(uiColor: .systemFill))
-                        Rectangle()
-                            .fill(ClassicTheme.wordChipBackground)
-                            .frame(width: proxy.size.width * session.progress)
-                        Rectangle()
-                            .fill(Color.accentColor.opacity(0.85))
-                            .frame(width: max(4, proxy.size.width * session.progress), height: 4)
-                    }
-                }
-                .frame(height: 4)
-                .accessibilityIdentifier("study.progress")
+                SegmentedProgressBar(completed: session.position,
+                                     total: session.totalCount,
+                                     tint: Color.accentColor.opacity(0.85))
+                    .padding(.horizontal, 22)
+                    .padding(.bottom, 4)
+                    .accessibilityIdentifier("study.progress")
 
                 Group {
                     if env.settings.answerStyle == .graded {
