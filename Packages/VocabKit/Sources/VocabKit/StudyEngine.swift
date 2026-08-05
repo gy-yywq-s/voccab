@@ -44,13 +44,13 @@ public enum StudyEngine {
     /// - new words: never-studied words in the list (daily-goal-capped for Mix)
     /// - review words: studied words that are due and below the target
     ///   familiarity
-    /// A word graduates by algorithm once its interval outgrows this horizon.
-    public static let graduationIntervalDays: Double = 180
-
     /// Whether this word has graduated (left the review pool) under the
-    /// chosen policy.
+    /// chosen policy. "By algorithm" uses each algorithm's native endpoint:
+    /// Circles completes its ladder, Leitner leaves the top box, SM-2 and
+    /// FSRS (theoretically perpetual) use their practical horizons.
     public static func isGraduated(
-        _ state: WordState, policy: GraduationPolicy, targetFamiliarity: Int
+        _ state: WordState, policy: GraduationPolicy, targetFamiliarity: Int,
+        kind: SchedulerKind = .circles, config: AlgorithmConfig = AlgorithmConfig()
     ) -> Bool {
         guard state.timesStudied > 0 else { return false }
         switch policy {
@@ -59,7 +59,17 @@ public enum StudyEngine {
         case .byFamiliarity:
             return (state.familiarity ?? 0) >= targetFamiliarity
         case .byAlgorithm:
-            return (state.intervalDays ?? 0) >= graduationIntervalDays
+            switch kind {
+            case .circles:
+                return state.memoryCircle > config.circlesGraduationCircle
+            case .leitner:
+                return config.leitnerRetireAfterTopBox
+                    && state.memoryCircle >= LeitnerScheduler.outOfBoxMarker
+            case .sm2:
+                return (state.intervalDays ?? 0) >= config.sm2HorizonDays
+            case .fsrs:
+                return (state.intervalDays ?? 0) >= config.fsrsHorizonDays
+            }
         }
     }
 
@@ -73,6 +83,8 @@ public enum StudyEngine {
         order: StudyOrder,
         alreadyStudiedToday: (newWords: Int, reviewed: Int),
         graduationPolicy: GraduationPolicy = .byFamiliarity,
+        schedulerKind: SchedulerKind = .circles,
+        config: AlgorithmConfig = AlgorithmConfig(),
         now: Date = Date()
     ) -> [SessionPlan] {
         var newItems: [StudyItem] = []
@@ -93,7 +105,8 @@ public enum StudyEngine {
             )
             if state.timesStudied == 0 {
                 newItems.append(item)
-            } else if !isGraduated(state, policy: graduationPolicy, targetFamiliarity: targetFamiliarity)
+            } else if !isGraduated(state, policy: graduationPolicy, targetFamiliarity: targetFamiliarity,
+                                   kind: schedulerKind, config: config)
                         && SRS.isDue(state, now: now) {
                 reviewItems.append(item)
             }

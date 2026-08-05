@@ -13,6 +13,11 @@ struct SettingsView: View {
     @State private var scheduler: SchedulerKind = .circles
     @State private var enabledDictionaries: Set<DictionarySource> = []
     @State private var expandGoal = false
+    @State private var pendingKind: SchedulerKind?
+    @State private var switchPlan: AlgorithmSwitch.Plan?
+    @State private var showSwitchConfirm = false
+    @State private var showReviewOffer = false
+    @State private var goToAlgSettings = false
 
     var body: some View {
         List {
@@ -95,8 +100,23 @@ struct SettingsView: View {
                 } label: {
                     Label("Algorithm", systemImage: "brain")
                 }
-                .onChange(of: scheduler) { env.settings.scheduler = scheduler }
+                .onChange(of: scheduler) {
+                    guard scheduler != env.settings.scheduler else { return }
+                    pendingKind = scheduler
+                    scheduler = env.settings.scheduler   // hold until confirmed
+                    switchPlan = AlgorithmSwitch.plan(from: env.settings.scheduler, to: pendingKind!,
+                                                      settings: env.settings, store: env.userStore)
+                    showSwitchConfirm = true
+                }
                 .accessibilityIdentifier("settings.scheduler")
+
+                NavigationLink {
+                    AlgorithmSettingsPage()
+                } label: {
+                    Label("Algorithm Settings", systemImage: "slider.horizontal.3")
+                        .badge(scheduler.label)
+                }
+                .accessibilityIdentifier("settings.algSettings")
 
                 NavigationLink {
                     AlgorithmPreviewPage()
@@ -139,6 +159,30 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: load)
+        .navigationDestination(isPresented: $goToAlgSettings) {
+            AlgorithmSettingsPage()
+        }
+        .alert("Switch to \(pendingKind?.label ?? "")?", isPresented: $showSwitchConfirm) {
+            Button("Switch") {
+                if let kind = pendingKind, let plan = switchPlan {
+                    AlgorithmSwitch.apply(plan, to: kind, settings: env.settings, store: env.userStore)
+                    scheduler = kind
+                    env.touch()
+                    showReviewOffer = true
+                }
+                pendingKind = nil
+                switchPlan = nil
+            }
+            Button("Cancel", role: .cancel) { pendingKind = nil; switchPlan = nil }
+        } message: {
+            Text(switchPlan?.summary ?? "")
+        }
+        .alert("Switched to \(scheduler.label)", isPresented: $showReviewOffer) {
+            Button("Review Algorithm Settings") { goToAlgSettings = true }
+            Button("Done", role: .cancel) {}
+        } message: {
+            Text("You can adjust its settings anytime; anything the switch auto-converted is marked there this once.")
+        }
         .task {
             voiceStatus = "Checking pronunciation recordings…"
             switch await SpeechService.probeRecordingAvailability() {

@@ -59,7 +59,7 @@ public enum GraduationPolicy: String, CaseIterable, Codable, Sendable {
 
     public var summary: String {
         switch self {
-        case .byAlgorithm: return "A word graduates when its review interval exceeds 180 days — the algorithm decides."
+        case .byAlgorithm: return "Each algorithm's own endpoint: Circles finish the ladder, Leitner cards retire past the top box, SM-2/FSRS graduate at their horizon."
         case .byFamiliarity: return "A word graduates at the target familiarity (the original app's counter rule)."
         case .never: return "Words keep cycling forever, just at ever-longer intervals."
         }
@@ -139,6 +139,53 @@ public final class AppSettings {
         static let answerStyle = "settings.answerStyle"
         static let graduationPolicy = "settings.graduationPolicy"
         static let recordExtendedData = "settings.recordExtendedData"
+        static let circlesGradCircle = "alg.circles.graduationCircle"
+        static let leitnerRetireTop = "alg.leitner.retireAfterTopBox"
+        static let sm2Horizon = "alg.sm2.horizonDays"
+        static let fsrsHorizon = "alg.fsrs.horizonDays"
+        static let fsrsRetention = "alg.fsrs.targetRetention"
+        static let fsrsFuzz = "alg.fsrs.fuzz"
+        static let switchConverted = "settings.switchConvertedKeys"
+    }
+
+    /// Per-algorithm refinement knobs.
+    public var algorithmConfig: AlgorithmConfig {
+        get {
+            var config = AlgorithmConfig()
+            if let v = defaults.object(forKey: Key.circlesGradCircle) as? Int { config.circlesGraduationCircle = v }
+            if let v = defaults.object(forKey: Key.leitnerRetireTop) as? Bool { config.leitnerRetireAfterTopBox = v }
+            if let v = defaults.object(forKey: Key.sm2Horizon) as? Double { config.sm2HorizonDays = v }
+            if let v = defaults.object(forKey: Key.fsrsHorizon) as? Double { config.fsrsHorizonDays = v }
+            if let v = defaults.object(forKey: Key.fsrsRetention) as? Double { config.fsrsTargetRetention = v }
+            if let v = defaults.object(forKey: Key.fsrsFuzz) as? Bool { config.fsrsFuzz = v }
+            return config
+        }
+        set {
+            defaults.set(newValue.circlesGraduationCircle, forKey: Key.circlesGradCircle)
+            defaults.set(newValue.leitnerRetireAfterTopBox, forKey: Key.leitnerRetireTop)
+            defaults.set(newValue.sm2HorizonDays, forKey: Key.sm2Horizon)
+            defaults.set(newValue.fsrsHorizonDays, forKey: Key.fsrsHorizon)
+            defaults.set(newValue.fsrsTargetRetention, forKey: Key.fsrsRetention)
+            defaults.set(newValue.fsrsFuzz, forKey: Key.fsrsFuzz)
+        }
+    }
+
+    /// The active algorithm instantiated with its refinement settings.
+    public var activeScheduler: any Scheduler {
+        let config = algorithmConfig
+        switch scheduler {
+        case .fsrs:
+            return FSRSScheduler(targetRetention: config.fsrsTargetRetention, fuzz: config.fsrsFuzz)
+        default:
+            return scheduler.scheduler
+        }
+    }
+
+    /// Setting keys the last algorithm switch auto-converted — shown as a
+    /// one-time highlight on the Algorithm Settings page, then cleared.
+    public var switchConvertedKeys: [String] {
+        get { defaults.stringArray(forKey: Key.switchConverted) ?? [] }
+        set { defaults.set(newValue, forKey: Key.switchConverted) }
     }
 
     public var answerStyle: AnswerStyle {

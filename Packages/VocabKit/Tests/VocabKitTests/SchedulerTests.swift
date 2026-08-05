@@ -12,8 +12,8 @@ final class LeitnerTests: XCTestCase {
         XCTAssertEqual(state.memoryCircle, 2)
         XCTAssertEqual(state.intervalDays, 2)
         for _ in 0..<5 { scheduler.apply(answer: true, to: &state) }
-        XCTAssertEqual(state.memoryCircle, 5)         // caps at box 5
-        XCTAssertEqual(state.intervalDays, 16)
+        XCTAssertEqual(state.memoryCircle, 6)         // passed the top box
+        XCTAssertEqual(state.intervalDays, 16)        // interval stays capped
         scheduler.apply(answer: false, to: &state)
         XCTAssertEqual(state.memoryCircle, 1)         // demote to box 1
         XCTAssertEqual(state.intervalDays, 1)
@@ -218,9 +218,28 @@ final class GraduationPolicyTests: XCTestCase {
         var state = WordState(word: "x", familiarity: 95, timesStudied: 3)
         state.intervalDays = 10
         XCTAssertTrue(StudyEngine.isGraduated(state, policy: .byFamiliarity, targetFamiliarity: 90))
-        XCTAssertFalse(StudyEngine.isGraduated(state, policy: .byAlgorithm, targetFamiliarity: 90))
+        XCTAssertFalse(StudyEngine.isGraduated(state, policy: .byAlgorithm, targetFamiliarity: 90, kind: .sm2))
         XCTAssertFalse(StudyEngine.isGraduated(state, policy: .never, targetFamiliarity: 90))
         state.intervalDays = 200
-        XCTAssertTrue(StudyEngine.isGraduated(state, policy: .byAlgorithm, targetFamiliarity: 90))
+        XCTAssertTrue(StudyEngine.isGraduated(state, policy: .byAlgorithm, targetFamiliarity: 90, kind: .sm2))
+        XCTAssertTrue(StudyEngine.isGraduated(state, policy: .byAlgorithm, targetFamiliarity: 90, kind: .fsrs))
+    }
+
+    func testNativeEndpoints() {
+        // Circles: graduated only after passing the configured rung.
+        var circles = WordState(word: "c", timesStudied: 7, memoryCircle: 6)
+        XCTAssertFalse(StudyEngine.isGraduated(circles, policy: .byAlgorithm, targetFamiliarity: 90, kind: .circles))
+        circles.memoryCircle = 7
+        XCTAssertTrue(StudyEngine.isGraduated(circles, policy: .byAlgorithm, targetFamiliarity: 90, kind: .circles))
+
+        // Leitner: out-of-box marker retires (unless disabled).
+        var leitner = WordState(word: "l", timesStudied: 6, memoryCircle: 6)
+        XCTAssertTrue(StudyEngine.isGraduated(leitner, policy: .byAlgorithm, targetFamiliarity: 90, kind: .leitner))
+        var keepCycling = AlgorithmConfig()
+        keepCycling.leitnerRetireAfterTopBox = false
+        XCTAssertFalse(StudyEngine.isGraduated(leitner, policy: .byAlgorithm, targetFamiliarity: 90,
+                                               kind: .leitner, config: keepCycling))
+        leitner.memoryCircle = 5
+        XCTAssertFalse(StudyEngine.isGraduated(leitner, policy: .byAlgorithm, targetFamiliarity: 90, kind: .leitner))
     }
 }

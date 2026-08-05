@@ -9,7 +9,13 @@ import Foundation
 /// re-reviews (the in-session requeue) now nudge stability instead of being
 /// silently ignored.
 public struct FSRSScheduler: Scheduler {
-    public init() {}
+    let configuredRetention: Double
+    let fuzzEnabled: Bool
+
+    public init(targetRetention: Double = FSRSScheduler.targetRetention, fuzz: Bool = true) {
+        configuredRetention = min(0.99, max(0.7, targetRetention))
+        fuzzEnabled = fuzz
+    }
 
     // FSRS-4.5 default weights.
     static let w: [Double] = [
@@ -74,8 +80,8 @@ public struct FSRSScheduler: Scheduler {
         }
         state.stability = stability
         state.difficulty = difficulty
-        schedule(&state, days: Self.interval(stability: stability), now: now, calendar: calendar,
-                 fuzz: true)
+        let days = stability / Self.factor * (pow(configuredRetention, 1 / Self.decay) - 1)
+        schedule(&state, days: days, now: now, calendar: calendar, fuzz: fuzzEnabled)
     }
 
     static func initialDifficulty(rating: Double) -> Double {

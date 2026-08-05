@@ -22,6 +22,11 @@ struct NeoSettingsView: View {
     @State private var scheduler: SchedulerKind = .circles
     @State private var enabledDictionaries: Set<DictionarySource> = []
     @State private var showGoalSheet = false
+    @State private var pendingKind: SchedulerKind?
+    @State private var switchPlan: AlgorithmSwitch.Plan?
+    @State private var showSwitchConfirm = false
+    @State private var showReviewOffer = false
+    @State private var goToAlgSettings = false
 
     var body: some View {
         ScrollView {
@@ -102,8 +107,7 @@ struct NeoSettingsView: View {
                 menuRow("Algorithm", value: scheduler.label) {
                     ForEach(SchedulerKind.allCases, id: \.self) { kind in
                         Button {
-                            scheduler = kind
-                            env.settings.scheduler = kind
+                            requestSwitch(to: kind)
                         } label: {
                             if scheduler == kind {
                                 Label(kind.label, systemImage: "checkmark")
@@ -136,6 +140,14 @@ struct NeoSettingsView: View {
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.practiceInput")
                 NeoHairline()
+                NavigationLink {
+                    AlgorithmSettingsPage()
+                } label: {
+                    valueRow("Algorithm Settings", value: scheduler.label, chevron: true)
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.algSettings")
+                NeoHairline()
 
                 NeoSectionHeader(title: "Data")
                     .padding(.top, 28)
@@ -167,6 +179,21 @@ struct NeoSettingsView: View {
                 .presentationDragIndicator(.visible)
         }
         .onAppear(perform: load)
+        .navigationDestination(isPresented: $goToAlgSettings) {
+            AlgorithmSettingsPage()
+        }
+        .alert("Switch to \(pendingKind?.label ?? "")?", isPresented: $showSwitchConfirm) {
+            Button("Switch") { confirmSwitch() }
+            Button("Cancel", role: .cancel) { pendingKind = nil; switchPlan = nil }
+        } message: {
+            Text(switchPlan?.summary ?? "")
+        }
+        .alert("Switched to \(scheduler.label)", isPresented: $showReviewOffer) {
+            Button("Review Algorithm Settings") { goToAlgSettings = true }
+            Button("Done", role: .cancel) {}
+        } message: {
+            Text("You can adjust its settings anytime; anything the switch auto-converted is marked there this once.")
+        }
         .task {
             voiceStatus = "Checking pronunciation recordings…"
             switch await SpeechService.probeRecordingAvailability() {
@@ -470,5 +497,25 @@ struct NeoImportWordsView: View {
         } catch {
             errorMessage = "No words found. \(CSVImport.diagnose(text))"
         }
+    }
+}
+
+extension NeoSettingsView {
+    private func requestSwitch(to kind: SchedulerKind) {
+        guard kind != env.settings.scheduler else { return }
+        pendingKind = kind
+        switchPlan = AlgorithmSwitch.plan(from: env.settings.scheduler, to: kind,
+                                          settings: env.settings, store: env.userStore)
+        showSwitchConfirm = true
+    }
+
+    private func confirmSwitch() {
+        guard let kind = pendingKind, let plan = switchPlan else { return }
+        AlgorithmSwitch.apply(plan, to: kind, settings: env.settings, store: env.userStore)
+        scheduler = kind
+        pendingKind = nil
+        switchPlan = nil
+        env.touch()
+        showReviewOffer = true
     }
 }

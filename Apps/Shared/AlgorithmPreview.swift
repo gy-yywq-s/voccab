@@ -9,6 +9,9 @@ import VocabKit
 struct AlgorithmPreviewPage: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var selected: SchedulerKind = .circles
+    @State private var pendingKind: SchedulerKind?
+    @State private var switchPlan: AlgorithmSwitch.Plan?
+    @State private var showSwitchConfirm = false
 
     var body: some View {
         ScrollView {
@@ -29,6 +32,20 @@ struct AlgorithmPreviewPage: View {
         .navigationTitle("Algorithms")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { selected = env.settings.scheduler }
+        .alert("Switch to \(pendingKind?.label ?? "")?", isPresented: $showSwitchConfirm) {
+            Button("Switch") {
+                if let kind = pendingKind, let plan = switchPlan {
+                    AlgorithmSwitch.apply(plan, to: kind, settings: env.settings, store: env.userStore)
+                    selected = kind
+                    env.touch()
+                }
+                pendingKind = nil
+                switchPlan = nil
+            }
+            Button("Cancel", role: .cancel) { pendingKind = nil; switchPlan = nil }
+        } message: {
+            Text(switchPlan?.summary ?? "")
+        }
     }
 
     private func algorithmSection(_ kind: SchedulerKind) -> some View {
@@ -50,9 +67,10 @@ struct AlgorithmPreviewPage: View {
                 Spacer()
                 if !isActive {
                     Button("Use") {
-                        env.settings.scheduler = kind
-                        selected = kind
-                        env.touch()
+                        pendingKind = kind
+                        switchPlan = AlgorithmSwitch.plan(from: env.settings.scheduler, to: kind,
+                                                          settings: env.settings, store: env.userStore)
+                        showSwitchConfirm = true
                     }
                     .font(.subheadline.weight(.medium))
                 }

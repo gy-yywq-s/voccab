@@ -312,7 +312,9 @@ final class StudyModel: ObservableObject {
             targetFamiliarity: env.settings.targetFamiliarity,
             order: order,
             alreadyStudiedToday: todayCounts,
-            graduationPolicy: env.settings.graduationPolicy
+            graduationPolicy: env.settings.graduationPolicy,
+            schedulerKind: env.settings.scheduler,
+            config: env.settings.algorithmConfig
         )
     }
 
@@ -357,7 +359,7 @@ final class StudyModel: ObservableObject {
         let elapsedDays = state.lastStudiedAt.map { max(0, Date().timeIntervalSince($0) / 86400) }
         let scheduledDays = state.intervalDays
         StudyEngine.answer(grade: grade, session: &s, state: &state,
-                           scheduler: env.settings.scheduler.scheduler)
+                           scheduler: env.settings.activeScheduler)
         env.userStore.save(state: state)
         if env.settings.recordExtendedData {
             let responseMs = min(600_000, Int(Date().timeIntervalSince(cardShownAt) * 1000))

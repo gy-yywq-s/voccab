@@ -467,6 +467,39 @@ extension UserStore {
         }
     }
 
+    /// Words with a scheduled interval but no FSRS stability — candidates
+    /// for seeding when switching to FSRS.
+    public func stabilitySeedCandidates() -> Int {
+        let rows = (try? db.execute("""
+            SELECT COUNT(*) AS c FROM word_state
+            WHERE interval_days > 0 AND (stability IS NULL OR stability <= 0)
+        """)) ?? []
+        return rows.first?.int("c") ?? 0
+    }
+
+    /// Seeds FSRS stability from each word's current interval so the model
+    /// starts from the schedule the previous algorithm had earned.
+    @discardableResult
+    public func seedStabilityFromIntervals() -> Int {
+        let count = stabilitySeedCandidates()
+        try? db.execute("""
+            UPDATE word_state SET stability = interval_days
+            WHERE interval_days > 0 AND (stability IS NULL OR stability <= 0)
+        """)
+        return count
+    }
+
+    public func wordsAboveLeitnerBoxes() -> Int {
+        let rows = (try? db.execute(
+            "SELECT COUNT(*) AS c FROM word_state WHERE memory_circle > 6")) ?? []
+        return rows.first?.int("c") ?? 0
+    }
+
+    public func hasPausedSessions() -> Bool {
+        let rows = (try? db.execute("SELECT COUNT(*) AS c FROM session_state")) ?? []
+        return (rows.first?.int("c") ?? 0) > 0
+    }
+
     /// Erases every user table. The bundled dictionary is untouched.
     public func clearAllData() {
         for table in Self.exportableTables {
