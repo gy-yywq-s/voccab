@@ -26,6 +26,20 @@ final class RedesignScreenshotTests: XCTestCase {
         walkthrough(app, theme: "dark", full: false)
     }
 
+    /// The 3-button graded input (Again / Good / Easy) on the flashcard.
+    func testThreeButtonPractice() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uitest", "-settings.answerStyle", "threeButtons"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["home.greeting"].waitForExistence(timeout: 15))
+        app.buttons["home.list.SAT RW Vocab"].waitTap()
+        app.buttons["wordList.study"].waitTap()
+        app.buttons["study.plan.Mix"].waitTap()
+        XCTAssertTrue(app.buttons["study.grade.1"].waitForExistence(timeout: 10)
+            || app.staticTexts["Again"].waitForExistence(timeout: 10))
+        snap("21-study-3buttons__light")
+    }
+
     /// The dictionary switcher is a row of plain SwiftUI Buttons, so the
     /// label text is consumed into the button element rather than surfacing
     /// as a StaticText. Try every plausible query, tapping by coordinate if
@@ -138,6 +152,15 @@ final class RedesignScreenshotTests: XCTestCase {
         snap("15-settings__\(theme)")
 
         if full {
+            // Algorithm comparison: two-layer table + expanded detail.
+            app.buttons["settings.algPreview"].waitTap()
+            sleep(1)
+            snap("19-alg-preview__\(theme)")
+            app.buttons["algPreview.row.fsrs7"].waitTap()
+            sleep(1)
+            snap("20-alg-preview-expanded__\(theme)")
+            app.navigationBars.buttons.firstMatch.waitTap()
+
             app.navigationBars.buttons.firstMatch.waitTap()
 
             // Import words page, reached from the home word-lists zone.
