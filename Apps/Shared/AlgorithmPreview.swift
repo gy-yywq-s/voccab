@@ -20,14 +20,11 @@ struct AlgorithmPreviewPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Every row runs the real scheduler on one story: five correct answers, one miss, two recoveries. Bars show the wait after each review (red = the miss). PERFECT is the total span of eight straight passes; 1 MISS is what the same eight reviews cover after that single miss. Tap a row for the full timeline.")
+                Text("Every row runs the real scheduler on the same story: five correct answers, one miss, two recoveries. Bars show the wait after each review (red = the miss). \"Reach\" is how far out the schedule stretches after those eight reviews. Tap a row for the full timeline.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)
-
-                columnHeader
-                    .padding(.top, 16)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 8)
 
                 ForEach(SchedulerKind.allCases, id: \.self) { kind in
                     Divider()
@@ -60,21 +57,6 @@ struct AlgorithmPreviewPage: View {
 
     // MARK: Layer 1 — comparison table
 
-    private var columnHeader: some View {
-        HStack(spacing: 12) {
-            Text("ALGORITHM")
-            Spacer()
-            Text("REVIEWS")
-                .frame(width: Self.sparklineWidth)
-            Text("PERFECT")
-                .frame(width: Self.spanColumnWidth, alignment: .trailing)
-            Text("1 MISS")
-                .frame(width: Self.missColumnWidth, alignment: .trailing)
-        }
-        .font(.caption2.weight(.semibold))
-        .foregroundStyle(.tertiary)
-    }
-
     private func algorithmRow(_ kind: SchedulerKind) -> some View {
         let sim = Self.simulation(for: kind)
         let isActive = selected == kind
@@ -85,31 +67,33 @@ struct AlgorithmPreviewPage: View {
                     expandedKind = isExpanded ? nil : kind
                 }
             } label: {
-                HStack(spacing: 12) {
-                    Text(kind.label)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    if isActive {
-                        Text("IN USE")
-                            .font(.caption2.weight(.bold))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(Color.accentColor.opacity(0.15)))
-                            .foregroundStyle(Color.accentColor)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 10) {
+                        Text(kind.label)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        if isActive {
+                            Text("IN USE")
+                                .font(.caption2.weight(.bold))
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.accentColor.opacity(0.15)))
+                                .foregroundStyle(Color.accentColor)
+                        }
+                        Spacer(minLength: 8)
+                        sparkline(sim.steps)
                     }
-                    Spacer(minLength: 4)
-                    sparkline(sim.steps)
-                        .frame(width: Self.sparklineWidth)
-                    Text(Formatting.interval(days: sim.perfectTotalDays))
-                        .font(.footnote.monospacedDigit().weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: Self.spanColumnWidth, alignment: .trailing)
-                    Text(Formatting.interval(days: sim.missTotalDays))
-                        .font(.footnote.monospacedDigit())
-                        .foregroundStyle(sim.missTotalDays < sim.perfectTotalDays * 0.98
-                                         ? Color.red : Color.secondary)
-                        .frame(width: Self.missColumnWidth, alignment: .trailing)
+                    // Self-labeled facts instead of cramped columns.
+                    (Text("Reach after 8 reviews: ")
+                        + Text(Formatting.interval(days: sim.perfectTotalDays)).bold()
+                        + Text(" perfect · ")
+                        + Text(Formatting.interval(days: sim.missTotalDays)).bold()
+                            .foregroundColor(sim.missTotalDays < sim.perfectTotalDays * 0.98
+                                             ? .red : .secondary)
+                        + Text(" with the miss"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 12)
                 .contentShape(Rectangle())
@@ -161,7 +145,7 @@ struct AlgorithmPreviewPage: View {
                     }
                 }
             }
-            Text("Next review after each answer · perfect run spans \(Formatting.interval(days: sim.perfectTotalDays)); the one miss cuts it to \(Formatting.interval(days: sim.missTotalDays))")
+            Text("Next review after each answer · a perfect run reaches \(Formatting.interval(days: sim.perfectTotalDays)); the one miss cuts that to \(Formatting.interval(days: sim.missTotalDays))")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
 
@@ -190,10 +174,6 @@ struct AlgorithmPreviewPage: View {
     }
 
     // MARK: Layout constants
-
-    private static let sparklineWidth: CGFloat = 46
-    private static let spanColumnWidth: CGFloat = 42
-    private static let missColumnWidth: CGFloat = 52
 
     /// Bar height for the sparkline: log10 of the interval in seconds,
     /// normalized against a one-second-to-one-year range.
