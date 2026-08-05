@@ -11,6 +11,7 @@
 		0D30B572751D5FF896374C2A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6CD4DCE15F6990064326553C /* Assets.xcassets */; };
 		1091D785F5C433F5114B16C4 /* AlgorithmPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033A82CA5BC2843F3C14BB07 /* AlgorithmPreview.swift */; };
 		1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DFA034A4C4765AD7697D786 /* NeoSettingsView.swift */; };
+		1F1E1A2C33A71F25A3D5C673 /* DataTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1B142BA308657220255187 /* DataTransfer.swift */; };
 		22FBAEBD03321C158895E4F1 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
 		232FF4B3386D1556BA0003CB /* RedesignApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3033400849322EE17506565 /* RedesignApp.swift */; };
 		258FD4FDE479337CC0394788 /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B09A07489A23C06DCABDAFB1 /* ClassicTheme.swift */; };
@@ -34,6 +35,7 @@
 		6A7067E734C171678F4A6332 /* PromoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2243D01A5745BAE8AE79EEFF /* PromoData.swift */; };
 		6E56A8105CB9BE725B35C06C /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3C3C371AD56F164772C89B /* SpeechService.swift */; };
 		6F542ED6B8D80E9AF6DEB7FD /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = A02AB383CE18DDD2FE6EF544 /* VocabKit */; };
+		72FD1A052DEFB706B71FF215 /* DataToolsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */; };
 		7B89DF6CB6A79D68D598D67D /* PromoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2243D01A5745BAE8AE79EEFF /* PromoData.swift */; };
 		840180061A8F2454D4A78466 /* NeoStudyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */; };
 		8A58B93ADA92E81A99376DD9 /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D284B7596E89C58ECC5284E /* Routes.swift */; };
@@ -58,6 +60,8 @@
 		DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CF31D3814A1989115A3077 /* HomeView.swift */; };
 		DE9A63535FF802FED31CFA19 /* voccab-dict.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D7369D04A001BC0B9037EBD3 /* voccab-dict.sqlite */; };
 		E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */; };
+		ED3441C0306E731ADD838E78 /* DataToolsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */; };
+		F032D56D479EDA9E9D6FA89D /* DataTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1B142BA308657220255187 /* DataTransfer.swift */; };
 		F1BD950D4CAF0DC2DFE82690 /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 207DB7AE943E677C21167D87 /* SharedComponents.swift */; };
 		F3018AD883473481A56EB7A7 /* DictionaryPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69AC979915B5150FF744F4B /* DictionaryPreview.swift */; };
 		F7E9B445148768CC1FA9D1E1 /* PromoAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */; };
@@ -83,6 +87,7 @@
 /* Begin PBXFileReference section */
 		033A82CA5BC2843F3C14BB07 /* AlgorithmPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmPreview.swift; sourceTree = "<group>"; };
 		0D2B56475AF4117F967B717F /* VoccabRedesignUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VoccabRedesignUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1A1B142BA308657220255187 /* DataTransfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTransfer.swift; sourceTree = "<group>"; };
 		1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1EB523406FE50F7D5929C0DB /* NeoWordListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoWordListView.swift; sourceTree = "<group>"; };
 		207DB7AE943E677C21167D87 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
@@ -97,6 +102,7 @@
 		4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoSearchOverlay.swift; sourceTree = "<group>"; };
 		4D284B7596E89C58ECC5284E /* Routes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
 		5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignScreenshotTests.swift; sourceTree = "<group>"; };
+		5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataToolsPage.swift; sourceTree = "<group>"; };
 		63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		6C1CD147D93A43C371B04537 /* VoccabClassic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoccabClassic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6CD4DCE15F6990064326553C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -233,6 +239,8 @@
 				033A82CA5BC2843F3C14BB07 /* AlgorithmPreview.swift */,
 				63340BE8D3EE0B0D0647EC69 /* AppEnvironment.swift */,
 				C7583571466DE107FC55B425 /* CameraLookup.swift */,
+				5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */,
+				1A1B142BA308657220255187 /* DataTransfer.swift */,
 				F69AC979915B5150FF744F4B /* DictionaryPreview.swift */,
 				36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */,
 				DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */,
@@ -460,6 +468,8 @@
 				1091D785F5C433F5114B16C4 /* AlgorithmPreview.swift in Sources */,
 				E8F1514C648F529AA96CA6A3 /* AppEnvironment.swift in Sources */,
 				908E3489DEFABD8B711906DC /* CameraLookup.swift in Sources */,
+				ED3441C0306E731ADD838E78 /* DataToolsPage.swift in Sources */,
+				1F1E1A2C33A71F25A3D5C673 /* DataTransfer.swift in Sources */,
 				2FF3D41231EEBE5CE05EF264 /* DictionaryPreview.swift in Sources */,
 				8B798228919395568B524658 /* NeoHomeView.swift in Sources */,
 				BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */,
@@ -488,6 +498,8 @@
 				316405FDF224695C9CDE6CFF /* CameraLookup.swift in Sources */,
 				3EB3998B5D4A449B41F43D46 /* ClassicApp.swift in Sources */,
 				258FD4FDE479337CC0394788 /* ClassicTheme.swift in Sources */,
+				72FD1A052DEFB706B71FF215 /* DataToolsPage.swift in Sources */,
+				F032D56D479EDA9E9D6FA89D /* DataTransfer.swift in Sources */,
 				F3018AD883473481A56EB7A7 /* DictionaryPreview.swift in Sources */,
 				DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */,
 				DC397606F9BA49B455C41206 /* PageModels.swift in Sources */,
