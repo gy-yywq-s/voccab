@@ -42,7 +42,7 @@ struct AlgorithmSettingsPage: View {
                         Text("365 days").tag(365.0)
                     } label: {
                         badged("Graduation horizon", key: "alg.fsrs.horizonDays",
-                               subtitle: "FSRS is perpetual in theory; this is the practical cut-off.")
+                               subtitle: "Measured on memory stability — the days a memory holds at 90% recall — so changing target retention never moves the finish line.")
                     }
                     Picker(selection: $config.fsrsTargetRetention) {
                         Text("85% (fewer reviews)").tag(0.85)

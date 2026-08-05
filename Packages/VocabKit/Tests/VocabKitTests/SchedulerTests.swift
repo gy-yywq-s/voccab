@@ -242,4 +242,20 @@ final class GraduationPolicyTests: XCTestCase {
         leitner.memoryCircle = 5
         XCTAssertFalse(StudyEngine.isGraduated(leitner, policy: .byAlgorithm, targetFamiliarity: 90, kind: .leitner))
     }
+
+    /// FSRS graduation is judged on stability, so the target-retention knob
+    /// (which stretches or shrinks intervals) cannot move the finish line.
+    func testFSRSGraduationIndependentOfRetention() {
+        var state = WordState(word: "f", timesStudied: 5)
+        // Low retention setting: interval (200d) outgrows the 180d horizon
+        // while the memory itself (stability 120d) has not. Must NOT graduate.
+        state.stability = 120
+        state.intervalDays = 200
+        XCTAssertFalse(StudyEngine.isGraduated(state, policy: .byAlgorithm, targetFamiliarity: 90, kind: .fsrs))
+        // High retention setting: interval stays short (90d) but the memory
+        // holds 200 days. Must graduate.
+        state.stability = 200
+        state.intervalDays = 90
+        XCTAssertTrue(StudyEngine.isGraduated(state, policy: .byAlgorithm, targetFamiliarity: 90, kind: .fsrs))
+    }
 }

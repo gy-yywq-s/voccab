@@ -68,7 +68,13 @@ public enum StudyEngine {
             case .sm2:
                 return (state.intervalDays ?? 0) >= config.sm2HorizonDays
             case .fsrs:
-                return (state.intervalDays ?? 0) >= config.fsrsHorizonDays
+                // Judged on stability, not interval: stability is "days the
+                // memory holds at 90% recall", independent of the target
+                // retention knob. Interval-based judging would let a lower
+                // retention (longer intervals) graduate weaker memories
+                // earlier. Interval is only the fallback for words FSRS has
+                // not scored yet.
+                return (state.stability ?? state.intervalDays ?? 0) >= config.fsrsHorizonDays
             }
         }
     }
