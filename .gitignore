@@ -6,3 +6,5 @@ Packages/VocabKit/.build/
 Packages/VocabKit/.swiftpm/
 DerivedData/
 Data/tools/cache/
+Data/tools/promo_run.log
+Data/tools/promo_progress.json
