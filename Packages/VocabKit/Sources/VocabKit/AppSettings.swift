@@ -48,22 +48,19 @@ public enum AnswerStyle: String, CaseIterable, Codable, Sendable {
 
 /// When a word stops being scheduled for review.
 public enum GraduationPolicy: String, CaseIterable, Codable, Sendable {
-    case byAlgorithm     // interval outgrows the horizon / ladder completed
-    case byFamiliarity   // legacy: familiarity >= target graduates the word
+    case byAlgorithm     // each algorithm's native endpoint
     case never
 
     public var label: String {
         switch self {
         case .byAlgorithm: return "By algorithm"
-        case .byFamiliarity: return "By familiarity"
         case .never: return "Never"
         }
     }
 
     public var summary: String {
         switch self {
-        case .byAlgorithm: return "Each algorithm's own endpoint: Circles finish the ladder, Leitner cards retire past the top box, SM-2/FSRS graduate at their horizon."
-        case .byFamiliarity: return "A word graduates at the target familiarity (the original app's counter rule)."
+        case .byAlgorithm: return "Each algorithm's own endpoint: the fixed ladders finish their top rung, SM-2 and FSRS graduate at their horizon."
         case .never: return "Words keep cycling forever, just at ever-longer intervals."
         }
     }
@@ -134,7 +131,6 @@ public final class AppSettings {
         static let accent = "settings.pronunciationAccent"
         static let dailyGoalNew = "settings.dailyGoalNew"
         static let dailyGoalReview = "settings.dailyGoalReview"
-        static let targetFamiliarity = "settings.targetFamiliarity"
         static let studyOrder = "settings.studyOrder"
         static let enabledDictionaries = "settings.enabledDictionaries"
         static let scheduler = "settings.scheduler"
@@ -144,10 +140,18 @@ public final class AppSettings {
         static let recordExtendedData = "settings.recordExtendedData"
         static let circlesGradCircle = "alg.circles.graduationCircle"
         static let leitnerRetireTop = "alg.leitner.retireAfterTopBox"
+        static let memriseRetireTop = "alg.memrise.retireAfterTop"
+        static let pimsleurRetireTop = "alg.pimsleur.retireAfterTop"
         static let sm2Horizon = "alg.sm2.horizonDays"
         static let fsrsHorizon = "alg.fsrs.horizonDays"
         static let fsrsRetention = "alg.fsrs.targetRetention"
         static let fsrsFuzz = "alg.fsrs.fuzz"
+        static let fsrsGoal = "alg.fsrs.goal"
+        static let fsrs7Horizon = "alg.fsrs7.horizonDays"
+        static let fsrs7Retention = "alg.fsrs7.targetRetention"
+        static let fsrs7Fuzz = "alg.fsrs7.fuzz"
+        static let fsrsPersonalWeights = "alg.fsrs.personalWeights"
+        static let fsrsOptimizedAt = "alg.fsrs.optimizedAt"
         static let switchConverted = "settings.switchConvertedKeys"
     }
 
@@ -157,20 +161,52 @@ public final class AppSettings {
             var config = AlgorithmConfig()
             if let v = defaults.object(forKey: Key.circlesGradCircle) as? Int { config.circlesGraduationCircle = v }
             if let v = defaults.object(forKey: Key.leitnerRetireTop) as? Bool { config.leitnerRetireAfterTopBox = v }
+            if let v = defaults.object(forKey: Key.memriseRetireTop) as? Bool { config.memriseRetireAfterTop = v }
+            if let v = defaults.object(forKey: Key.pimsleurRetireTop) as? Bool { config.pimsleurRetireAfterTop = v }
             if let v = defaults.object(forKey: Key.sm2Horizon) as? Double { config.sm2HorizonDays = v }
             if let v = defaults.object(forKey: Key.fsrsHorizon) as? Double { config.fsrsHorizonDays = v }
             if let v = defaults.object(forKey: Key.fsrsRetention) as? Double { config.fsrsTargetRetention = v }
             if let v = defaults.object(forKey: Key.fsrsFuzz) as? Bool { config.fsrsFuzz = v }
+            if let v = defaults.string(forKey: Key.fsrsGoal).flatMap(SchedulingGoal.init) { config.fsrsGoal = v }
+            if let v = defaults.object(forKey: Key.fsrs7Horizon) as? Double { config.fsrs7HorizonDays = v }
+            if let v = defaults.object(forKey: Key.fsrs7Retention) as? Double { config.fsrs7TargetRetention = v }
+            if let v = defaults.object(forKey: Key.fsrs7Fuzz) as? Bool { config.fsrs7Fuzz = v }
             return config
         }
         set {
             defaults.set(newValue.circlesGraduationCircle, forKey: Key.circlesGradCircle)
             defaults.set(newValue.leitnerRetireAfterTopBox, forKey: Key.leitnerRetireTop)
+            defaults.set(newValue.memriseRetireAfterTop, forKey: Key.memriseRetireTop)
+            defaults.set(newValue.pimsleurRetireAfterTop, forKey: Key.pimsleurRetireTop)
             defaults.set(newValue.sm2HorizonDays, forKey: Key.sm2Horizon)
             defaults.set(newValue.fsrsHorizonDays, forKey: Key.fsrsHorizon)
             defaults.set(newValue.fsrsTargetRetention, forKey: Key.fsrsRetention)
             defaults.set(newValue.fsrsFuzz, forKey: Key.fsrsFuzz)
+            defaults.set(newValue.fsrsGoal.rawValue, forKey: Key.fsrsGoal)
+            defaults.set(newValue.fsrs7HorizonDays, forKey: Key.fsrs7Horizon)
+            defaults.set(newValue.fsrs7TargetRetention, forKey: Key.fsrs7Retention)
+            defaults.set(newValue.fsrs7Fuzz, forKey: Key.fsrs7Fuzz)
         }
+    }
+
+    /// Per-user FSRS-6 weights produced by the on-device optimizer;
+    /// nil = default parameters.
+    public var fsrsPersonalWeights: [Double]? {
+        get {
+            guard let array = defaults.array(forKey: Key.fsrsPersonalWeights) as? [Double],
+                  array.count == FSRSScheduler.defaultWeights.count else { return nil }
+            return array
+        }
+        set {
+            if let newValue { defaults.set(newValue, forKey: Key.fsrsPersonalWeights) }
+            else { defaults.removeObject(forKey: Key.fsrsPersonalWeights) }
+        }
+    }
+
+    /// When the optimizer last produced the personal weights (nil = never).
+    public var fsrsOptimizedAt: Date? {
+        get { defaults.object(forKey: Key.fsrsOptimizedAt) as? Date }
+        set { defaults.set(newValue, forKey: Key.fsrsOptimizedAt) }
     }
 
     /// The active algorithm instantiated with its refinement settings.
@@ -178,7 +214,14 @@ public final class AppSettings {
         let config = algorithmConfig
         switch scheduler {
         case .fsrs:
-            return FSRSScheduler(targetRetention: config.fsrsTargetRetention, fuzz: config.fsrsFuzz)
+            return FSRSScheduler(targetRetention: config.fsrsTargetRetention,
+                                 fuzz: config.fsrsFuzz,
+                                 goal: config.fsrsGoal,
+                                 weights: fsrsPersonalWeights)
+        case .fsrs7:
+            return FSRS7Scheduler(targetRetention: config.fsrs7TargetRetention,
+                                  fuzz: config.fsrs7Fuzz,
+                                  goal: config.fsrsGoal)
         default:
             return scheduler.scheduler
         }
@@ -235,12 +278,6 @@ public final class AppSettings {
     public var dailyGoalReview: Int {
         get { defaults.object(forKey: Key.dailyGoalReview) as? Int ?? 30 }
         set { defaults.set(newValue, forKey: Key.dailyGoalReview) }
-    }
-
-    /// Words at or above this familiarity are considered mastered (default >=90%).
-    public var targetFamiliarity: Int {
-        get { defaults.object(forKey: Key.targetFamiliarity) as? Int ?? 90 }
-        set { defaults.set(newValue, forKey: Key.targetFamiliarity) }
     }
 
     /// The upgrade the original app lacked: configurable recitation order.

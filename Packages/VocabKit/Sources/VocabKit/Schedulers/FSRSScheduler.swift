@@ -1,48 +1,130 @@
 import Foundation
 
-/// FSRS (Free Spaced Repetition Scheduler): the modern memory model tracking
-/// per-word stability and difficulty, scheduling at 90% target retention.
+/// FSRS-6 — the current mainline Free Spaced Repetition Scheduler.
 ///
-/// Graded input activates the full model: the FSRS-4.5 weight set already
-/// carries a Hard penalty (w15) and Easy bonus (w16) that binary input could
-/// never reach; first-review stability is per-rating (w0–w3); and same-day
-/// re-reviews (the in-session requeue) now nudge stability instead of being
-/// silently ignored.
+/// Ported from the official Swift implementation
+/// (github.com/open-spaced-repetition/swift-fsrs, MIT), adapted to this app's
+/// `WordState`. FSRS-6 replaces the FSRS-4.5 model this app previously
+/// shipped:
+///
+/// - 21 parameters (`defaultWeights`), with the forgetting-curve decay
+///   itself a parameter (`w[20]`) instead of the fixed −0.5;
+/// - explicit short-term (same-day) stability updates — the in-session
+///   requeue now *moves* the model instead of being a blind spot;
+/// - linear-damped difficulty steps with mean reversion toward the raw
+///   Easy-init difficulty.
+///
+/// Supports per-user weights (from the on-device optimizer), a configurable
+/// target retention, an SSP-MMC "minimize memorization cost" goal, and
+/// optional interval fuzz.
 public struct FSRSScheduler: Scheduler {
+    /// FSRS-6 default parameters (`FSRSDefaults.defaultWv6` upstream).
+    public static let defaultWeights: [Double] = [
+        0.212, 1.2931, 2.3065, 8.2956, 6.4133,
+        0.8334, 3.0194, 0.001, 1.8722, 0.1666,
+        0.796, 1.4835, 0.0614, 0.2629, 1.6483,
+        0.6014, 1.8729, 0.5425, 0.0912, 0.0658,
+        0.1542,
+    ]
+    public static let targetRetention = 0.9
+    static let sMin = 0.001
+    static let sMax = 36_500.0
+
+    let w: [Double]
     let configuredRetention: Double
     let fuzzEnabled: Bool
+    let goal: SchedulingGoal
 
-    public init(targetRetention: Double = FSRSScheduler.targetRetention, fuzz: Bool = true) {
-        configuredRetention = min(0.99, max(0.7, targetRetention))
-        fuzzEnabled = fuzz
+    public init(targetRetention: Double = FSRSScheduler.targetRetention,
+                fuzz: Bool = true,
+                goal: SchedulingGoal = .fixedRetention,
+                weights: [Double]? = nil) {
+        self.configuredRetention = min(0.99, max(0.7, targetRetention))
+        self.fuzzEnabled = fuzz
+        self.goal = goal
+        if let weights, weights.count == Self.defaultWeights.count {
+            self.w = weights
+        } else {
+            self.w = Self.defaultWeights
+        }
     }
 
-    // FSRS-4.5 default weights.
-    static let w: [Double] = [
-        0.4872, 1.4003, 3.7145, 13.8206, 5.1618, 1.2298, 0.8975, 0.031,
-        1.6474, 0.1367, 1.0461, 2.1072, 0.0793, 0.3246, 1.587, 0.2272, 2.8755,
-    ]
-    static let factor = 19.0 / 81.0
-    static let decay = -0.5
-    public static let targetRetention = 0.9
+    // MARK: Forgetting curve (decay is w[20])
 
-    /// Retrievability after `days` for a word with stability `s`.
+    var decay: Double { -w[20] }
+    var factor: Double { exp(log(0.9) / decay) - 1 }
+
+    func forgettingCurve(elapsedDays: Double, stability: Double) -> Double {
+        pow(1 + factor * elapsedDays / max(stability, Self.sMin), decay)
+    }
+
+    /// Public retrievability with default-parameter decay — used by the
+    /// "most forgotten first" study order.
     public static func retrievability(days: Double, stability: Double) -> Double {
-        pow(1 + factor * days / max(stability, 0.01), decay)
+        let decay = -defaultWeights[20]
+        let factor = exp(log(0.9) / decay) - 1
+        return pow(1 + factor * days / max(stability, sMin), decay)
     }
 
-    /// Interval that hits the target retention for stability `s`.
-    static func interval(stability: Double) -> Double {
-        stability / factor * (pow(targetRetention, 1 / decay) - 1)
+    /// Interval that hits retention `r` for stability `s` under this
+    /// instance's decay.
+    func interval(stability: Double, retention: Double) -> Double {
+        stability * (pow(retention, 1 / decay) - 1) / factor
     }
+
+    // MARK: Difficulty
+
+    func initDifficultyRaw(rating: Double) -> Double {
+        w[4] - exp((rating - 1) * w[5]) + 1
+    }
+
+    func initDifficulty(rating: Double) -> Double {
+        min(10, max(1, initDifficultyRaw(rating: rating)))
+    }
+
+    func nextDifficulty(_ d: Double, rating: Double) -> Double {
+        let deltaD = -w[6] * (rating - 3)
+        let damped = d + deltaD * (10 - d) / 9          // linear damping
+        // v6 mean-reverts toward the RAW Easy-init value.
+        let reverted = w[7] * initDifficultyRaw(rating: 4) + (1 - w[7]) * damped
+        return min(10, max(1, reverted))
+    }
+
+    // MARK: Stability
+
+    func stabilityAfterSuccess(d: Double, s: Double, r: Double, grade: ReviewGrade) -> Double {
+        let hardPenalty = grade == .hard ? w[15] : 1
+        let easyBonus = grade == .easy ? w[16] : 1
+        let growth = exp(w[8]) * (11 - d) * pow(s, -w[9])
+            * (exp(w[10] * (1 - r)) - 1) * hardPenalty * easyBonus
+        return min(Self.sMax, max(Self.sMin, s * (1 + growth)))
+    }
+
+    func stabilityAfterFailure(d: Double, s: Double, r: Double) -> Double {
+        let sf = w[11] * pow(d, -w[12]) * (pow(s + 1, w[13]) - 1) * exp(w[14] * (1 - r))
+        return min(Self.sMax, max(Self.sMin, sf))
+    }
+
+    /// Same-day (short-term) stability: `S · S^{-w19} · e^{w17·(G−3+w18)}`,
+    /// floored at no-shrink for passing grades.
+    func shortTermStability(s: Double, grade: ReviewGrade) -> Double {
+        var sinc = pow(s, -w[19]) * exp(w[17] * (Double(grade.rawValue) - 3 + w[18]))
+        if grade.rawValue >= ReviewGrade.hard.rawValue { sinc = max(sinc, 1) }
+        return min(Self.sMax, max(Self.sMin, s * sinc))
+    }
+
+    // MARK: Review application
 
     public func apply(grade: ReviewGrade, to state: inout WordState, now: Date, calendar: Calendar) {
         let rating = Double(grade.rawValue)
+        let sameDay: Bool
         let elapsed: Double
         if let last = state.lastStudiedAt {
-            elapsed = max(0, now.timeIntervalSince(last) / 86400)
+            elapsed = max(0, now.timeIntervalSince(last) / 86_400)
+            sameDay = calendar.isDate(last, inSameDayAs: now)
         } else {
             elapsed = 0
+            sameDay = false
         }
         bookkeep(grade: grade, state: &state, now: now)
         switch grade {
@@ -55,63 +137,32 @@ public struct FSRSScheduler: Scheduler {
         var stability = state.stability ?? 0
         var difficulty = state.difficulty ?? 0
 
-        if stability <= 0 {
-            // First review: per-rating initial stability (w0–w3).
-            stability = Self.w[grade.rawValue - 1]
-            difficulty = Self.initialDifficulty(rating: rating)
-        } else if elapsed < 0.5 {
-            // Same-day re-review (in-session requeue): a small multiplicative
-            // nudge instead of a full DSR update, so repeated passes within
-            // one session neither explode nor zero out the schedule.
-            difficulty = Self.nextDifficulty(difficulty, rating: rating)
-            stability *= exp(0.2 * (rating - 2))
-            stability = max(0.1, stability)
+        if stability <= 0 || difficulty <= 0 {
+            // First review: per-rating initial stability w[0..3].
+            stability = max(w[grade.rawValue - 1], 0.1)
+            difficulty = initDifficulty(rating: rating)
+        } else if sameDay {
+            difficulty = nextDifficulty(difficulty, rating: rating)
+            stability = shortTermStability(s: stability, grade: grade)
         } else {
-            let retriev = Self.retrievability(days: elapsed, stability: stability)
-            difficulty = Self.nextDifficulty(difficulty, rating: rating)
+            let r = forgettingCurve(elapsedDays: elapsed, stability: stability)
+            difficulty = nextDifficulty(difficulty, rating: rating)
             if grade.isPass {
-                stability = Self.stabilityAfterSuccess(
-                    stability: stability, difficulty: difficulty,
-                    retrievability: retriev, grade: grade)
+                stability = stabilityAfterSuccess(d: difficulty, s: stability, r: r, grade: grade)
             } else {
-                stability = Self.stabilityAfterFailure(
-                    stability: stability, difficulty: difficulty, retrievability: retriev)
+                let sAfterFail = stabilityAfterFailure(d: difficulty, s: stability, r: r)
+                // Short-term-aware floor: a lapse cannot drop stability below
+                // S / e^{w17·w18} (upstream `nextState` Again branch).
+                let floorS = stability / exp(w[17] * w[18])
+                stability = min(sAfterFail, max(Self.sMin, floorS))
             }
         }
         state.stability = stability
         state.difficulty = difficulty
-        let days = stability / Self.factor * (pow(configuredRetention, 1 / Self.decay) - 1)
+
+        let retention = goal.effectiveRetention(
+            fixed: configuredRetention, stability: stability, difficulty: difficulty, model: self)
+        let days = max(1, interval(stability: stability, retention: retention))
         schedule(&state, days: days, now: now, calendar: calendar, fuzz: fuzzEnabled)
-    }
-
-    static func initialDifficulty(rating: Double) -> Double {
-        clampDifficulty(w[4] - (rating - 3) * w[5])
-    }
-
-    static func nextDifficulty(_ difficulty: Double, rating: Double) -> Double {
-        let updated = difficulty - w[6] * (rating - 3)
-        let meanReverted = w[7] * initialDifficulty(rating: 3) + (1 - w[7]) * updated
-        return clampDifficulty(meanReverted)
-    }
-
-    static func stabilityAfterSuccess(
-        stability: Double, difficulty: Double, retrievability: Double,
-        grade: ReviewGrade = .good
-    ) -> Double {
-        // w15 (< 1) damps growth on Hard; w16 (> 1) boosts it on Easy.
-        let hardPenalty = grade == .hard ? w[15] : 1
-        let easyBonus = grade == .easy ? w[16] : 1
-        let growth = exp(w[8]) * (11 - difficulty) * pow(stability, -w[9])
-            * (exp(w[10] * (1 - retrievability)) - 1) * hardPenalty * easyBonus
-        return stability * (1 + growth)
-    }
-
-    static func stabilityAfterFailure(stability: Double, difficulty: Double, retrievability: Double) -> Double {
-        let s = w[11] * pow(difficulty, -w[12]) * (pow(stability + 1, w[13]) - 1) * exp(w[14] * (1 - retrievability))
-        return min(max(0.1, s), stability)
-    }
-
-    static func clampDifficulty(_ value: Double) -> Double {
-        min(10, max(1, value))
     }
 }

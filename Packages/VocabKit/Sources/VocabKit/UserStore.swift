@@ -69,7 +69,8 @@ public final class UserStore {
         """)
         // Scheduler columns added for the selectable-algorithms upgrade;
         // ALTER TABLE fails harmlessly when the column already exists.
-        for column in ["interval_days REAL", "ease_factor REAL", "stability REAL", "difficulty REAL"] {
+        for column in ["interval_days REAL", "ease_factor REAL", "stability REAL", "difficulty REAL",
+                       "ebisu_alpha REAL", "ebisu_beta REAL", "ebisu_halflife REAL"] {
             _ = try? db.execute("ALTER TABLE word_state ADD COLUMN \(column)")
         }
         // Word-lists restructure: user-ordered lists, and the old builtin
@@ -262,7 +263,6 @@ public final class UserStore {
     private static func state(from row: Database.Row, word: String) -> WordState {
         WordState(
             word: word,
-            familiarity: row.optionalDouble("familiarity").map { Int($0) },
             note: row.text("note"),
             timesStudied: row.int("times_studied"),
             lastStudiedAt: row.optionalDouble("last_studied_at").map { Date(timeIntervalSince1970: $0) },
@@ -271,7 +271,10 @@ public final class UserStore {
             intervalDays: row.optionalDouble("interval_days"),
             easeFactor: row.optionalDouble("ease_factor"),
             stability: row.optionalDouble("stability"),
-            difficulty: row.optionalDouble("difficulty")
+            difficulty: row.optionalDouble("difficulty"),
+            ebisuAlpha: row.optionalDouble("ebisu_alpha"),
+            ebisuBeta: row.optionalDouble("ebisu_beta"),
+            ebisuHalflifeHours: row.optionalDouble("ebisu_halflife")
         )
     }
 
@@ -293,11 +296,11 @@ public final class UserStore {
 
     public func save(state: WordState) {
         try? db.execute("""
-            INSERT INTO word_state (word, familiarity, note, times_studied, last_studied_at, next_planned_at,
-                                    memory_circle, interval_days, ease_factor, stability, difficulty)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            INSERT INTO word_state (word, note, times_studied, last_studied_at, next_planned_at,
+                                    memory_circle, interval_days, ease_factor, stability, difficulty,
+                                    ebisu_alpha, ebisu_beta, ebisu_halflife)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(word) DO UPDATE SET
-                familiarity = excluded.familiarity,
                 note = excluded.note,
                 times_studied = excluded.times_studied,
                 last_studied_at = excluded.last_studied_at,
@@ -306,10 +309,12 @@ public final class UserStore {
                 interval_days = excluded.interval_days,
                 ease_factor = excluded.ease_factor,
                 stability = excluded.stability,
-                difficulty = excluded.difficulty
+                difficulty = excluded.difficulty,
+                ebisu_alpha = excluded.ebisu_alpha,
+                ebisu_beta = excluded.ebisu_beta,
+                ebisu_halflife = excluded.ebisu_halflife
         """, [
             .text(state.word),
-            state.familiarity.map { Database.Value.int(Int64($0)) } ?? .null,
             .text(state.note),
             .int(Int64(state.timesStudied)),
             state.lastStudiedAt.map { Database.Value.real($0.timeIntervalSince1970) } ?? .null,
@@ -319,28 +324,32 @@ public final class UserStore {
             state.easeFactor.map { Database.Value.real($0) } ?? .null,
             state.stability.map { Database.Value.real($0) } ?? .null,
             state.difficulty.map { Database.Value.real($0) } ?? .null,
+            state.ebisuAlpha.map { Database.Value.real($0) } ?? .null,
+            state.ebisuBeta.map { Database.Value.real($0) } ?? .null,
+            state.ebisuHalflifeHours.map { Database.Value.real($0) } ?? .null,
         ])
     }
 
-    public func setFamiliarity(_ value: Int?, for word: String) {
+    /// Seeds scheduling state for "I already know this word" (the manual
+    /// entry point that used to set a familiarity percentage): the rung maps
+    /// to the circles ladder and the Ebisu observer starts believing the
+    /// matching half-life. Information FOR the scheduler, never an override.
+    public func seedKnownWord(_ word: String, rung: Int) {
         var s = state(of: word)
-        s.familiarity = value.map { min(100, max(0, $0)) }
-        // A manual familiarity is information FOR the scheduler, not an
-        // override of it: seed the scheduling state to the matching rung so
-        // the algorithm takes over from the right starting point.
-        if let familiarity = s.familiarity {
-            let rung = max(1, familiarity / 20)          // 20%->1 … 100%->5
-            if s.timesStudied == 0 { s.timesStudied = 1 }
-            s.memoryCircle = max(s.memoryCircle, rung)
-            let seededInterval = Double(SRS.intervalDays(circle: rung))
-            if (s.intervalDays ?? 0) < seededInterval {
-                s.intervalDays = seededInterval
-                s.stability = max(s.stability ?? 0, seededInterval)
-                s.lastStudiedAt = s.lastStudiedAt ?? Date()
-                s.nextPlannedAt = Calendar.current.date(
-                    byAdding: .day, value: Int(seededInterval),
-                    to: Calendar.current.startOfDay(for: Date()))
-            }
+        let clamped = max(1, min(5, rung))
+        if s.timesStudied == 0 { s.timesStudied = 1 }
+        s.memoryCircle = max(s.memoryCircle, clamped)
+        let seededInterval = Double(SRS.intervalDays(circle: clamped))
+        if (s.intervalDays ?? 0) < seededInterval {
+            s.intervalDays = seededInterval
+            s.stability = max(s.stability ?? 0, seededInterval)
+            s.lastStudiedAt = s.lastStudiedAt ?? Date()
+            s.nextPlannedAt = Calendar.current.date(
+                byAdding: .day, value: Int(seededInterval),
+                to: Calendar.current.startOfDay(for: Date()))
+        }
+        if s.ebisuModel == nil {
+            s.ebisuModel = EbisuModel.initial(intervalDays: seededInterval)
         }
         save(state: s)
     }
@@ -490,14 +499,66 @@ extension UserStore {
     }
 
     public func wordsAboveLeitnerBoxes() -> Int {
+        wordsWithCircleAbove(6)
+    }
+
+    /// Words whose ladder marker exceeds `circle` — used by the switch flow
+    /// to describe how progress maps onto a shorter ladder.
+    public func wordsWithCircleAbove(_ circle: Int) -> Int {
         let rows = (try? db.execute(
-            "SELECT COUNT(*) AS c FROM word_state WHERE memory_circle > 6")) ?? []
+            "SELECT COUNT(*) AS c FROM word_state WHERE memory_circle > ?",
+            [.int(Int64(circle))])) ?? []
         return rows.first?.int("c") ?? 0
     }
 
     public func hasPausedSessions() -> Bool {
         let rows = (try? db.execute("SELECT COUNT(*) AS c FROM session_state")) ?? []
         return (rows.first?.int("c") ?? 0) > 0
+    }
+
+    /// Removes the most recent study_log row for a word — the flashcard
+    /// Undo affordance rolls back the log entry alongside the state snapshot.
+    public func deleteLastLog(word: String) {
+        try? db.execute("""
+            DELETE FROM study_log WHERE rowid = (
+                SELECT rowid FROM study_log WHERE word = ? ORDER BY studied_at DESC LIMIT 1
+            )
+        """, [.text(word)])
+    }
+
+    /// Total logged reviews — gates the on-device optimizer.
+    public func totalReviewCount() -> Int {
+        let rows = (try? db.execute("SELECT COUNT(*) AS c FROM study_log")) ?? []
+        return rows.first?.int("c") ?? 0
+    }
+
+    /// Per-word review sequences for optimizer training, ordered by time.
+    /// Legacy binary rows map to Good/Again — the same mapping the schedulers
+    /// have always applied.
+    public func reviewSequences() -> [[FSRSOptimizer.Review]] {
+        let rows = (try? db.execute(
+            "SELECT word, studied_at, knew, grade FROM study_log ORDER BY word, studied_at"
+        )) ?? []
+        var sequences: [[FSRSOptimizer.Review]] = []
+        var currentWord = ""
+        var current: [FSRSOptimizer.Review] = []
+        var lastAt: Double?
+        for row in rows {
+            let word = row.text("word")
+            if word != currentWord {
+                if current.count >= 2 { sequences.append(current) }
+                currentWord = word
+                current = []
+                lastAt = nil
+            }
+            let at = row.optionalDouble("studied_at") ?? 0
+            let grade = row.optionalDouble("grade").map { Int($0) } ?? (row.int("knew") == 1 ? 3 : 1)
+            let elapsedDays = lastAt.map { max(0, (at - $0) / 86_400) } ?? 0
+            current.append(FSRSOptimizer.Review(rating: min(4, max(1, grade)), elapsedDays: elapsedDays))
+            lastAt = at
+        }
+        if current.count >= 2 { sequences.append(current) }
+        return sequences
     }
 
     /// Erases every user table. The bundled dictionary is untouched.

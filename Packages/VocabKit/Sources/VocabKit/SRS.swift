@@ -16,21 +16,14 @@ public enum SRS {
         return intervals.last! * (1 << (circle - intervals.count))
     }
 
-    public static let familiarityStepUp = 20
-    public static let familiarityStepDown = 20
-
-    /// Applies one study answer to a word state.
+    /// Applies one study answer to a word state (legacy circles path).
     public static func apply(answer knew: Bool, to state: inout WordState, now: Date = Date(), calendar: Calendar = .current) {
         state.timesStudied += 1
         state.lastStudiedAt = now
         if knew {
             state.memoryCircle = max(1, state.memoryCircle + 1)
-            let current = state.familiarity ?? 0
-            state.familiarity = min(100, current + familiarityStepUp)
         } else {
             state.memoryCircle = 1
-            let current = state.familiarity ?? 0
-            state.familiarity = max(0, current - familiarityStepDown)
         }
         let days = intervalDays(circle: state.memoryCircle)
         let startOfToday = calendar.startOfDay(for: now)

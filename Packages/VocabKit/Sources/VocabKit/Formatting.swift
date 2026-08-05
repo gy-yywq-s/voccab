@@ -44,10 +44,21 @@ public enum Formatting {
         return "Great job! You've mastered \(newWords) new words and reviewed \(reviewed) words. Challenge yourself with a new set!"
     }
 
-    /// Familiarity chip text: "Familiarity: 20%" or "Familiarity: ?".
-    public static func familiarityChip(_ familiarity: Int?) -> String {
-        if let familiarity { return "Familiarity: \(familiarity)%" }
-        return "Familiarity: ?"
+    /// Recall chip text: "Recall: 82%" (Ebisu-predicted probability of
+    /// remembering right now) or "Recall: ?" for never-studied words.
+    public static func recallChip(_ recall: Double?) -> String {
+        if let recall { return "Recall: \(Int((recall * 100).rounded()))%" }
+        return "Recall: ?"
+    }
+
+    /// Compact interval text able to express the hour-scale algorithms:
+    /// "5s", "2m", "4h", "3d", "180d".
+    public static func interval(days: Double) -> String {
+        let seconds = days * 86_400
+        if seconds < 60 { return "\(max(1, Int(seconds.rounded())))s" }
+        if seconds < 3600 { return "\(Int((seconds / 60).rounded()))m" }
+        if seconds < 86_400 { return "\(Int((seconds / 3600).rounded()))h" }
+        return "\(Int(days.rounded()))d"
     }
 
     /// Frequency chip text: "Frequency: TOP 100" / "Frequency: 5K-10K" /

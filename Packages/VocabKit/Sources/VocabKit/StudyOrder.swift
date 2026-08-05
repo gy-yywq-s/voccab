@@ -6,8 +6,10 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
     case listOrder
     case frequencyHighFirst
     case frequencyLowFirst
-    case familiarityLowFirst
-    case familiarityHighFirst
+    /// Ebisu-predicted recall probability, weakest first — the slot the old
+    /// familiarity counter occupied, now driven by the Bayesian observer.
+    case recallWeakFirst
+    case recallStrongFirst
     case plannedReviewFirst
     case alphabeticalAZ
     case alphabeticalZA
@@ -19,8 +21,8 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
         case .listOrder: return "List Order"
         case .frequencyHighFirst: return "Frequency (Common First)"
         case .frequencyLowFirst: return "Frequency (Rare First)"
-        case .familiarityLowFirst: return "Familiarity (Low First)"
-        case .familiarityHighFirst: return "Familiarity (High First)"
+        case .recallWeakFirst: return "Recall (Weakest First)"
+        case .recallStrongFirst: return "Recall (Strongest First)"
         case .plannedReviewFirst: return "Planned Review (Due First)"
         case .alphabeticalAZ: return "Alphabetical (A-Z)"
         case .alphabeticalZA: return "Alphabetical (Z-A)"
@@ -34,8 +36,8 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
         case .listOrder: return "List Order"
         case .frequencyHighFirst: return "Common First"
         case .frequencyLowFirst: return "Rare First"
-        case .familiarityLowFirst: return "Low Familiarity"
-        case .familiarityHighFirst: return "High Familiarity"
+        case .recallWeakFirst: return "Weak Recall"
+        case .recallStrongFirst: return "Strong Recall"
         case .plannedReviewFirst: return "Due First"
         case .alphabeticalAZ: return "A-Z"
         case .alphabeticalZA: return "Z-A"
@@ -62,14 +64,14 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
                     ? $0.word.lowercased() < $1.word.lowercased()
                     : normalizedRank($0.rank) > normalizedRank($1.rank)
             }
-        case .familiarityLowFirst:
+        case .recallWeakFirst:
             return items.sorted {
-                let a = $0.familiarity ?? -1, b = $1.familiarity ?? -1
+                let a = $0.recall ?? -1, b = $1.recall ?? -1
                 return a == b ? $0.word.lowercased() < $1.word.lowercased() : a < b
             }
-        case .familiarityHighFirst:
+        case .recallStrongFirst:
             return items.sorted {
-                let a = $0.familiarity ?? -1, b = $1.familiarity ?? -1
+                let a = $0.recall ?? -1, b = $1.recall ?? -1
                 return a == b ? $0.word.lowercased() < $1.word.lowercased() : a > b
             }
         case .plannedReviewFirst:
@@ -86,9 +88,9 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
             var generator = SplitMix64(seed: randomSeed)
             return items.shuffled(using: &generator)
         case .forgottenFirst:
-            // Lowest estimated recall probability first (Ebisu's practical
-            // payoff, computed with the FSRS curve). Unmodeled words sort
-            // as fully forgotten so they surface early.
+            // Lowest scheduler-estimated retrievability first (FSRS curve on
+            // the active model's stability). Unmodeled words sort as fully
+            // forgotten so they surface early.
             let now = Date()
             return items.sorted {
                 let a = $0.estimatedRetrievability(now: now) ?? 0
@@ -122,20 +124,22 @@ public struct StudyItem: Hashable, Codable, Sendable {
     public var word: String
     public var listPosition: Int
     public var rank: Int
-    public var familiarity: Int?
+    /// Ebisu-predicted recall probability at plan-build time (0...1);
+    /// nil = never studied.
+    public var recall: Double?
     public var nextPlannedAt: Date?
     public var isNew: Bool
     // Optional so paused sessions from older builds still decode.
     public var stability: Double?
     public var lastStudiedAt: Date?
 
-    public init(word: String, listPosition: Int, rank: Int, familiarity: Int?,
+    public init(word: String, listPosition: Int, rank: Int, recall: Double? = nil,
                 nextPlannedAt: Date?, isNew: Bool,
                 stability: Double? = nil, lastStudiedAt: Date? = nil) {
         self.word = word
         self.listPosition = listPosition
         self.rank = rank
-        self.familiarity = familiarity
+        self.recall = recall
         self.nextPlannedAt = nextPlannedAt
         self.isNew = isNew
         self.stability = stability

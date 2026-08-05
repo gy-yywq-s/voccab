@@ -63,33 +63,21 @@ final class ExchangeTests: XCTestCase {
 }
 
 final class SRSTests: XCTestCase {
-    func testKnowAdvancesCircleAndFamiliarity() {
+    func testKnowAdvancesCircle() {
         var state = WordState(word: "test")
         SRS.apply(answer: true, to: &state)
         XCTAssertEqual(state.memoryCircle, 1)
-        XCTAssertEqual(state.familiarity, 20)
         XCTAssertEqual(state.timesStudied, 1)
         XCTAssertNotNil(state.nextPlannedAt)
 
         SRS.apply(answer: true, to: &state)
         XCTAssertEqual(state.memoryCircle, 2)
-        XCTAssertEqual(state.familiarity, 40)
     }
 
     func testDontKnowResetsCircle() {
-        var state = WordState(word: "test", familiarity: 60, timesStudied: 3, memoryCircle: 4)
+        var state = WordState(word: "test", timesStudied: 3, memoryCircle: 4)
         SRS.apply(answer: false, to: &state)
         XCTAssertEqual(state.memoryCircle, 1)
-        XCTAssertEqual(state.familiarity, 40)
-    }
-
-    func testFamiliarityClamps() {
-        var state = WordState(word: "test", familiarity: 95)
-        SRS.apply(answer: true, to: &state)
-        XCTAssertEqual(state.familiarity, 100)
-        var low = WordState(word: "test2", familiarity: 10)
-        SRS.apply(answer: false, to: &low)
-        XCTAssertEqual(low.familiarity, 0)
     }
 
     func testIntervalLadder() {
@@ -113,9 +101,9 @@ final class SRSTests: XCTestCase {
 final class StudyOrderTests: XCTestCase {
     private func items() -> [StudyItem] {
         [
-            StudyItem(word: "beta", listPosition: 0, rank: 5000, familiarity: 80, nextPlannedAt: Date(timeIntervalSince1970: 300), isNew: false),
-            StudyItem(word: "alpha", listPosition: 1, rank: 100, familiarity: nil, nextPlannedAt: nil, isNew: true),
-            StudyItem(word: "gamma", listPosition: 2, rank: 0, familiarity: 20, nextPlannedAt: Date(timeIntervalSince1970: 100), isNew: false),
+            StudyItem(word: "beta", listPosition: 0, rank: 5000, recall: 0.8, nextPlannedAt: Date(timeIntervalSince1970: 300), isNew: false),
+            StudyItem(word: "alpha", listPosition: 1, rank: 100, recall: nil, nextPlannedAt: nil, isNew: true),
+            StudyItem(word: "gamma", listPosition: 2, rank: 0, recall: 0.2, nextPlannedAt: Date(timeIntervalSince1970: 100), isNew: false),
         ]
     }
 
@@ -131,8 +119,8 @@ final class StudyOrderTests: XCTestCase {
         XCTAssertEqual(StudyOrder.frequencyLowFirst.sort(items()).map(\.word), ["gamma", "beta", "alpha"])
     }
 
-    func testFamiliarityLowFirstPutsUnknownFirst() {
-        XCTAssertEqual(StudyOrder.familiarityLowFirst.sort(items()).map(\.word), ["alpha", "gamma", "beta"])
+    func testRecallWeakFirstPutsUnknownFirst() {
+        XCTAssertEqual(StudyOrder.recallWeakFirst.sort(items()).map(\.word), ["alpha", "gamma", "beta"])
     }
 
     func testPlannedReview() {
@@ -155,13 +143,13 @@ final class StudyOrderTests: XCTestCase {
 final class StudyEngineTests: XCTestCase {
     private func makeStates() -> [String: WordState] {
         var states: [String: WordState] = [:]
-        // studied, due, low familiarity -> review candidate
-        states["beta"] = WordState(word: "beta", familiarity: 40, timesStudied: 2,
+        // studied, due, mid-ladder -> review candidate
+        states["beta"] = WordState(word: "beta", timesStudied: 2,
                                    lastStudiedAt: Date().addingTimeInterval(-86400 * 3),
                                    nextPlannedAt: Date().addingTimeInterval(-3600), memoryCircle: 2)
-        // studied but above target familiarity
-        states["gamma"] = WordState(word: "gamma", familiarity: 95, timesStudied: 5,
-                                    lastStudiedAt: Date(), nextPlannedAt: Date().addingTimeInterval(-3600), memoryCircle: 4)
+        // studied and past the circles graduation rung -> excluded
+        states["gamma"] = WordState(word: "gamma", timesStudied: 8,
+                                    lastStudiedAt: Date(), nextPlannedAt: Date().addingTimeInterval(-3600), memoryCircle: 7)
         return states
     }
 
@@ -172,14 +160,13 @@ final class StudyEngineTests: XCTestCase {
             dictWords: [:],
             dailyGoalNew: 1,
             dailyGoalReview: 30,
-            targetFamiliarity: 90,
             order: .alphabeticalAZ,
             alreadyStudiedToday: (0, 0)
         )
         let mix = plans[0], allNew = plans[1], allReview = plans[2]
         XCTAssertEqual(mix.mode, .mix)
         XCTAssertEqual(mix.newCount, 1)          // capped by daily goal
-        XCTAssertEqual(mix.reviewCount, 1)       // beta only; gamma above target
+        XCTAssertEqual(mix.reviewCount, 1)       // beta only; gamma graduated
         XCTAssertEqual(allNew.newCount, 2)       // alpha + delta
         XCTAssertEqual(allReview.reviewCount, 1)
     }
@@ -191,7 +178,6 @@ final class StudyEngineTests: XCTestCase {
             dictWords: [:],
             dailyGoalNew: 15,
             dailyGoalReview: 30,
-            targetFamiliarity: 90,
             order: .listOrder,
             alreadyStudiedToday: (15, 30)
         )
@@ -202,8 +188,8 @@ final class StudyEngineTests: XCTestCase {
 
     func testSessionAnswerFlow() {
         let items = [
-            StudyItem(word: "one", listPosition: 0, rank: 1, familiarity: nil, nextPlannedAt: nil, isNew: true),
-            StudyItem(word: "two", listPosition: 1, rank: 2, familiarity: nil, nextPlannedAt: nil, isNew: true),
+            StudyItem(word: "one", listPosition: 0, rank: 1, nextPlannedAt: nil, isNew: true),
+            StudyItem(word: "two", listPosition: 1, rank: 2, nextPlannedAt: nil, isNew: true),
         ]
         var session = StudyEngine.startSession(
             listID: 1,
@@ -227,7 +213,7 @@ final class StudyEngineTests: XCTestCase {
     }
 
     func testSessionRoundTripEncoding() {
-        let items = [StudyItem(word: "one", listPosition: 0, rank: 1, familiarity: 20, nextPlannedAt: Date(), isNew: false)]
+        let items = [StudyItem(word: "one", listPosition: 0, rank: 1, recall: 0.2, nextPlannedAt: Date(), isNew: false)]
         let session = StudyEngine.startSession(
             listID: 7,
             plan: SessionPlan(mode: .mix, newWords: items, reviewWords: []),
@@ -399,17 +385,18 @@ final class UserStoreTests: XCTestCase {
 
     func testWordStateRoundTrip() throws {
         let store = try makeStore()
-        var state = WordState(word: "some", familiarity: 20, note: "n", timesStudied: 2,
+        var state = WordState(word: "some", note: "n", timesStudied: 2,
                               lastStudiedAt: Date(), nextPlannedAt: Date(), memoryCircle: 2)
+        state.ebisuModel = EbisuModel(alpha: 3.5, beta: 2.5, halflifeHours: 48)
         store.save(state: state)
         let loaded = store.state(of: "some")
-        XCTAssertEqual(loaded.familiarity, 20)
         XCTAssertEqual(loaded.memoryCircle, 2)
         XCTAssertEqual(loaded.timesStudied, 2)
+        XCTAssertEqual(loaded.ebisuModel?.halflifeHours ?? 0, 48, accuracy: 0.001)
 
-        state.familiarity = nil
+        state.ebisuModel = nil
         store.save(state: state)
-        XCTAssertNil(store.state(of: "some").familiarity)
+        XCTAssertNil(store.state(of: "some").ebisuModel)
     }
 
     func testTodayCounts() throws {
@@ -466,9 +453,12 @@ final class FormattingTests: XCTestCase {
     }
 
     func testChips() {
-        XCTAssertEqual(Formatting.familiarityChip(20), "Familiarity: 20%")
-        XCTAssertEqual(Formatting.familiarityChip(nil), "Familiarity: ?")
+        XCTAssertEqual(Formatting.recallChip(0.2), "Recall: 20%")
+        XCTAssertEqual(Formatting.recallChip(nil), "Recall: ?")
         XCTAssertEqual(Formatting.frequencyChip(.top100), "Frequency: TOP 100")
+        XCTAssertEqual(Formatting.interval(days: 5.0 / 86400), "5s")
+        XCTAssertEqual(Formatting.interval(days: 4.0 / 24), "4h")
+        XCTAssertEqual(Formatting.interval(days: 3), "3d")
     }
 }
 

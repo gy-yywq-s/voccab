@@ -1,99 +1,85 @@
 # Memory-scheduling algorithms
 
 Voccab lets the user choose the spaced-repetition algorithm in
-Settings → Study → Algorithm. All algorithms consume the same binary study
-input (I Know / I Don't Know), share the same familiarity bookkeeping
-(±20%, clamped to 0–100%), and store their state side by side, so switching
-algorithms never loses progress.
+Settings → Practice → Algorithm. Every algorithm consumes the same study
+input (binary or graded, per the Practice Input setting), shares the same
+Ebisu recall observer, and stores its state side by side, so switching
+algorithms never loses progress. A guarded switch flow previews what a
+change auto-converts before it happens.
 
-Implementation: `Packages/VocabKit/Sources/VocabKit/Scheduler.swift`.
+Implementation: `Packages/VocabKit/Sources/VocabKit/Schedulers/` — one file
+per algorithm, plus `SchedulerCore.swift` (shared protocol + bookkeeping),
+`SchedulerKind.swift` (registry), `AlgorithmConfig.swift` (per-algorithm
+knobs), `SSPMMC.swift` (scheduling goal), `FSRSOptimizer.swift`
+(on-device personalization).
 Tests: `Packages/VocabKit/Tests/VocabKitTests/SchedulerTests.swift`.
 
-## Research summary
+## The lineup
 
-Spaced repetition rests on two robust findings from memory research:
-
-- **The forgetting curve** (Ebbinghaus, 1885): recall probability decays
-  roughly exponentially with time since the last review.
-- **The spacing effect**: reviews spaced just before forgetting produce far
-  more durable memory per minute of study than massed repetition, and each
-  successful spaced recall slows subsequent forgetting.
-
-Modern schedulers differ in how they estimate when a word is about to be
-forgotten:
-
-| Algorithm | Year | Per-word model | Strengths | Weaknesses |
+| Algorithm | Year | Scale | Per-word model | Character |
 | --- | --- | --- | --- | --- |
-| Fixed ladder ("memory circles") | — | none (global ladder) | predictable, matches the original app | ignores item difficulty |
-| Leitner boxes | 1972 | box number | dead simple, physical-flashcard heritage | coarse, resets hard |
-| SM-2 (SuperMemo) | 1987 | ease factor | first per-item adaptivity; the Anki default for decades | ease "death spiral" on repeated failures |
-| FSRS 4.5 | 2023 | stability + difficulty (DSR model) | best published fit to real review logs; explicit retention target | more complex; benefits from personalized weights |
+| Memory Circles | — | days | ladder rung | the original app's fixed 1·2·4·7·15·30 ladder |
+| Leitner Boxes | 1972 | days | box number | physical-flashcard heritage, doubling boxes |
+| Memrise Ladder | — | **hours** | ladder rung | 4h → 12h → 24h → 6d…: same-day reinforcement first |
+| Pimsleur Burst | 1967 | **seconds** | ladder rung | 5s → 25s → 2m → …: rapid same-session cramming |
+| SM-2 | 1987 | days | ease factor | classic SuperMemo adaptivity |
+| FSRS-6 | 2024 | days | stability + difficulty | mainline modern model, 21 parameters, learnable decay |
+| FSRS-7 | 2026 | **fractional** | stability + difficulty | newest model, 35 parameters, dual forgetting curves, native same-day handling |
 
-## What each implementation does
+FSRS-6 and FSRS-7 are ports of the official open-spaced-repetition
+implementations (swift-fsrs and srs-benchmark reference, MIT). The
+hour-scale algorithms schedule with exact timestamps; day-scale algorithms
+keep calendar-day anchoring.
 
-### Memory Circles (default — the original app's behavior)
+## Graded input
 
-Success advances one circle on the ladder **1, 2, 4, 7, 15, 30** days
-(doubling past the ladder); failure resets to circle 1. The word detail page
-shows the circle number ("Memory: Circle 2").
+Grades map per algorithm (spelled out in Settings → Practice Input):
+ladders treat Hard as "hold the rung" and Easy as "climb two"; SM-2 maps
+grades to its native quality 2–5; FSRS uses ratings 1–4 directly,
+activating the Hard-penalty and Easy-bonus weights binary input can't
+reach. Binary mode is bit-identical to the historical behavior
+(know → Good, forgot → Again).
 
-### Leitner Boxes
+## The Ebisu recall observer
 
-Five boxes with intervals **1, 2, 4, 8, 16** days. Success promotes one box,
-failure demotes to box 1. The box number is stored in the same field as the
-circle number.
+`Ebisu.swift` is an explicit Swift implementation of Ebisu v2 (Bayesian
+Beta-on-recall). It is deliberately **not** a scheduler (it benchmarks
+below baseline as one); instead it runs as an independent observer updated
+by every review under every algorithm, and its `predictRecall` powers the
+recall display, the recall filters, and the "Recall (Weakest First)" study
+order — the slot the old familiarity counter occupied before it was
+removed.
 
-### SM-2
+## Scheduling goals (FSRS-6/7)
 
-Every word carries an ease factor `EF` starting at 2.5. Binary answers map to
-SM-2 quality grades (know → q=4, forgot → q=2):
+- **Target retention** (default): every interval aims for the configured
+  recall probability (85/90/95%).
+- **Minimize total cost (SSP-MMC)**: a greedy one-step version of the
+  SSP-MMC objective (Ye et al., TKDE 2023) — each review picks the
+  retention that maximizes expected stability gained per second of
+  expected review time.
 
-```
-EF' = max(1.3, EF + 0.1 − (5−q)(0.08 + (5−q)·0.02))
-I(1) = 1 day, I(2) = 6 days, I(n) = I(n−1) × EF
-```
+## Graduation
 
-Failure resets the repetition count (next interval 1 day) while keeping the
-shrunken ease, so difficult words cycle faster permanently.
+"By algorithm" uses each algorithm's native endpoint: ladders retire past
+their top rung (configurable), SM-2 uses a practical interval horizon, and
+the FSRS family graduates on **stability** ≥ horizon (retention-knob
+independent). "Never" keeps everything cycling.
 
-### FSRS (4.5, simplified)
+## Personalization
 
-FSRS models each word as (Stability, Difficulty). Retrievability after `t`
-days is
-
-```
-R(t, S) = (1 + (19/81)·t/S)^(−0.5)
-```
-
-and the next interval is chosen so R ≈ 0.9 (with the standard constants the
-interval approximately equals the stability). On review, stability grows by
-
-```
-S' = S · (1 + e^{w8} · (11 − D) · S^{−w9} · (e^{w10·(1−R)} − 1))
-```
-
-for a success, and collapses to
-
-```
-S'_fail = min(S, w11 · D^{−w12} · ((S+1)^{w13} − 1) · e^{w14·(1−R)})
-```
-
-on a failure. Difficulty moves with each answer and mean-reverts toward its
-initial "Good" value. We use the published FSRS-4.5 default weights and map
-the binary input to Good/Again ratings.
-
-Simplifications versus full FSRS: no per-user weight optimization (needs a
-review-log training step), no Hard/Easy grades (the UI is binary by design),
-and no fuzzing of intervals. These keep behavior deterministic and the UI
-unchanged; the data model already stores everything needed to add weight
-training later.
+Settings → Algorithm Settings → Personalization fits the 21 FSRS-6
+parameters to the user's own review log (log-loss objective, Adam with
+numerical gradients, on-device, ≥400 reviews). The result is kept only if
+it beats the defaults on the user's own data, and can be reverted anytime.
+The review log records grade, response time, and interval context (user
+can disable) — the raw material this and any future tuning needs.
 
 ## User freedom
 
-- The algorithm, recitation order, daily goals, and target familiarity are
-  all independent settings.
-- The scheduler only decides *when* a word comes back; *what* is studied and
-  in *which order* stays under the user's control (study order setting +
-  per-session override).
-- Manual familiarity edits (slider or "Feel Familiar?" menu) are always
-  respected regardless of algorithm.
+- Algorithm, input style, scheduling goal, graduation policy, order, and
+  daily goals are independent settings.
+- The scheduler decides *when* a word comes back; *what* is studied and in
+  *which order* stays under the user's control.
+- Switching algorithms previews auto-conversions, is cancelable, and
+  highlights converted settings once afterwards.

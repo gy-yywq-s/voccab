@@ -187,29 +187,31 @@ public enum FrequencyFilter: String, CaseIterable, Sendable {
     }
 }
 
+/// Filters word lists by the Ebisu-predicted recall probability (the slot
+/// the old familiarity counter used to occupy).
 public enum FamiliarityFilter: String, CaseIterable, Sendable {
     case all
-    case familiar       // >= 80%
-    case notFamiliar    // < 80%
-    case unknown
+    case familiar       // predicted recall >= 80%
+    case notFamiliar    // predicted recall < 80%
+    case unknown        // never studied
 
     public var label: String {
         switch self {
         case .all: return "Show All"
-        case .familiar: return "Familiar (>=80%)"
-        case .notFamiliar: return "Not Familiar (<80%)"
-        case .unknown: return "Unknown"
+        case .familiar: return "Strong Recall (>=80%)"
+        case .notFamiliar: return "Weak Recall (<80%)"
+        case .unknown: return "Never Studied"
         }
     }
 
-    public func matches(familiarity: Int?) -> Bool {
+    public func matches(recall: Double?) -> Bool {
         switch self {
         case .all: return true
-        case .familiar: return (familiarity ?? -1) >= 80
+        case .familiar: return (recall ?? -1) >= 0.8
         case .notFamiliar:
-            guard let familiarity else { return false }
-            return familiarity < 80
-        case .unknown: return familiarity == nil
+            guard let recall else { return false }
+            return recall < 0.8
+        case .unknown: return recall == nil
         }
     }
 }
@@ -284,8 +286,6 @@ public struct WordList: Identifiable, Hashable, Sendable {
 /// Per-word user state.
 public struct WordState: Hashable, Sendable {
     public var word: String
-    /// 0...100, nil = never set (shown as "?").
-    public var familiarity: Int?
     public var note: String
     public var timesStudied: Int
     public var lastStudiedAt: Date?
@@ -301,14 +301,19 @@ public struct WordState: Hashable, Sendable {
     public var stability: Double?
     /// FSRS difficulty (1...10).
     public var difficulty: Double?
+    /// Ebisu recall observer (independent of the active scheduler).
+    public var ebisuAlpha: Double?
+    public var ebisuBeta: Double?
+    public var ebisuHalflifeHours: Double?
 
-    public init(word: String, familiarity: Int? = nil, note: String = "",
+    public init(word: String, note: String = "",
                 timesStudied: Int = 0, lastStudiedAt: Date? = nil,
                 nextPlannedAt: Date? = nil, memoryCircle: Int = 0,
                 intervalDays: Double? = nil, easeFactor: Double? = nil,
-                stability: Double? = nil, difficulty: Double? = nil) {
+                stability: Double? = nil, difficulty: Double? = nil,
+                ebisuAlpha: Double? = nil, ebisuBeta: Double? = nil,
+                ebisuHalflifeHours: Double? = nil) {
         self.word = word
-        self.familiarity = familiarity
         self.note = note
         self.timesStudied = timesStudied
         self.lastStudiedAt = lastStudiedAt
@@ -318,6 +323,30 @@ public struct WordState: Hashable, Sendable {
         self.easeFactor = easeFactor
         self.stability = stability
         self.difficulty = difficulty
+        self.ebisuAlpha = ebisuAlpha
+        self.ebisuBeta = ebisuBeta
+        self.ebisuHalflifeHours = ebisuHalflifeHours
+    }
+
+    /// The Ebisu recall observer as a model value, when present.
+    public var ebisuModel: EbisuModel? {
+        get {
+            guard let a = ebisuAlpha, let b = ebisuBeta, let h = ebisuHalflifeHours else { return nil }
+            return EbisuModel(alpha: a, beta: b, halflifeHours: h)
+        }
+        set {
+            ebisuAlpha = newValue?.alpha
+            ebisuBeta = newValue?.beta
+            ebisuHalflifeHours = newValue?.halflifeHours
+        }
+    }
+
+    /// Ebisu-predicted probability of recalling this word right now.
+    /// nil = never studied.
+    public func predictedRecall(now: Date = Date()) -> Double? {
+        guard timesStudied > 0, let model = ebisuModel, let last = lastStudiedAt else { return nil }
+        let elapsedHours = max(0, now.timeIntervalSince(last) / 3600)
+        return model.predictRecall(elapsedHours: elapsedHours)
     }
 }
 

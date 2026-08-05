@@ -46,18 +46,16 @@ public enum StudyEngine {
     ///   familiarity
     /// Whether this word has graduated (left the review pool) under the
     /// chosen policy. "By algorithm" uses each algorithm's native endpoint:
-    /// Circles completes its ladder, Leitner leaves the top box, SM-2 and
-    /// FSRS (theoretically perpetual) use their practical horizons.
+    /// the fixed ladders complete/leave their top rung, SM-2 and the FSRS
+    /// family (theoretically perpetual) use their practical horizons.
     public static func isGraduated(
-        _ state: WordState, policy: GraduationPolicy, targetFamiliarity: Int,
+        _ state: WordState, policy: GraduationPolicy,
         kind: SchedulerKind = .circles, config: AlgorithmConfig = AlgorithmConfig()
     ) -> Bool {
         guard state.timesStudied > 0 else { return false }
         switch policy {
         case .never:
             return false
-        case .byFamiliarity:
-            return (state.familiarity ?? 0) >= targetFamiliarity
         case .byAlgorithm:
             switch kind {
             case .circles:
@@ -65,6 +63,12 @@ public enum StudyEngine {
             case .leitner:
                 return config.leitnerRetireAfterTopBox
                     && state.memoryCircle >= LeitnerScheduler.outOfBoxMarker
+            case .memrise:
+                return config.memriseRetireAfterTop
+                    && state.memoryCircle >= MemriseScheduler.outOfLadderMarker
+            case .pimsleur:
+                return config.pimsleurRetireAfterTop
+                    && state.memoryCircle >= PimsleurScheduler.outOfLadderMarker
             case .sm2:
                 return (state.intervalDays ?? 0) >= config.sm2HorizonDays
             case .fsrs:
@@ -75,6 +79,8 @@ public enum StudyEngine {
                 // earlier. Interval is only the fallback for words FSRS has
                 // not scored yet.
                 return (state.stability ?? state.intervalDays ?? 0) >= config.fsrsHorizonDays
+            case .fsrs7:
+                return (state.stability ?? state.intervalDays ?? 0) >= config.fsrs7HorizonDays
             }
         }
     }
@@ -85,10 +91,9 @@ public enum StudyEngine {
         dictWords: [String: DictWord],
         dailyGoalNew: Int,
         dailyGoalReview: Int,
-        targetFamiliarity: Int,
         order: StudyOrder,
         alreadyStudiedToday: (newWords: Int, reviewed: Int),
-        graduationPolicy: GraduationPolicy = .byFamiliarity,
+        graduationPolicy: GraduationPolicy = .byAlgorithm,
         schedulerKind: SchedulerKind = .circles,
         config: AlgorithmConfig = AlgorithmConfig(),
         now: Date = Date()
@@ -103,7 +108,7 @@ public enum StudyEngine {
                 word: word,
                 listPosition: index,
                 rank: rank,
-                familiarity: state.familiarity,
+                recall: state.predictedRecall(now: now),
                 nextPlannedAt: state.nextPlannedAt,
                 isNew: state.timesStudied == 0,
                 stability: state.stability,
@@ -111,7 +116,7 @@ public enum StudyEngine {
             )
             if state.timesStudied == 0 {
                 newItems.append(item)
-            } else if !isGraduated(state, policy: graduationPolicy, targetFamiliarity: targetFamiliarity,
+            } else if !isGraduated(state, policy: graduationPolicy,
                                    kind: schedulerKind, config: config)
                         && SRS.isDue(state, now: now) {
                 reviewItems.append(item)
