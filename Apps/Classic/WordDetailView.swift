@@ -68,6 +68,10 @@ struct WordDetailView: View {
         }
         .background(Color(uiColor: .systemBackground))
         .toolbar { toolbarItems }
+        .onAppear {
+            // Open on the user's top-ranked dictionary (Settings order).
+            tab = env.settings.enabledDictionaries.first ?? .chinese
+        }
         .alert("Edit note", isPresented: $showNoteEditor) {
             TextField("Note", text: $noteText, axis: .vertical)
             Button("Save") { model.setNote(noteText) }
@@ -211,18 +215,18 @@ struct WordDetailView: View {
             }
             let state = model.data.state
             Group {
-                Text("You have studied this word \(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s").")
+                Text("You have practiced this word \(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s").")
                 if let last = state.lastStudiedAt {
-                    (Text("Last studied: ").bold() + Text(Formatting.relative(last)))
+                    (Text("Last practiced: ").bold() + Text(Formatting.relative(last)))
                 }
                 if let next = state.nextPlannedAt {
-                    (Text("Next planned study: ").bold() + Text(Formatting.relative(next)))
+                    (Text("Next review: ").bold() + Text(Formatting.relative(next)))
                 }
                 if state.memoryCircle > 0 {
                     (Text("Memory: ").bold() + Text("Circle \(state.memoryCircle)"))
                 }
                 if state.timesStudied == 0 {
-                    Text("You have never studied this word.")
+                    Text("You haven't practiced this word yet.")
                 }
             }
             .font(.callout)
@@ -470,6 +474,7 @@ struct WordDetailView: View {
     private var appleTab: some View {
         AppleDictionaryInline(term: model.displayWord)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, -20)
             .padding(.top, 8)
     }
 

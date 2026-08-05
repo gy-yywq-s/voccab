@@ -79,9 +79,10 @@ struct NeoHomeView: View {
 
     private var greetingZone: some View {
         let counts = env.userStore.todayCounts()
-        return VStack(alignment: .leading, spacing: 6) {
-            Text(greetingWord)
-                .font(Neo.pageTitle)
+        return VStack(alignment: .leading, spacing: 7) {
+            // A real heading: large serif, editorial weight, varied line.
+            Text(greetingLine)
+                .font(.system(size: 34, weight: .semibold, design: .serif))
             statText(counts)
                 .font(Neo.bodyFont)
                 .foregroundStyle(.secondary)
@@ -92,20 +93,28 @@ struct NeoHomeView: View {
         .id(env.dataVersion)
     }
 
-    private var greetingWord: String {
+    /// Varied by time of day AND by day, so it doesn't read like a fixed
+    /// system string.
+    private var greetingLine: String {
         let hour = Calendar.current.component(.hour, from: Date())
+        let day = Calendar.current.component(.day, from: Date())
+        let pool: [String]
         switch hour {
-        case 5..<12: return "Good morning"
-        case 12..<18: return "Good afternoon"
-        default: return "Good evening"
+        case 5..<12:
+            pool = ["Good morning", "Morning, reader", "First light", "Early pages"]
+        case 12..<18:
+            pool = ["Good afternoon", "Afternoon, reader", "Midday pages", "Keep at it"]
+        default:
+            pool = ["Good evening", "Evening, reader", "Night pages", "Quiet hours"]
         }
+        return pool[day % pool.count]
     }
 
     private func statText(_ counts: (newWords: Int, reviewed: Int)) -> Text {
         if counts.newWords == 0 && counts.reviewed == 0 {
-            return Text("Nothing studied yet today — pick a list below to begin.")
+            return Text("A blank page so far today — pick a list and make a dent.")
         }
-        return Text("\(counts.newWords) new words learned · \(counts.reviewed) reviewed today")
+        return Text("\(counts.newWords) new · \(counts.reviewed) revisited today — nice pace.")
     }
 
     private var myWordsZone: some View {

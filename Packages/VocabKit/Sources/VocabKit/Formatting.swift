@@ -36,7 +36,7 @@ public enum Formatting {
     /// Study-session start page message.
     public static func sessionMessage(newWords: Int, reviewed: Int, hasNewLeft: Bool, hasReviewLeft: Bool) -> String {
         if newWords == 0 && reviewed == 0 {
-            return "A fresh start! Pick a set below and begin studying."
+            return "A fresh start! Pick a set below and dive in."
         }
         if !hasNewLeft && !hasReviewLeft {
             return "Great job! You've mastered \(newWords) new words and reviewed \(reviewed) words. You're all caught up for today!"

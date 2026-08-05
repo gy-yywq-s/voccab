@@ -66,9 +66,15 @@ struct HomeView: View {
         .id(env.dataVersion)
     }
 
+    private var greetingWord: String {
+        let day = Calendar.current.component(.day, from: Date())
+        let pool = ["Hello,", "Hey there,", "Welcome back,", "Onward,"]
+        return pool[day % pool.count]
+    }
+
     private var greeting: some View {
         HStack(alignment: .center, spacing: 12) {
-            Text("Hello,")
+            Text(greetingWord)
                 .font(.system(size: 46, weight: .bold, design: .rounded))
             Image(systemName: "sparkles")
                 .font(.system(size: 34, weight: .semibold))

@@ -15,7 +15,11 @@ struct PromoCarousel: View {
 
     @EnvironmentObject private var env: AppEnvironment
     @State private var index = 0
-    private let ticker = Timer.publish(every: 10, on: .main, in: .common).autoconnect()
+    // A 1s heartbeat + idle check instead of a fixed 10s timer, so the
+    // auto-advance never fires mid-swipe and always waits a full 10s after
+    // any manual interaction.
+    @State private var lastChange = Date()
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var slides: [PromoSlideData] { PromoData.slides }
 
@@ -46,9 +50,12 @@ struct PromoCarousel: View {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .stroke(Color(uiColor: .separator).opacity(0.6), lineWidth: 0.5)
         )
+        .onChange(of: index) {
+            lastChange = Date()
+        }
         .onReceive(ticker) { _ in
-            guard !slides.isEmpty else { return }
-            withAnimation(.easeInOut(duration: 0.45)) {
+            guard !slides.isEmpty, Date().timeIntervalSince(lastChange) >= 10 else { return }
+            withAnimation(.easeInOut(duration: 0.6)) {
                 index = (index + 1) % slides.count
             }
         }
@@ -59,7 +66,7 @@ struct PromoCarousel: View {
         let count = slides.count
         guard count > 0 else { return false }
         let distance = abs(id - index)
-        return distance <= 1 || distance == count - 1
+        return distance <= 2 || distance >= count - 2
     }
 }
 
@@ -99,14 +106,29 @@ private struct PromoSlideView: View {
                     .position(x: box.midX, y: box.midY)
                     .shadow(color: .black.opacity(0.35), radius: 4)
 
-                lookupCard
-                    .padding(12)
-                    .frame(
-                        maxWidth: .infinity, maxHeight: .infinity,
-                        // Keep the card away from the highlighted word.
-                        alignment: box.midY < height / 2 ? .bottomLeading : .topLeading
-                    )
+                positionedCard(box: box, width: width, height: height)
             }
+        }
+    }
+
+    /// The meaning card sits directly ABOVE the highlighted word (falling
+    /// back to below it only when the word is at the very top of the frame).
+    @ViewBuilder
+    private func positionedCard(box: CGRect, width: CGFloat, height: CGFloat) -> some View {
+        let cardWidth: CGFloat = 200
+        let gap: CGFloat = 10
+        let leading = min(max(box.midX - cardWidth / 2, 10), width - cardWidth - 10)
+        if box.minY > 120 {
+            lookupCard
+                .frame(width: cardWidth)
+                .padding(.leading, leading)
+                .frame(width: width, height: max(box.minY - gap, 0), alignment: .bottomLeading)
+        } else {
+            lookupCard
+                .frame(width: cardWidth)
+                .padding(.leading, leading)
+                .padding(.top, box.maxY + gap)
+                .frame(width: width, height: height, alignment: .topLeading)
         }
     }
 

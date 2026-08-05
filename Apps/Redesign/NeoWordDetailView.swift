@@ -57,7 +57,7 @@ struct NeoWordDetailView: View {
                 headword
                 chineseDefinitions
                 noteBlock
-                NeoSectionHeader(title: "Study") {
+                NeoSectionHeader(title: "Progress") {
                     Text(model.data.state.familiarity.map { "\($0)%" } ?? "Not set")
                         .font(Neo.bodyFont)
                         .foregroundStyle(.secondary)
@@ -77,6 +77,10 @@ struct NeoWordDetailView: View {
         .scrollIndicators(.hidden)
         .background(Color(uiColor: .systemBackground))
         .toolbar { toolbarItems }
+        .onAppear {
+            // Open on the user's top-ranked dictionary (Settings order).
+            tab = env.settings.enabledDictionaries.first ?? .chinese
+        }
         .alert("Edit note", isPresented: $showNoteEditor) {
             TextField("Note", text: $noteText, axis: .vertical)
             Button("Save") { model.setNote(noteText) }
@@ -280,7 +284,7 @@ struct NeoWordDetailView: View {
             .padding(.top, 12)
 
             VStack(spacing: 0) {
-                factRow("Studied", state.timesStudied == 0 ? "never" : "\(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s")")
+                factRow("Practiced", state.timesStudied == 0 ? "never" : "\(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s")")
                 if let last = state.lastStudiedAt {
                     factRow("Last review", Formatting.relative(last))
                 }
@@ -554,7 +558,9 @@ struct NeoWordDetailView: View {
     }
 
     private var appleContent: some View {
+        // Full-bleed: cancel the page's horizontal padding.
         AppleDictionaryInline(term: model.displayWord)
+            .padding(.horizontal, -20)
     }
 
     @ToolbarContentBuilder

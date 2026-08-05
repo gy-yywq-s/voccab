@@ -85,8 +85,28 @@ public enum CSVImport {
             }
             result.append(ImportedRow(word: word, note: note))
         }
+        // A header-looking first row with no data rows usually means a paste
+        // lost its line breaks; surface diagnostics instead of guessing.
         guard !result.isEmpty else { throw ImportError.empty }
         return result
+    }
+
+    /// One-line description of how the text parsed, for import error alerts.
+    public static func diagnose(_ text: String) -> String {
+        var content = text
+        if content.hasPrefix("\u{FEFF}") { content.removeFirst() }
+        let delimiter = detectDelimiter(content)
+        let rows = delimiter.map { parseRaw(content, delimiter: $0) } ?? plainLines(content)
+        let delimiterName = delimiter.map {
+            $0 == "\t" ? "tab" : ($0 == ";" ? "semicolon" : "comma")
+        } ?? "none (plain lines)"
+        let maxColumns = rows.map(\.count).max() ?? 0
+        var hints: [String] = []
+        if rows.count <= 1 && maxColumns > 3 {
+            hints.append("looks like line breaks were lost in a paste — try importing the file instead")
+        }
+        return "Parsed \(rows.count) row(s), up to \(maxColumns) column(s), delimiter: \(delimiterName)."
+            + (hints.isEmpty ? "" : " Hint: \(hints.joined(separator: "; "))")
     }
 
     /// Tab wins (Excel paste), then semicolon vs comma by count; nil means
@@ -187,22 +207,30 @@ public enum CSVImport {
         return rows
     }
 
-    /// Imports rows into a new list; notes land on the word state.
+    /// Imports rows into a new list — or, when `mergeInto` is given, into an
+    /// existing list. Notes land on the word state either way.
     @discardableResult
     public static func importRows(
         _ rows: [ImportedRow],
         listName: String,
-        userStore: UserStore
+        userStore: UserStore,
+        mergeInto existingListID: Int? = nil
     ) -> WordList? {
-        guard let list = userStore.createList(name: listName) else { return nil }
+        let targetID: Int
+        if let existingListID {
+            targetID = existingListID
+        } else {
+            guard let list = userStore.createList(name: listName) else { return nil }
+            targetID = list.id
+        }
         userStore.withTransaction {
             for row in rows {
-                userStore.add(word: row.word, to: list.id)
+                userStore.add(word: row.word, to: targetID)
                 if !row.note.isEmpty {
                     userStore.setNote(row.note, for: row.word)
                 }
             }
         }
-        return userStore.lists().first(where: { $0.id == list.id })
+        return userStore.lists().first(where: { $0.id == targetID })
     }
 }

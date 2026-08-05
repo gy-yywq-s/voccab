@@ -9,6 +9,12 @@ struct NeoSettingsView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var accent: PronunciationAccent = .american
     @State private var pronunciationSource: PronunciationSource = .system
+    @State private var voiceStatus = ""
+
+    private var dictionarySummary: String {
+        let count = env.settings.enabledDictionaries.count
+        return "\(count) enabled"
+    }
     @State private var goalNew = 15
     @State private var goalReview = 30
     @State private var target = 90
@@ -23,7 +29,7 @@ struct NeoSettingsView: View {
                 NeoSectionHeader(title: "Word list")
                     .padding(.top, 20)
                 NavigationLink(value: Route.importWords) {
-                    valueRow("Import Words", value: "CSV", chevron: true)
+                    valueRow("Import Words", value: "CSV · TSV · text", chevron: true)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.import")
@@ -50,21 +56,23 @@ struct NeoSettingsView: View {
                     }
                 }
                 .accessibilityIdentifier("settings.voice")
+                if !voiceStatus.isEmpty {
+                    Text(voiceStatus)
+                        .font(.footnote)
+                        .foregroundStyle(voiceStatus.hasPrefix("Recordings available") ? Color.green : .secondary)
+                        .padding(.bottom, 8)
+                }
                 NeoHairline()
                 NavigationLink {
                     DictionaryPreviewPage()
                 } label: {
-                    valueRow("Dictionary Preview", value: "", chevron: true)
+                    valueRow("Dictionaries", value: dictionarySummary, chevron: true)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.dictPreview")
                 NeoHairline()
-                ForEach([DictionarySource.oxford, .english, .synonyms, .webster, .moby, .apple], id: \.self) { source in
-                    toggleRow(source)
-                    NeoHairline()
-                }
 
-                NeoSectionHeader(title: "Study")
+                NeoSectionHeader(title: "Practice")
                     .padding(.top, 28)
                 Button {
                     showGoalSheet = true
@@ -84,7 +92,7 @@ struct NeoSettingsView: View {
                 }
                 .accessibilityIdentifier("settings.targetFamiliarity")
                 NeoHairline()
-                menuRow("Study Order", value: order.shortLabel) {
+                menuRow("Order", value: order.shortLabel) {
                     ForEach(StudyOrder.allCases, id: \.self) { option in
                         Button {
                             order = option
@@ -121,6 +129,14 @@ struct NeoSettingsView: View {
                     .padding(.top, 2)
                     .padding(.bottom, 8)
                 NeoHairline()
+                NavigationLink {
+                    AlgorithmPreviewPage()
+                } label: {
+                    valueRow("Compare Algorithms", value: "", chevron: true)
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.algPreview")
+                NeoHairline()
 
                 NeoSectionHeader(title: "About")
                     .padding(.top, 28)
@@ -141,6 +157,17 @@ struct NeoSettingsView: View {
                 .presentationDragIndicator(.visible)
         }
         .onAppear(perform: load)
+        .task {
+            voiceStatus = "Checking pronunciation recordings…"
+            switch await SpeechService.probeRecordingAvailability() {
+            case .available:
+                voiceStatus = "Recordings available (Wikimedia Commons)"
+            case .unavailable(let reason):
+                voiceStatus = "Recordings unavailable — \(reason)"
+            case .checking:
+                break
+            }
+        }
     }
 
     // MARK: Rows
@@ -282,6 +309,7 @@ struct NeoImportWordsView: View {
     @State private var showPicker = false
     @State private var errorMessage: String?
     @State private var importedList: WordList?
+    @State private var mergeTarget: WordList?
 
     var body: some View {
         ScrollView {
@@ -296,6 +324,28 @@ struct NeoImportWordsView: View {
                     .foregroundStyle(.secondary)
 
                 exampleTable
+
+                HStack {
+                    Text("Add to")
+                        .font(Neo.bodyFont.weight(.medium))
+                    Spacer()
+                    Menu {
+                        Button("New list") { mergeTarget = nil }
+                        ForEach(env.userStore.lists(), id: \.id) { list in
+                            Button(list.name) { mergeTarget = list }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(mergeTarget?.name ?? "New list")
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption)
+                        }
+                        .font(Neo.bodyFont)
+                        .foregroundStyle(Neo.blue)
+                    }
+                    .accessibilityIdentifier("import.target")
+                }
+                .padding(.top, 8)
 
                 HStack {
                     Spacer()
@@ -400,10 +450,15 @@ struct NeoImportWordsView: View {
     private func importText(_ text: String, listName: String) {
         do {
             let rows = try CSVImport.parse(text)
-            importedList = CSVImport.importRows(rows, listName: listName, userStore: env.userStore)
+            importedList = CSVImport.importRows(
+                rows, listName: listName, userStore: env.userStore,
+                mergeInto: mergeTarget?.id)
+            if importedList == nil {
+                errorMessage = "A list named “\(listName)” already exists — pick it under “Add to” to merge instead."
+            }
             env.touch()
         } catch {
-            errorMessage = "No words found — check the table or list format."
+            errorMessage = "No words found. \(CSVImport.diagnose(text))"
         }
     }
 }

@@ -51,25 +51,87 @@ struct AppleDictionarySheet: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: UIReferenceLibraryViewController, context: Context) {}
 }
 
-/// The system dictionary embedded directly in the page (no modal slide-up).
-/// Apple exposes no text API for its dictionaries, so the reference view
-/// controller itself is hosted inline in the tab content area.
+/// The system dictionary flattened into the page: full-bleed, sized to its
+/// own content with internal scrolling disabled, so the page scrolls as one.
+/// The view controller is cached per term (creating it is what caused the
+/// tap stall) and `dictionaryHasDefinition` is never called synchronously —
+/// the embedded controller shows its own empty state when a word is missing.
 struct AppleDictionaryInline: View {
     let term: String
+    @State private var contentHeight: CGFloat = 420
+
+    /// Creating the first UIReferenceLibraryViewController loads dictionary
+    /// assets and stalls the main thread; do it once at an idle moment.
+    @MainActor
+    static func warmUp() {
+        _ = UIReferenceLibraryViewController(term: "hello")
+    }
 
     var body: some View {
-        if UIReferenceLibraryViewController.dictionaryHasDefinition(forTerm: term) {
-            AppleDictionarySheet(term: term)
-                .frame(height: 460)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color(uiColor: .separator).opacity(0.5), lineWidth: 0.5)
-                )
+        FlattenedReferenceView(term: term, contentHeight: $contentHeight)
+            .frame(height: max(contentHeight, 320))
+    }
+}
+
+private struct FlattenedReferenceView: UIViewControllerRepresentable {
+    let term: String
+    @Binding var contentHeight: CGFloat
+
+    static let cache = NSCache<NSString, UIReferenceLibraryViewController>()
+
+    func makeUIViewController(context: Context) -> UIReferenceLibraryViewController {
+        let controller: UIReferenceLibraryViewController
+        if let cached = Self.cache.object(forKey: term as NSString) {
+            controller = cached
         } else {
-            Text("No entry for “\(term)” in the system dictionaries. Add dictionaries in Settings › General › Dictionary.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            controller = UIReferenceLibraryViewController(term: term)
+            Self.cache.setObject(controller, forKey: term as NSString)
+        }
+        context.coordinator.flatten(controller, into: $contentHeight)
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIReferenceLibraryViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    final class Coordinator {
+        private var observation: NSKeyValueObservation?
+
+        /// Finds the controller's internal scroll view once it exists,
+        /// disables its own scrolling, and mirrors its content height out so
+        /// the SwiftUI frame grows to fit — one page, one scroll.
+        func flatten(_ controller: UIViewController, into height: Binding<CGFloat>) {
+            func attempt(retries: Int) {
+                guard retries > 0 else { return }
+                guard let scrollView = Self.findScrollView(in: controller.view) else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        attempt(retries: retries - 1)
+                    }
+                    return
+                }
+                scrollView.isScrollEnabled = false
+                observation = scrollView.observe(\.contentSize, options: [.initial, .new]) { scrollView, _ in
+                    let newHeight = scrollView.contentSize.height
+                    guard newHeight > 60 else { return }
+                    DispatchQueue.main.async {
+                        if abs(height.wrappedValue - (newHeight + 24)) > 2 {
+                            height.wrappedValue = newHeight + 24
+                        }
+                    }
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                attempt(retries: 8)
+            }
+        }
+
+        private static func findScrollView(in view: UIView) -> UIScrollView? {
+            if let scrollView = view as? UIScrollView { return scrollView }
+            for subview in view.subviews {
+                if let found = findScrollView(in: subview) { return found }
+            }
+            return nil
         }
     }
 }

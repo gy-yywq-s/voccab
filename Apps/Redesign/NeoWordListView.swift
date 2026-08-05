@@ -321,8 +321,8 @@ struct NeoWordListView: View {
     private var bottomBar: some View {
         VStack(spacing: 0) {
             NeoBeginBar(
-                title: model.pausedSession.map { "Continue studying · \($0.totalCount - $0.position) left" }
-                    ?? "Study \(studyCountLabel)",
+                title: model.pausedSession.map { "Keep going · \($0.totalCount - $0.position) left" }
+                    ?? "Practice \(studyCountLabel)",
                 systemImage: model.pausedSession == nil ? "arrow.right" : "play.fill"
             ) {
                 navigateToStudy = true

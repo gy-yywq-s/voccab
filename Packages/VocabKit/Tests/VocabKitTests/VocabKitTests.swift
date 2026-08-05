@@ -423,3 +423,73 @@ final class FormattingTests: XCTestCase {
         XCTAssertEqual(Formatting.frequencyChip(.top100), "Frequency: TOP 100")
     }
 }
+
+final class UserFileFixtureTests: XCTestCase {
+    /// Exact bytes of the user's real Numbers/Excel export (UTF-8 BOM +
+    /// CRLF + quoted mixed EN/CN notes) that was reported failing on device.
+    func testUserExportedBOMCRLFFileParses() throws {
+        let base64 = [
+        77u/d29yZCxub3Rlcw0KcHJpc3RpbmUsInVudG91Y2hlZCwgcHJpbWl0aXZlIg0KdmlzaW9uYXJ5LOaciei/nOingeeahA0KY29u
+        ZmxhdGUsImZ1c2UsIGJsZW5kIg0KZXBpdG9taXplLGJlY29taW5nIGFuIGV4ZW1wbGFyeSBvbmUg57yp5Y2wDQpsYW1iYXN0ZSwi
+        Y2FzdGlnYXRlLCBjcml0aWNpemUiDQpzdWJ2ZXJ0LCJvdmVyc2V0LCDpoqDopoYsIGRlY2ltYXRlIg0KcHJlc2FnZSxiZWluZyBh
+        IHByZWN1cnNvciBhbmQgaGFyYmluZ2VyDQpwYWxwYWJsZSwiY2FuIGJlIHRvdWNoZWQgYnkgcGFsbSwg5Y+v6Kem5Y+K55qE5Y+v
+        6Kem5pG455qE77ya5piO5pi+55qEIg0Kc3B1cmlvdXMsIuiwrOivr+eahCwg56uZ5LiN5L2P6ISa55qEIg0KcGVjdWxpYXIsImJl
+        aW5nIGEgc3BlY2lhbCBwcm9wZXJ0eSwgc3RyYW5nZSBhbmQgdW5pcXVlIg0KZ3JvdGVzcXVlLOaAquivnuaBtuW/gw0KdHJhbnF1
+        aWwsInBlYWNlZnVsLCBzdGlsbCINCm5veGlvdXMs5oG25b+DDQpzdXBlcmZsdW91cyxyZWR1bmRhbnQNCmNvbW1vbnBsYWNlLOiA
+        geeUn+W4uOiwiCDlubPlh6EgbWVkaW9jcmUNCm1pc2NoaWV2b3VzLOa3mOawlCDosIPnmq4gYWxzb+Wdj+eahA0KcXVpbnRlc3Nl
+        bnRpYWws54m55oCn55qEDQplbWJlbGxpc2gsImVsYWJvcmF0ZSwgZGVjb3JhdGUsIGZyb20gZW0tYmVsbHVzLCBsaXRlcmFsbHkg
+        bWFraW5nIGJlYXV0aWZ1bCwgYmVsbHVz4oCUYmVhdXRpZnVsIg0KaW1wb3NpbmcsImltcHJlc3NpdmUsIOWjruingm1hZ25pZmlj
+        ZW50Ig0KdW5hc3N1bWluZywibm90IHRvIGFzc3VtZSBhbnl0aGluZyBpc2gsIG1vZGVzdCwgdGhlIG9wcG9zaXRlIG9mIHByZXRl
+        bnRpb3VzIg0Kc2hyZXdkLCJhc3R1dGUsIOeyvuaYjueahCINCnNjcnV0aW5pemUs5LuU57uG6KeC5a+f77yI5LiOIHNjcnVwdWxv
+        dXMg5oiQ5a+56K6w77yac2NydXRpbml6ZeS7lOe7huinguWvnyAvIHNjcnVwdWxvdXPmnInpgZPlvrfvvIkNCnNjcnVwdWxvdXMs
+        5pyJ6YGT5b6377yI5LiOIHNjcnV0aW5pemUg5oiQ5a+56K6w77yac2NydXRpbml6ZeS7lOe7huinguWvnyAvIHNjcnVwdWxvdXPm
+        nInpgZPlvrfvvIkNCmludGVycG9sYXRlLOWFiea7keaPkuWFpe+8jOe7n+iuoeS4reaOqOeul+S4remXtOaVsOaNruWAvO+8iOWv
+        ueavlCBleHRyYXBvbGF0ZSDlpJbmjqjvvIkNCmV4dHJhcG9sYXRlLOe7n+iuoeS4reaOqOeul+acquefpemihuWfn+WklumDqOW7
+        tuS8uOaOqOa1i++8iOWvueavlCBpbnRlcnBvbGF0ZSDlhoXmj5LvvIkNCmNvbnZlbmUsIuWPrOW8gO+8jGFzc2VtYmxlLCBzYW1l
+        IHJvb3QgYXMgY29udmVuaWVudCINCmJyb29kLCLmsonmgJ0sIOW/p+S8pO+8jOWdh+S4uuWSjOWtteibi+ebuOWFs+eahG1ldGFw
+        aG9yaWNhbCB1c2XvvJphY3RpdmXlrbXom4siDQpjb25zdHJ1ZSwidW5kZXJzdGFuZGluZyBjb25zdHJ1Y3Rpb24gb2YgYSBzZW50
+        ZW5jZSwg55CG6KejIg0KbWlzY29uc3RydWUs6K+v6KejDQpwcm9oaWJpdGl2ZSwiYmVzaWRlcyBub3QgYWxsb3dlZCwgb3RoZXIg
+        bWVhbmluZ3M6IHJlc3RyaWN0aXZlIGZvciBvdGhlciByZWFzb25zIGxpa2UgZmluYW5jaWFs4oCmIg0Kc3RyaXZlLCJjb250ZW5k
+        LCBwYXN0IHN0cm92ZSINCmJyZWV6ZSxtaWxkIHdpbmQNCmFyY2FuZSwibXlzdGVyaW91cyDpmr7mh4LnmoTvvIxhcmMgY2hlc3Qg
+        YXJjYW5lIHRvIHNodXQgdXAgbm90IHNhaWQsIGFyYyBhbHNvIGZvciDog7jnlLIiDQp1YmlxdWl0eSxjb21tb25seSBmb3VuZO+8
+        jOaZrumBjeWtmOWcqOaApw0KZGVmdW5jdCwibm90IHBlcmZvcm1pbmcsIGRlYWTvvIxhZGouIg0KZXhjaXNlLCLmtojotLnnqI4s
+        IOWIh+mZpCBleC1jaXNlIg0KaWxsdW1pbmF0ZSzpmJDmmI4NCm11bHRpdHVkZSxjcm93ZCDmsJHkvJcg5Lq6576kDQpyZWNhbnQs
+        cmV2b2tlDQpwcm9jbGFpbSxwcm9jbGFpbSB0aGUgcmVwdWJsaWMNCmRlYXJ0aCxzaG9ydGFnZSDnn63nvLoNCnByZXBvbmRlcmFu
+        Y2UsYmVpbmcgdGhlIG1ham9yaXR5IGJlaW5nIGluIGFkdmFudGFnZQ0KaW50ZXJtaXR0ZW50LOmXtOath+aAp+eahCDmlq3mlq3n
+        u63nu63nmoQNCmZlZWRpbmcs5ZWD6aOfDQphdCB0aGF0IHRpbWUs5LiN5LiA5a6a5piv5LiA5Liq54m55a6a5pe26Ze0IOWPr+iD
+        veaYr+exu+S8vOS6juKAnOavj+WkqeaXqeS4iuKAnQ0Kc3VwcGxhbnQs5Y+W5LujDQp0cmFuc3Bvc2Us6LCD5o2iIOe9ruaNou+8
+        mz1zaGlmdA0KcHJvZnVzZSxhYnVuZGFudA0KZnJhaWx0eSx0aGUgc3RhdGUgb2YgYmVpbmcgd2VhayDouqvkvZPomZrlvLEg5Lq6
+        5oCn5byx54K5DQpzdXN0ZW5hbmNlLCJudXRyaWVudCwgZm9vZCBuZWNlc3NpdHkiDQpkZW5vdW5jZSxjb25kZW1u77yI5a+55q+U
+        IHJlbm91bmNlIOWjsOaYjuaUvuW8g++8iQ0KcmVub3VuY2Us5aOw5piO5pS+5byD77yI5a+55q+UIGRlbm91bmNlIOiwtOi0o++8
+        iQ0KZm9yc2FrZSzkuI3lsaXooYzotKPku7vkuYvmipvlvIPnprvlvIDvvIznprvlvIDllpzniLHkuovnianlkozlnLDmlrnnmoTm
+        lL7lvIMNCmFzc3VhZ2UsInJlbGlldmUsIHNhdGlzZnksIGFkIHN3ZWV0LCBhbWVsaW9yYXRlIg0KY29udmV5LOS8oOi+vg0KbWlu
+        dXRlLOaegeWwj+eahCDnu4boh7TnmoQgbWludXRlIGRldGFpbA0KbWludXRpYWUs5LiN6YeN6KaB55qE5b6u5bCP57uG6IqCDQpv
+        dmVyc2VlLOebkeeuoe+8iG92ZXJzZWUgLyBvdmVyc2lnaHQg5ZCM6K6w77yJDQpvdmVyc2lnaHQs55uR566h77yIb3ZlcnNlZSAv
+        IG92ZXJzaWdodCDlkIzorrDvvIkNCm9ic2N1cmUs6YGu6ZqQ77yM5L2/5pyq6KeBDQppbnRyaWd1ZSwic2NoZW1lLCBpbnN0aWdh
+        dGXvvIzmv4Dotbflpb3lpYciDQppbnRyaWd1aW5nLGludGVyZXN0aW5nDQpjb25jZWl2ZSzmnoTmg7Mg5oOz6LGhDQpjb25jZWl2
+        YWJsZSxpbWFnaW5hYmxlDQpiZWhvbGQsImNvbnNpZGVyIGFzLCDms6jop4Yg55yLIg0KYmVob2xkZW4s6JKZ5oGp55qE77yM6LSf
+        5pyJ77yI5oql5oGp77yJ6LSj5Lu777yM6KGo56S65oSf6LCi55qE77ya77yI5Zug5Li66KKr55yL5LqG77yJDQpyZXB1ZGlhdGUs
+        5ouS57ud5ZCm5a6a5om55Yik4oCmLiDkuI7igKbmlq3nu53lhbPns7sNCmVmZmFjZSzmirnljrvvvJtzZWxmLWVmZmFjaW5nOiBi
+        ZWluZyBtb2Rlc3QgYW5kIHVuYXNzdW1pbmcgKGluIGEgZ29vZCB3YXkpDQplc2NoZXcs6YG/5YWNDQpkaWZmZXJlbnQg4oCmIHRo
+        YW4sDQppbXBvc3RlcizlhpLlkI3ogIUNCnBvc3R1cmUs5ae/5oCBIOWnv+WKv++8m+aVheS9nOWnv+aAgSDmlYXkvZzlp7/lir8N
+        CnBlcnZhc2l2ZSzlvKXmvKvnmoQg5peg5aSE5LiN5Zyo55qEDQpwcmV2YWlsLOWHu+i0pe+8m+ebm+ihjA0KZXhvcmJpdGFudCzo
+        v4fpq5jnmoQg6LaF57qn6auYDQpkZXNlcnRlZCzooqvmipvlvIPnmoQNCmludGVyc3BlcnNlLOeCuee8gA0KcGVya3ksY2hlZXJm
+        dWwgYW5kIGxpdmVseQ0KZWNzdGF0aWMsZXhoaWxhcmF0ZWQNCmNhbm9uaWNhbCzlhaznkIbnmoTop4TojIPnmoQgcmVjb2duaXpl
+        ZA0KdGVudGF0aXZlLOeKueixq+eahA0KY29udGVudGlvdXMsY29udHJvdmVyc2lhbA0KYXNwZXJzaW9uLA0K
+        ].joined()
+        let data = Data(base64Encoded: base64)!
+        let text = try XCTUnwrap(CSVImport.decode(data))
+        let rows = try CSVImport.parse(text)
+        XCTAssertEqual(rows.count, 83)
+        XCTAssertEqual(rows.first?.word, "pristine")
+        XCTAssertEqual(rows.first?.note, "untouched, primitive")
+        XCTAssertTrue(rows.contains { $0.word == "at that time" })
+    }
+
+    /// A paste that lost its line breaks: header present but no data rows.
+    func testSingleLinePasteThrowsWithDiagnosis() {
+        let flat = "word,notes pristine,untouched visionary,farsighted"
+        XCTAssertThrowsError(try CSVImport.parse(flat))
+        XCTAssertTrue(CSVImport.diagnose(flat).contains("1 row"))
+    }
+}

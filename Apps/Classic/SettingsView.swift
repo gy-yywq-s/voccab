@@ -5,6 +5,7 @@ struct SettingsView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var accent: PronunciationAccent = .american
     @State private var pronunciationSource: PronunciationSource = .system
+    @State private var voiceStatus = ""
     @State private var goalNew = 15
     @State private var goalReview = 30
     @State private var target = 90
@@ -43,34 +44,19 @@ struct SettingsView: View {
                 .onChange(of: pronunciationSource) { env.settings.pronunciationSource = pronunciationSource }
                 .accessibilityIdentifier("settings.voice")
 
+                if !voiceStatus.isEmpty {
+                    Text(voiceStatus)
+                        .font(.footnote)
+                        .foregroundStyle(voiceStatus.hasPrefix("Recordings available") ? Color.green : .secondary)
+                }
+
                 NavigationLink {
                     DictionaryPreviewPage()
                 } label: {
-                    Label("Dictionary Preview", systemImage: "text.book.closed")
+                    Label("Dictionaries", systemImage: "text.book.closed")
+                        .badge("\(env.settings.enabledDictionaries.count) enabled")
                 }
                 .accessibilityIdentifier("settings.dictPreview")
-
-                // Upgrade: choose which dictionaries show on the word page.
-                ForEach([DictionarySource.oxford, .english, .synonyms, .webster, .moby, .apple], id: \.self) { source in
-                    Toggle(isOn: binding(for: source)) {
-                        Label {
-                            HStack {
-                                Text(source.label)
-                                if !source.hasBundledData {
-                                    Text("no data")
-                                        .font(.caption2)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(Color(uiColor: .secondarySystemFill)))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        } icon: {
-                            Image(systemName: "character.book.closed")
-                        }
-                    }
-                    .accessibilityIdentifier("settings.dictionary.\(source.rawValue)")
-                }
             }
 
             Section {
@@ -102,7 +88,7 @@ struct SettingsView: View {
                         Text(order.label).tag(order)
                     }
                 } label: {
-                    Label("Study Order", systemImage: "arrow.up.arrow.down")
+                    Label("Practice Order", systemImage: "arrow.up.arrow.down")
                 }
                 .onChange(of: order) { env.settings.studyOrder = order }
                 .accessibilityIdentifier("settings.studyOrder")
@@ -118,8 +104,15 @@ struct SettingsView: View {
                 }
                 .onChange(of: scheduler) { env.settings.scheduler = scheduler }
                 .accessibilityIdentifier("settings.scheduler")
+
+                NavigationLink {
+                    AlgorithmPreviewPage()
+                } label: {
+                    Label("Compare Algorithms", systemImage: "chart.line.uptrend.xyaxis")
+                }
+                .accessibilityIdentifier("settings.algPreview")
             } header: {
-                Text("Study")
+                Text("Practice")
             } footer: {
                 Text(scheduler.summary)
             }
@@ -136,6 +129,17 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: load)
+        .task {
+            voiceStatus = "Checking pronunciation recordings…"
+            switch await SpeechService.probeRecordingAvailability() {
+            case .available:
+                voiceStatus = "Recordings available (Wikimedia Commons)"
+            case .unavailable(let reason):
+                voiceStatus = "Recordings unavailable — \(reason)"
+            case .checking:
+                break
+            }
+        }
     }
 
     private var goalEditor: some View {
@@ -211,6 +215,7 @@ struct ImportWordsView: View {
     @State private var showPicker = false
     @State private var errorMessage: String?
     @State private var importedList: WordList?
+    @State private var mergeTarget: WordList?
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -227,6 +232,28 @@ struct ImportWordsView: View {
                         .foregroundStyle(.secondary)
 
                     exampleTable
+
+                    HStack {
+                        Text("Add to")
+                            .font(.headline)
+                        Spacer()
+                        Menu {
+                            Button("New list") { mergeTarget = nil }
+                            ForEach(env.userStore.lists(), id: \.id) { list in
+                                Button(list.name) { mergeTarget = list }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(mergeTarget?.name ?? "New list")
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption)
+                            }
+                            .foregroundStyle(.tint)
+                        }
+                        .accessibilityIdentifier("import.target")
+                    }
+                    .padding(.top, 10)
+
                     Color.clear.frame(height: 110)
                 }
                 .padding(.horizontal, 20)
@@ -347,10 +374,15 @@ struct ImportWordsView: View {
     private func importText(_ text: String, listName: String) {
         do {
             let rows = try CSVImport.parse(text)
-            importedList = CSVImport.importRows(rows, listName: listName, userStore: env.userStore)
+            importedList = CSVImport.importRows(
+                rows, listName: listName, userStore: env.userStore,
+                mergeInto: mergeTarget?.id)
+            if importedList == nil {
+                errorMessage = "A list named “\(listName)” already exists — pick it under “Add to” to merge instead."
+            }
             env.touch()
         } catch {
-            errorMessage = "No words found — check the table or list format."
+            errorMessage = "No words found. \(CSVImport.diagnose(text))"
         }
     }
 }

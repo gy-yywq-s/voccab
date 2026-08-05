@@ -272,7 +272,7 @@ struct WordListView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "trophy")
-                    Text(model.pausedSession == nil ? "Study Current Words" : "Continue Study")
+                    Text(model.pausedSession == nil ? "Practice These Words" : "Keep Going")
                 }
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(model.pausedSession == nil ? ClassicTheme.studyButtonText : Color.accentColor)

@@ -40,6 +40,9 @@ API = "https://commons.wikimedia.org/w/api.php"
 HEADERS = {"User-Agent": "VoccabPromoBuilder/1.0 (asset pipeline for an educational app)"}
 
 ROOT_CATS = [
+    # Deliberately varied pools — the shared bar is "cultural texture", not
+    # one visual style: art serigraphs, theatre, sheet music, magic shows,
+    # circus bills, book/period ads, war and travel lithographs.
     "Category:Work Projects Administration Poster Collection",
     "Category:WPA posters, National Park Service",
     "Category:Works Progress Administration posters by state",
@@ -47,12 +50,22 @@ ROOT_CATS = [
     "Category:United States travel posters",
     "Category:Travel posters",
     "Category:American World War I posters",
+    "Category:World War II posters from the United States",
+    "Category:United States Office of War Information posters",
+    "Category:Circus posters",
+    "Category:Magic posters",
+    "Category:Theatre posters",
+    "Category:Sheet music covers",
+    "Category:Advertising posters in the United States",
+    "Category:American Red Cross posters",
+    "Category:Liberty bond posters",
+    "Category:Art Nouveau posters",
 ]
-MAX_FILES = 900
+MAX_FILES = 1500
 THUMB_WIDTH = 1000
 OUT_W, OUT_H = 900, 1200
 MIN_CONF = 75
-MIN_RANK = 1200          # skip ultra-common words: lookup demo should teach
+MIN_RANK = 10000         # gallery words must be genuinely hard but worth knowing
 MAX_RANK = 60000
 MAX_WORD_REUSE = 1
 

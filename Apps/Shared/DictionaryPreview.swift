@@ -8,15 +8,18 @@ struct DictionaryPreviewPage: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var word = "serene"
     @State private var enabled: Set<DictionarySource> = []
+    @State private var ordered: [DictionarySource] = []
 
-    private let sources: [DictionarySource] = [
-        .chinese, .oxford, .english, .synonyms, .webster, .moby, .apple,
-    ]
+    /// Enabled sources first, in the user's order (= word-page tab order,
+    /// and the first one is the tab a word page opens on), then the rest.
+    private var sources: [DictionarySource] {
+        ordered + DictionarySource.allCases.filter { !ordered.contains($0) }
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Type any word to see how each dictionary renders it, and choose which ones appear on word pages.")
+                Text("Type any word to see how each dictionary renders it. Toggle which ones appear on word pages, and use the arrows to order them — the first enabled dictionary is the tab a word page opens on.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)
@@ -42,18 +45,42 @@ struct DictionaryPreviewPage: View {
             .padding(.horizontal, 20)
         }
         .background(Color(uiColor: .systemBackground))
-        .navigationTitle("Dictionary Preview")
+        .navigationTitle("Dictionaries")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { enabled = Set(env.settings.enabledDictionaries) }
+        .onAppear {
+            ordered = env.settings.enabledDictionaries
+            enabled = Set(ordered)
+        }
     }
 
     private func sourceSection(_ source: DictionarySource) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Divider().padding(.bottom, 12)
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center, spacing: 12) {
                 Text(source.label)
                     .font(.headline)
                 Spacer()
+                if enabled.contains(source), let position = ordered.firstIndex(of: source) {
+                    HStack(spacing: 2) {
+                        Button {
+                            move(source, by: -1)
+                        } label: {
+                            Image(systemName: "chevron.up")
+                                .font(.footnote.weight(.semibold))
+                                .frame(width: 30, height: 30)
+                        }
+                        .disabled(position == 0)
+                        Button {
+                            move(source, by: 1)
+                        } label: {
+                            Image(systemName: "chevron.down")
+                                .font(.footnote.weight(.semibold))
+                                .frame(width: 30, height: 30)
+                        }
+                        .disabled(position == ordered.count - 1)
+                    }
+                    .foregroundStyle(.tint)
+                }
                 Toggle("", isOn: binding(source))
                     .labelsHidden()
             }
@@ -66,12 +93,22 @@ struct DictionaryPreviewPage: View {
         .padding(.vertical, 12)
     }
 
+    private func move(_ source: DictionarySource, by offset: Int) {
+        guard let index = ordered.firstIndex(of: source) else { return }
+        let target = index + offset
+        guard ordered.indices.contains(target) else { return }
+        ordered.swapAt(index, target)
+        env.settings.enabledDictionaries = ordered
+        env.touch()
+    }
+
     private func binding(_ source: DictionarySource) -> Binding<Bool> {
         Binding(
             get: { enabled.contains(source) },
             set: { on in
                 if on { enabled.insert(source) } else { enabled.remove(source) }
                 env.settings.setDictionary(source, enabled: on)
+                ordered = env.settings.enabledDictionaries
                 env.touch()
             }
         )
@@ -122,11 +159,14 @@ struct DictionaryPreviewPage: View {
                 missing
             }
         case .apple:
-            if UIReferenceLibraryViewController.dictionaryHasDefinition(forTerm: term) {
-                previewText("Definition available — shown embedded on the word page.")
-            } else {
-                previewText("Rendered by iOS. Add dictionaries in Settings › General › Dictionary.")
-            }
+            // Real embedded preview (its own scrolling stays on here).
+            AppleDictionarySheet(term: term)
+                .frame(height: 240)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color(uiColor: .separator).opacity(0.5), lineWidth: 0.5)
+                )
         }
     }
 

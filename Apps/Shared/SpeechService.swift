@@ -72,9 +72,48 @@ final class SpeechService {
         return local
     }
 
-    /// Asks dictionaryapi.dev for the word's recording URLs and picks the
-    /// one matching the accent (falling back to any available recording).
+    /// Primary source: Wikimedia Commons pronunciation files (reliable
+    /// infrastructure, mp3 transcodes served for every ogg). Fallback: the
+    /// dictionaryapi.dev community mirror.
     private static func lookupAudioURL(for word: String, accent: PronunciationAccent) async -> URL? {
+        let prefixes = accent == .american ? ["En-us", "En-uk"] : ["En-uk", "En-us"]
+        for prefix in prefixes {
+            if let url = await commonsMP3(file: "File:\(prefix)-\(word).ogg") {
+                return url
+            }
+        }
+        return await mirrorAudioURL(for: word, accent: accent)
+    }
+
+    /// Resolves a Commons audio file title to its mp3 transcode URL.
+    private static func commonsMP3(file title: String) async -> URL? {
+        var components = URLComponents(string: "https://commons.wikimedia.org/w/api.php")!
+        components.queryItems = [
+            .init(name: "action", value: "query"),
+            .init(name: "titles", value: title),
+            .init(name: "prop", value: "videoinfo"),
+            .init(name: "viprop", value: "derivatives"),
+            .init(name: "format", value: "json"),
+        ]
+        guard let url = components.url,
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let query = root["query"] as? [String: Any],
+              let pages = query["pages"] as? [String: Any] else {
+            return nil
+        }
+        for page in pages.values {
+            guard let page = page as? [String: Any],
+                  let info = (page["videoinfo"] as? [[String: Any]])?.first,
+                  let derivatives = info["derivatives"] as? [[String: Any]] else { continue }
+            for derivative in derivatives where derivative["transcodekey"] as? String == "mp3" {
+                if let src = derivative["src"] as? String { return URL(string: src) }
+            }
+        }
+        return nil
+    }
+
+    private static func mirrorAudioURL(for word: String, accent: PronunciationAccent) async -> URL? {
         guard let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
               let api = URL(string: "https://api.dictionaryapi.dev/api/v2/entries/en/\(encoded)"),
               let (data, _) = try? await URLSession.shared.data(from: api),
@@ -92,5 +131,27 @@ final class SpeechService {
             let audio: String?
         }
         let phonetics: [Phonetic]?
+    }
+
+    // MARK: Availability probe (shown in Settings)
+
+    enum RecordingAvailability {
+        case checking, available, unavailable(String)
+    }
+
+    /// Checks whether recorded pronunciations are reachable right now, with
+    /// a reason when they aren't — surfaced next to the Voice setting.
+    static func probeRecordingAvailability() async -> RecordingAvailability {
+        if let url = await commonsMP3(file: "File:En-us-hello.ogg") {
+            if let (_, response) = try? await URLSession.shared.data(from: url),
+               (response as? HTTPURLResponse)?.statusCode == 200 {
+                return .available
+            }
+            return .unavailable("Wikimedia reachable but audio download failed")
+        }
+        if await mirrorAudioURL(for: "hello", accent: .american) != nil {
+            return .available
+        }
+        return .unavailable("No network path to Wikimedia Commons or dictionaryapi.dev")
     }
 }

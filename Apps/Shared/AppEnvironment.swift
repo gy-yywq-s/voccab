@@ -44,10 +44,19 @@ final class AppEnvironment: ObservableObject {
             seedUITestList()
             UITestSeeder.seed(userStore: userStore, dictionary: dictionary, settings: settings)
         }
+        warmUpAfterLaunch()
     }
 
     func touch() {
         dataVersion += 1
+    }
+
+    /// Deferred warm-ups that would otherwise stall a first tap.
+    func warmUpAfterLaunch() {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            AppleDictionaryInline.warmUp()
+        }
     }
 
     /// UI-test-only: install the embedded walkthrough list.
