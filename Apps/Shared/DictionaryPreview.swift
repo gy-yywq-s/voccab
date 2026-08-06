@@ -55,6 +55,9 @@ struct DictionaryPreviewPage: View {
                     ForEach(filteredEnabled, id: \.self) { source in
                         enabledRow(source)
                             .moveDisabled(isFiltering)
+                            // ECDICT provides the default definitions on
+                            // every card — reorderable, never removable.
+                            .deleteDisabled(source == .chinese)
                             .accessibilityIdentifier("dictPreview.row.\(source.rawValue)")
                     }
                     .onMove(perform: moveEnabled)
@@ -62,7 +65,7 @@ struct DictionaryPreviewPage: View {
                 } header: {
                     Text("Word Pages Show")
                 } footer: {
-                    Text("Drag to reorder — the first dictionary is the tab a word page opens on. Remove one to move it back to the list below.")
+                    Text("Drag to reorder — the first dictionary is the tab a word page opens on. Remove one to move it back to the list below. English-Chinese (ECDICT) provides the definitions on every card and stays on.")
                 }
             }
             if !filteredAvailable.isEmpty {
@@ -178,7 +181,8 @@ struct DictionaryPreviewPage: View {
     }
 
     private func deleteEnabled(at offsets: IndexSet) {
-        let removed = offsets.map { filteredEnabled[$0] }
+        let removed = offsets.map { filteredEnabled[$0] }.filter { $0 != .chinese }
+        guard !removed.isEmpty else { return }
         withAnimation {
             ordered.removeAll { removed.contains($0) }
         }

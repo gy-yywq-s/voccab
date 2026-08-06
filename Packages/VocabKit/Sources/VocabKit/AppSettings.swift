@@ -309,7 +309,10 @@ public final class AppSettings {
             guard let raw = defaults.stringArray(forKey: Key.enabledDictionaries) else {
                 return [.chinese, .oxford, .english, .synonyms]
             }
-            return raw.compactMap(DictionarySource.init)
+            var sources = raw.compactMap(DictionarySource.init)
+            // The definition provider is always present.
+            if !sources.contains(.chinese) { sources.insert(.chinese, at: 0) }
+            return sources
         }
         set { defaults.set(newValue.map(\.rawValue), forKey: Key.enabledDictionaries) }
     }
@@ -319,6 +322,9 @@ public final class AppSettings {
     }
 
     public func setDictionary(_ source: DictionarySource, enabled: Bool) {
+        // ECDICT (.chinese) provides the default definitions on every card —
+        // it can be reordered but never disabled.
+        if source == .chinese, !enabled { return }
         var current = enabledDictionaries
         if enabled, !current.contains(source) {
             current.append(source)
