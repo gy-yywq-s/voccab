@@ -44,27 +44,59 @@ enum Neo {
     // Boundaries.
     static let hairline = Color(uiColor: .separator)
 
-    /// Serif appears exactly once in the app: the masthead wordmark,
-    /// mirroring Passage's type allocation. Everything else is SF.
+    /// Serif carries identity, not interface: the masthead, page titles and
+    /// word content — the same allocation the original app makes.
     static let masthead: Font = .system(size: 23, weight: .medium, design: .serif)
 
-    // MARK: Type roles measured from the Passage reference screens.
-    // Hierarchy is carried by size + weight + gray level, never by family:
-    //   pageTitle    28 bold primary      ("Sessions")
-    //   sectionTitle 24 bold primary      ("Scheduled delivery")
-    //   rowTitle     20 semibold primary  (session/item titles, nav titles)
-    //   body         17 regular primary   (main statements)
-    //   bodyQuiet    17 regular secondary (summaries, helper prose)
-    //   contextLabel 17 regular secondary ("Archive", "reject", "targeted")
-    //   caption      15 regular secondary/tertiary ("Command of Evidence · …")
-    //   action       20 semibold blue     ("Begin today")
-    //   warm body    17 regular warm      (risk/note prose)
-    static let pageTitle: Font = .system(size: 28, weight: .bold)
-    static let sectionTitle: Font = .system(size: 24, weight: .bold)
-    static let rowTitle: Font = .system(size: 20, weight: .semibold)
+    // MARK: Type roles — evolved away from the reading-app scale.
+    // The old ramp shouted (28/24/20 bold sans everywhere); information
+    // apps group with cards and label quietly. Hierarchy now comes from
+    // grouping + a serif accent on titles, not from ever-bigger bold sans.
+    static let pageTitle: Font = .system(size: 26, weight: .semibold, design: .serif)
+    static let sectionTitle: Font = .system(size: 18, weight: .semibold)
+    static let rowTitle: Font = .system(size: 17, weight: .semibold)
     static let bodyFont: Font = .system(size: 17)
     static let caption: Font = .system(size: 15)
-    static let action: Font = .system(size: 20, weight: .semibold)
+    static let action: Font = .system(size: 19, weight: .semibold)
+
+    // MARK: Grouping surfaces (original-app philosophy: related info sits
+    // together on a soft card; hairlines only separate *within* a card).
+    static let cardFill = Color(uiColor: .secondarySystemBackground)
+    static let cardRadius: CGFloat = 16
+    /// Uppercase tracked micro-label above a card, Apple-Settings style.
+    static let sectionLabel: Font = .system(size: 13, weight: .medium)
+}
+
+/// Soft rounded grouping card — flat fill, continuous corners, no border.
+struct NeoCard<Content: View>: View {
+    var padding: CGFloat = 16
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) { content }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(padding)
+            .background(
+                RoundedRectangle(cornerRadius: Neo.cardRadius, style: .continuous)
+                    .fill(Neo.cardFill)
+            )
+    }
+}
+
+/// Small colored data chip (familiarity, counts, tags) — the original
+/// app's way of showing status without a sentence.
+struct NeoChip: View {
+    let text: String
+    var tint: Color = Neo.blue
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3.5)
+            .background(Capsule().fill(tint.opacity(0.13)))
+    }
 }
 
 /// The primary-entry bar, straight from Passage's "Begin today": full-width
