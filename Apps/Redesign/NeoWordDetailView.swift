@@ -45,7 +45,6 @@ struct NeoWordDetailView: View {
     @StateObject var model: WordDetailModel
     @State private var tab: DictionarySource = .chinese
     @State private var showNoteEditor = false
-    @State private var noteText = ""
     @State private var showNewListPrompt = false
     @State private var newListName = ""
     @State private var showResetConfirm = false
@@ -84,10 +83,9 @@ struct NeoWordDetailView: View {
             // Open on the user's top-ranked dictionary (Settings order).
             tab = env.settings.enabledDictionaries.first ?? .chinese
         }
-        .alert("Edit note", isPresented: $showNoteEditor) {
-            TextField("Note", text: $noteText, axis: .vertical)
-            Button("Save") { model.setNote(noteText) }
-            Button("Cancel", role: .cancel) {}
+        .sheet(isPresented: $showNoteEditor) {
+            NoteEditorSheet(word: model.displayWord,
+                            text: model.data.state.note) { model.setNote($0) }
         }
         .alert("New List", isPresented: $showNewListPrompt) {
             TextField("List name", text: $newListName)
@@ -609,7 +607,6 @@ struct NeoWordDetailView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button {
-                    noteText = model.data.state.note
                     showNoteEditor = true
                 } label: {
                     Label("Edit note", systemImage: "square.and.pencil")

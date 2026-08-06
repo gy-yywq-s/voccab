@@ -177,3 +177,45 @@ struct SegmentedProgressBar: View {
         .animation(.easeInOut(duration: 0.2), value: completed)
     }
 }
+
+/// A real note editor — multi-line TextEditor in a sheet (the old alert
+/// TextField was a single cramped line). Medium detent by default,
+/// draggable to full screen.
+struct NoteEditorSheet: View {
+    let word: String
+    @State var text: String
+    let onSave: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        NavigationStack {
+            TextEditor(text: $text)
+                .focused($focused)
+                .font(.body)
+                .lineSpacing(4)
+                .padding(.horizontal, 14)
+                .padding(.top, 6)
+                .scrollContentBackground(.hidden)
+                .background(Color(uiColor: .systemBackground))
+                .navigationTitle(word)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            onSave(text)
+                            dismiss()
+                        }
+                        .fontWeight(.semibold)
+                    }
+                }
+                .onAppear { focused = true }
+                .accessibilityIdentifier("word.noteEditor")
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+}
