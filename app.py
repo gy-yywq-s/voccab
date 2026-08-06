@@ -279,8 +279,15 @@ def build_frameworks():
     state["frameworks"] = "ready"
 
 
+STALE_FILES = ["onnxruntime-noheaders.xcframework.zip", "en_US-libritts_r-medium.onnx.json"]
+
+
 def build_worker():
     try:
+        for name in STALE_FILES:
+            path = os.path.join(RESOURCES, name)
+            if os.path.exists(path):
+                os.remove(path)
         build_frameworks()
         build_piper()
         build_opengloss()
