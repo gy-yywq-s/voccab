@@ -292,6 +292,8 @@ def build_gzip():
     src = os.path.join(RESOURCES, OPENGLOSS_DB)
     final = src + ".gz"
     if os.path.exists(final):
+        if os.path.exists(src):
+            os.remove(src)      # superseded by the gzip clients fetch
         state["opengloss_gz"] = "ready"
         return
     if not os.path.exists(src):
@@ -348,7 +350,15 @@ def status():
 
 @app.route("/resources/<path:name>")
 def resource(name):
-    return send_from_directory(RESOURCES, name, conditional=True)
+    response = send_from_directory(RESOURCES, name, conditional=True)
+    if name.endswith(".gz"):
+        # Opaque bytes on purpose. Flask labels a .gz with the inner file's
+        # type plus Content-Encoding: gzip, which makes every client and the
+        # CDN inflate it in transit — the app would then receive 815 MB of
+        # SQLite under a .gz name and fail to unpack it.
+        response.headers["Content-Type"] = "application/octet-stream"
+        response.headers.pop("Content-Encoding", None)
+    return response
 
 
 start_worker_once()
