@@ -64,6 +64,8 @@
 		99A590C4D081F744AF360483 /* MacEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3555B61D4F4B14D97FB0B18 /* MacEnvironment.swift */; };
 		A00058E3386B6BDD01EA8FDC /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3C3C371AD56F164772C89B /* SpeechService.swift */; };
 		A35263C7302D5F0AAA9C5023 /* NeoWordListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EB523406FE50F7D5929C0DB /* NeoWordListView.swift */; };
+		A6A888FE8DD57CA0693F84DD /* SherpaTTS in Frameworks */ = {isa = PBXBuildFile; productRef = F712C6375509BD6D9B53D4E6 /* SherpaTTS */; };
+		A99FF75850228F61301E95BC /* SherpaTTS in Frameworks */ = {isa = PBXBuildFile; productRef = AF4E63B80E60FC9A89B64BB0 /* SherpaTTS */; };
 		AB4AA0CEA5861FB4D6F8854F /* NeoTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223FB3FADBBBE0562BB97181 /* NeoTheme.swift */; };
 		AE2C852B159069F45DC7CE21 /* VoccabMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F77F5A790518E9798E7D9D4 /* VoccabMacApp.swift */; };
 		AE65B2AE73AA699C192B960D /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
@@ -126,6 +128,7 @@
 		15AC2DC67C4D18E46B3831A0 /* DictionaryRendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryRendering.swift; sourceTree = "<group>"; };
 		1A1B142BA308657220255187 /* DataTransfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTransfer.swift; sourceTree = "<group>"; };
 		1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1BA7B9238BF9FAB4C4B39C42 /* SherpaTTS */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SherpaTTS; path = Packages/SherpaTTS; sourceTree = SOURCE_ROOT; };
 		1C678393EF9769CD300F762A /* AlgorithmSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmSwitch.swift; sourceTree = "<group>"; };
 		1EB523406FE50F7D5929C0DB /* NeoWordListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoWordListView.swift; sourceTree = "<group>"; };
 		207DB7AE943E677C21167D87 /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
@@ -190,6 +193,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D69FB15DF56B49C0D88CDA84 /* VocabKit in Frameworks */,
+				A99FF75850228F61301E95BC /* SherpaTTS in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -198,6 +202,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6F542ED6B8D80E9AF6DEB7FD /* VocabKit in Frameworks */,
+				A6A888FE8DD57CA0693F84DD /* SherpaTTS in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -363,6 +368,7 @@
 		B2444DA78B08C5D1EB6612A9 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
+				1BA7B9238BF9FAB4C4B39C42 /* SherpaTTS */,
 				AB1F6F50128D2F1B211E0CDE /* VocabKit */,
 			);
 			path = Packages;
@@ -440,6 +446,7 @@
 			name = VoccabClassic;
 			packageProductDependencies = (
 				C0AE9BEB2FE1101D996F12F4 /* VocabKit */,
+				AF4E63B80E60FC9A89B64BB0 /* SherpaTTS */,
 			);
 			productName = VoccabClassic;
 			productReference = 6C1CD147D93A43C371B04537 /* VoccabClassic.app */;
@@ -478,6 +485,7 @@
 			name = VoccabRedesign;
 			packageProductDependencies = (
 				A02AB383CE18DDD2FE6EF544 /* VocabKit */,
+				F712C6375509BD6D9B53D4E6 /* SherpaTTS */,
 			);
 			productName = VoccabRedesign;
 			productReference = 80ACC6087B4C2F37A838D584 /* VoccabRedesign.app */;
@@ -528,6 +536,7 @@
 			mainGroup = 0DE538AE8167C3EDAC65120A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				5AD87175D74AB84D444E9B1B /* XCLocalSwiftPackageReference "Packages/SherpaTTS" */,
 				8FF564A1828142031946A3D8 /* XCLocalSwiftPackageReference "Packages/VocabKit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -1057,6 +1066,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		5AD87175D74AB84D444E9B1B /* XCLocalSwiftPackageReference "Packages/SherpaTTS" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/SherpaTTS;
+		};
 		8FF564A1828142031946A3D8 /* XCLocalSwiftPackageReference "Packages/VocabKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/VocabKit;
@@ -1072,9 +1085,17 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = VocabKit;
 		};
+		AF4E63B80E60FC9A89B64BB0 /* SherpaTTS */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SherpaTTS;
+		};
 		C0AE9BEB2FE1101D996F12F4 /* VocabKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VocabKit;
+		};
+		F712C6375509BD6D9B53D4E6 /* SherpaTTS */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SherpaTTS;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
