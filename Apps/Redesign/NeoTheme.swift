@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// Voccab Neo design language — native-first iOS, calibrated against the
-/// Passage reference screens: pure system background, SF type for all
-/// interface text (serif reserved for dictionary headwords as content),
-/// bold sans section titles, hairline separators, pale-blue task actions,
-/// a deep-navy commit, and native controls (toggles, segmented pickers,
-/// wheel sheets) everywhere else.
+/// Voccab Neo design language — "vintage study" edition, built from the
+/// user's chosen palette sheets: warm cream pages, cocoa ink, sand-gold
+/// emphasis, moss/olive greens for progress, and two blues (mid + deep)
+/// as the only interactive hues. Interface type is rounded geometric
+/// (SF Rounded, mirroring the palette sheets' Comfortaa look); serif is
+/// reserved for word content. Terracotta is deliberately absent.
 enum Neo {
 
     static func dynamic(light: UIColor, dark: UIColor) -> Color {
@@ -14,57 +14,98 @@ enum Neo {
         })
     }
 
-    // Ink roles map straight onto system labels.
-    static let ink = Color.primary
-    static let graphite = Color.secondary
-    static let faint = Color(uiColor: .tertiaryLabel)
+    private static func hex(_ value: UInt32, _ alpha: CGFloat = 1) -> UIColor {
+        UIColor(
+            red: CGFloat((value >> 16) & 0xFF) / 255,
+            green: CGFloat((value >> 8) & 0xFF) / 255,
+            blue: CGFloat(value & 0xFF) / 255,
+            alpha: alpha)
+    }
 
-    // Blue roles (Passage: interactive signal + deep navy commitment).
-    static let blue = dynamic(
-        light: UIColor(red: 0.13, green: 0.35, blue: 0.66, alpha: 1),
-        dark: UIColor(red: 0.42, green: 0.62, blue: 0.94, alpha: 1)
-    )
-    static let paleBlue = dynamic(
-        light: UIColor(red: 0.13, green: 0.35, blue: 0.66, alpha: 0.09),
-        dark: UIColor(red: 0.42, green: 0.62, blue: 0.94, alpha: 0.16)
-    )
-    static let navy = dynamic(
-        light: UIColor(red: 0.12, green: 0.23, blue: 0.42, alpha: 1),
-        dark: UIColor(red: 0.24, green: 0.42, blue: 0.70, alpha: 1)
-    )
+    // Grounds (Ge cream page, Cd bleached-cream card; cocoa world in dark).
+    static let page = dynamic(light: hex(0xF7E6D4), dark: hex(0x2C2222))
+    static let cardFill = dynamic(light: hex(0xFBFAE6), dark: hex(0x3B2F2F))
+    /// Sand-gold emphasized surface (Gb) — Hard button, highlighted cards.
+    static let sand = dynamic(light: hex(0xE7C58A), dark: hex(0xC9A76B))
+    static let onSand = dynamic(light: hex(0x4B3535), dark: hex(0x2C2222))
+
+    // Ink (cocoa on cream; cream on cocoa).
+    static let ink = dynamic(light: hex(0x4B3535), dark: hex(0xF3E9DC))
+    static let graphite = dynamic(light: hex(0x4B3535, 0.62), dark: hex(0xF3E9DC, 0.62))
+    static let faint = dynamic(light: hex(0x4B3535, 0.38), dark: hex(0xF3E9DC, 0.38))
+    /// Burnt gray (Df) — icons and truly neutral marks.
+    static let neutral = dynamic(light: hex(0x5D5D5A), dark: hex(0xA5A5A0))
+
+    // Blues — the interactive pair chosen to replace the vintage violet:
+    // mid blue (Ff) for controls, deep blue (Ec) for commitment.
+    static let blue = dynamic(light: hex(0x4E7CB2), dark: hex(0x85A9D6))
+    static let paleBlue = dynamic(light: hex(0x4E7CB2, 0.13), dark: hex(0x85A9D6, 0.20))
+    static let navy = dynamic(light: hex(0x253A82), dark: hex(0x8FA7E8))
+
+    // Greens — learning signals: moss (Gc) for recall/success, grass (Ha)
+    // for seeding/new growth, olive (Ca/Ad) as deep/soft accents.
+    static let green = dynamic(light: hex(0x86B05D), dark: hex(0x97BE72))
+    static let grass = dynamic(light: hex(0xD2E186), dark: hex(0x5A6A2E))
+    static let onGrass = dynamic(light: hex(0x415111), dark: hex(0xE2EDB4))
+    static let olive = dynamic(light: hex(0x587032), dark: hex(0xA3B565))
+    static let softOlive = dynamic(light: hex(0xA3B565), dark: hex(0x7A8A4C))
 
     // Signals.
-    static let warm = dynamic(
-        light: UIColor(red: 0.64, green: 0.42, blue: 0.12, alpha: 1),
-        dark: UIColor(red: 0.88, green: 0.64, blue: 0.30, alpha: 1)
-    )
-    static let green = Color(uiColor: .systemGreen)
+    static let warm = dynamic(light: hex(0x9A6B2F), dark: hex(0xE7C58A))
     static let red = Color(uiColor: .systemRed)
 
-    // Boundaries.
-    static let hairline = Color(uiColor: .separator)
+    // Boundaries — cocoa-tinted, never system gray.
+    static let hairline = dynamic(light: hex(0x4B3535, 0.16), dark: hex(0xF3E9DC, 0.14))
 
-    /// Serif appears exactly once in the app: the masthead wordmark,
-    /// mirroring Passage's type allocation. Everything else is SF.
-    static let masthead: Font = .system(size: 23, weight: .medium, design: .serif)
+    /// Rounded geometric wordmark, matching the palette sheets.
+    static let masthead: Font = .system(size: 22, weight: .semibold, design: .rounded)
 
-    // MARK: Type roles measured from the Passage reference screens.
-    // Hierarchy is carried by size + weight + gray level, never by family:
-    //   pageTitle    28 bold primary      ("Sessions")
-    //   sectionTitle 24 bold primary      ("Scheduled delivery")
-    //   rowTitle     20 semibold primary  (session/item titles, nav titles)
-    //   body         17 regular primary   (main statements)
-    //   bodyQuiet    17 regular secondary (summaries, helper prose)
-    //   contextLabel 17 regular secondary ("Archive", "reject", "targeted")
-    //   caption      15 regular secondary/tertiary ("Command of Evidence · …")
-    //   action       20 semibold blue     ("Begin today")
-    //   warm body    17 regular warm      (risk/note prose)
-    static let pageTitle: Font = .system(size: 28, weight: .bold)
-    static let sectionTitle: Font = .system(size: 24, weight: .bold)
-    static let rowTitle: Font = .system(size: 20, weight: .semibold)
-    static let bodyFont: Font = .system(size: 17)
-    static let caption: Font = .system(size: 15)
-    static let action: Font = .system(size: 20, weight: .semibold)
+    // MARK: Type roles — rounded geometric interface (the palette sheets'
+    // Comfortaa temperament via SF Rounded); serif never appears in chrome,
+    // only in word content. Hierarchy from grouping, not ever-bigger bold.
+    static let pageTitle: Font = .system(size: 25, weight: .semibold, design: .rounded)
+    static let sectionTitle: Font = .system(size: 18, weight: .semibold, design: .rounded)
+    static let rowTitle: Font = .system(size: 17, weight: .semibold, design: .rounded)
+    static let bodyFont: Font = .system(size: 17, design: .rounded)
+    static let caption: Font = .system(size: 15, design: .rounded)
+    static let action: Font = .system(size: 19, weight: .semibold, design: .rounded)
+
+    // MARK: Grouping surfaces.
+    static let cardRadius: CGFloat = 16
+    /// Uppercase tracked micro-label above a card.
+    static let sectionLabel: Font = .system(size: 13, weight: .medium, design: .rounded)
+}
+
+/// Soft rounded grouping card — flat fill, continuous corners, no border.
+struct NeoCard<Content: View>: View {
+    var padding: CGFloat = 16
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) { content }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(padding)
+            .background(
+                RoundedRectangle(cornerRadius: Neo.cardRadius, style: .continuous)
+                    .fill(Neo.cardFill)
+            )
+    }
+}
+
+/// Small colored data chip (familiarity, counts, tags) — the original
+/// app's way of showing status without a sentence.
+struct NeoChip: View {
+    let text: String
+    var tint: Color = Neo.blue
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 12, weight: .medium, design: .rounded))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3.5)
+            .background(Capsule().fill(tint.opacity(0.13)))
+    }
 }
 
 /// The primary-entry bar, straight from Passage's "Begin today": full-width

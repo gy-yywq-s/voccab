@@ -6,12 +6,13 @@ import VocabKit
 /// REAL scheduler code on the same story (five correct answers, one miss, two
 /// recoveries), so the differences shown are exactly what the app would do.
 ///
-/// Structure: a two-line intro, then the algorithms grouped into three quiet
-/// families (fixed ladders / adaptive / modern models). Each row shows the
-/// serif algorithm name, an 8-bar interval sparkline (red bar = the miss),
-/// and the schedule's reach. Tapping a row expands an inset detail card with
-/// the full timeline, labeled quick facts, a link into the per-algorithm
-/// AlgorithmInfoPage, and the guarded "Use" switch flow.
+/// Structure: a two-line intro plus a one-sentence legend for the totals,
+/// then the algorithms grouped into three quiet families (fixed ladders /
+/// adaptive / modern models). Each row shows the serif algorithm name,
+/// compact aligned reach figures (perfect · with the miss), and an 8-bar
+/// interval sparkline (red bar = the miss). Tapping a row expands an inset
+/// detail card with the full timeline, labeled quick facts, a link into the
+/// per-algorithm AlgorithmInfoPage, and the guarded "Use" switch flow.
 struct AlgorithmPreviewPage: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var selected: SchedulerKind = .circles
@@ -36,10 +37,15 @@ struct AlgorithmPreviewPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                Text("Every row replays the same eight answers — five right, one miss, two recoveries — on the real scheduler. Red bar = the miss; tap a row to expand it.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 12)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Every row replays the same eight answers — five right, one miss, two recoveries — on the real scheduler. Red bar = the miss; tap a row to expand it.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Text("Totals show how far each algorithm reaches after 8 reviews — a perfect run · with the miss.")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.top, 12)
 
                 ForEach(Array(Self.families.enumerated()), id: \.offset) { _, family in
                     familySection(family.name, family.blurb, family.kinds)
@@ -102,32 +108,22 @@ struct AlgorithmPreviewPage: View {
                     expandedKind = isExpanded ? nil : kind
                 }
             } label: {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 10) {
-                        Text(kind.label)
-                            .font(Font.custom("Iowan Old Style", size: 17, relativeTo: .subheadline))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                        if isActive {
-                            Text("IN USE")
-                                .font(.caption2.weight(.bold))
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 3)
-                                .background(Capsule().fill(Color.accentColor.opacity(0.15)))
-                                .foregroundStyle(Color.accentColor)
-                        }
-                        Spacer(minLength: 8)
-                        sparkline(sim.steps)
+                HStack(spacing: 10) {
+                    Text(kind.label)
+                        .font(Font.custom("Iowan Old Style", size: 17, relativeTo: .subheadline))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    if isActive {
+                        Text("IN USE")
+                            .font(.caption2.weight(.bold))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Capsule().fill(Color.accentColor.opacity(0.15)))
+                            .foregroundStyle(Color.accentColor)
                     }
-                    (Text("Reach after 8 reviews: ")
-                        + Text(Formatting.interval(days: sim.perfectTotalDays)).bold()
-                        + Text(" perfect · ")
-                        + Text(Formatting.interval(days: sim.missTotalDays)).bold()
-                            .foregroundColor(sim.missTotalDays < sim.perfectTotalDays * 0.98
-                                             ? .red : .secondary)
-                        + Text(" with the miss"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 8)
+                    reachFigures(sim)
+                    sparkline(sim.steps)
                 }
                 .padding(.vertical, 12)
                 .contentShape(Rectangle())
@@ -139,6 +135,24 @@ struct AlgorithmPreviewPage: View {
                 detail(kind, sim: sim, isActive: isActive)
             }
         }
+    }
+
+    /// Compact reach totals — "68d · 31d" — in fixed-width trailing columns so
+    /// the figures align vertically across rows. The legend at the top of the
+    /// list explains them once: perfect run · with the miss.
+    private func reachFigures(_ sim: Sim) -> some View {
+        HStack(spacing: 3) {
+            Text(Formatting.interval(days: sim.perfectTotalDays))
+                .foregroundStyle(.secondary)
+                .frame(width: 40, alignment: .trailing)
+            Text("·")
+                .foregroundStyle(.tertiary)
+            Text(Formatting.interval(days: sim.missTotalDays))
+                .foregroundStyle(sim.missTotalDays < sim.perfectTotalDays * 0.98
+                                 ? Color.red : Color.secondary)
+                .frame(width: 40, alignment: .trailing)
+        }
+        .font(.caption.monospacedDigit().weight(.medium))
     }
 
     /// Eight tiny bars, one per review; height is log-scaled to the interval.
@@ -180,7 +194,7 @@ struct AlgorithmPreviewPage: View {
                     }
                 }
             }
-            Text("Next review after each answer · a perfect run reaches \(Formatting.interval(days: sim.perfectTotalDays)); the one miss cuts that to \(Formatting.interval(days: sim.missTotalDays))")
+            Text("Next review after each answer")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
 

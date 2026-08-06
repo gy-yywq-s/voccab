@@ -79,7 +79,7 @@ struct NeoSearchOverlay: View {
 
             searchField
         }
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
         .onAppear { focused = true }
         .alert("New List", isPresented: $showNewListPrompt) {
             TextField("List name", text: $newListName)
@@ -202,7 +202,7 @@ struct NeoSearchOverlay: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(Neo.page)
                 .shadow(color: .black.opacity(0.10), radius: 8, y: 2)
         )
     }
@@ -285,7 +285,7 @@ struct NeoSearchOverlay: View {
         .padding(.horizontal, 16)
         .frame(height: 46)
         .background(
-            Capsule().fill(Color(uiColor: .secondarySystemBackground))
+            Capsule().fill(Neo.cardFill)
         )
         .padding(.horizontal, 16)
         .padding(.bottom, 10)

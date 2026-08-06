@@ -159,7 +159,7 @@ struct NeoSettingsView: View {
             .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showGoalSheet) {
@@ -396,7 +396,7 @@ struct NeoImportWordsView: View {
             .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(
             isPresented: $showPicker,
