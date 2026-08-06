@@ -127,7 +127,9 @@ public enum ResourceManager {
                 isRequired: false,
                 downloadURLs: [
                     URL(string: "https://voccab-res.gaelis.cc/resources/en_US-libritts_r-medium.onnx")!,
-                    URL(string: "https://voccab-res.gaelis.cc/resources/en_US-libritts_r-medium.onnx.json")!,
+                    URL(string: "https://voccab-res.gaelis.cc/resources/tokens.txt")!,
+                    // Expanded into espeak-ng-data/ once downloaded.
+                    URL(string: "https://voccab-res.gaelis.cc/resources/espeak-ng-data.zip")!,
                 ]),
         ]
         // Cached pronunciation recordings (Wikimedia fetches).
@@ -166,11 +168,34 @@ public enum ResourceManager {
                 try? FileManager.default.removeItem(at: dest)
                 try FileManager.default.moveItem(at: temp, to: dest)
             }
+            try expandArchives(in: staging)
             try? FileManager.default.removeItem(at: dir)
             try FileManager.default.moveItem(at: staging, to: dir)
         } catch {
             try? FileManager.default.removeItem(at: staging)
             throw error
+        }
+    }
+
+    /// Unpacks any archive that arrived with a resource — espeak-ng's data
+    /// is a directory of ~200 files, so it travels as one store-only zip
+    /// and is expanded here, next to the model that needs it.
+    private static func expandArchives(in directory: URL) throws {
+        let manager = FileManager.default
+        let contents = (try? manager.contentsOfDirectory(at: directory,
+                                                         includingPropertiesForKeys: nil)) ?? []
+        for archive in contents where archive.pathExtension == "zip" {
+            let entries = Zip.extract(try Data(contentsOf: archive))
+            guard !entries.isEmpty else { continue }
+            for (name, payload) in entries {
+                // Entry names are relative and must stay inside the folder.
+                guard !name.hasPrefix("/"), !name.contains("..") else { continue }
+                let destination = directory.appendingPathComponent(name)
+                try manager.createDirectory(at: destination.deletingLastPathComponent(),
+                                            withIntermediateDirectories: true)
+                try payload.write(to: destination)
+            }
+            try? manager.removeItem(at: archive)
         }
     }
 

@@ -182,6 +182,7 @@ struct ResourcesPage: View {
                 if let resource = pendingDelete {
                     _ = ResourceManager.delete(resource)
                     resources = ResourceManager.all()
+                    env.speech.refreshPiper()
                     env.touch()
                 }
                 pendingDelete = nil
@@ -221,6 +222,7 @@ struct ResourcesPage: View {
             }
             downloading[resource.id] = nil
             resources = ResourceManager.all()
+            env.speech.refreshPiper()
             env.touch()
         }
     }

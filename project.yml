@@ -9,6 +9,11 @@ options:
 packages:
   VocabKit:
     path: Packages/VocabKit
+  # Wraps the checksum-pinned sherpa-onnx xcframeworks for on-device Piper
+  # synthesis. iOS front ends only — the Mac app has no speech yet, and
+  # VocabKit stays pure Foundation so `swift test` needs no binaries.
+  SherpaTTS:
+    path: Packages/SherpaTTS
 
 # Signing stays at Xcode defaults (automatic, no pinned team) so a fresh
 # clone builds for simulator with zero setup and device builds only need
@@ -26,6 +31,7 @@ targetTemplates:
     platform: iOS
     dependencies:
       - package: VocabKit
+      - package: SherpaTTS
     info:
       path: ${target_name}-Info.plist
       properties:

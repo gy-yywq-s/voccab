@@ -61,7 +61,7 @@ struct VoiceSettingsPage: View {
                         Label {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Model not downloaded")
-                                Text("Download it under Settings → Data → Resources (~75 MB). Until then Piper falls back to the system voice.")
+                                Text("Download it under Settings → Data → Resources (~95 MB). Until then Piper falls back to the system voice.")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }
@@ -81,10 +81,19 @@ struct VoiceSettingsPage: View {
                         }
                     }
                     .accessibilityIdentifier("voice.speaker")
+                    if modelDownloaded {
+                        Button {
+                            env.speech.piperSpeaker = speaker
+                            env.speech.speak("serene", accent: .american, source: .piper)
+                        } label: {
+                            Label("Hear this voice", systemImage: "play.circle")
+                        }
+                        .accessibilityIdentifier("voice.audition")
+                    }
                 } header: {
                     Text("Piper · LibriTTS-R")
                 } footer: {
-                    Text("904 voices from the LibriTTS-R corpus, described with the LibriTTS-P annotations. Auditioning arrives with the model download.")
+                    Text("904 voices from the LibriTTS-R corpus, described with the LibriTTS-P annotations. Synthesis runs on this device — the first word after switching voices takes a moment while the model loads.")
                 }
             }
         }
@@ -104,7 +113,10 @@ struct VoiceSettingsPage: View {
             }
         }
         .onChange(of: accent) { env.settings.pronunciationAccent = accent }
-        .onChange(of: speaker) { env.settings.piperSpeaker = speaker }
+        .onChange(of: speaker) {
+            env.settings.piperSpeaker = speaker
+            env.speech.piperSpeaker = speaker
+        }
         .onChange(of: rate) {
             env.settings.speechRate = rate
             env.speech.rate = rate

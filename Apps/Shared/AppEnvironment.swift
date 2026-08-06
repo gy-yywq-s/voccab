@@ -85,6 +85,10 @@ final class AppEnvironment: ObservableObject {
 
     /// Deferred warm-ups that would otherwise stall a first tap.
     func warmUpAfterLaunch() {
+        // Voice preferences live in settings but are read on every speak,
+        // so hand them to the service once at launch.
+        speech.rate = settings.speechRate
+        speech.piperSpeaker = settings.piperSpeaker
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 2_500_000_000)
             AppleDictionaryInline.warmUp()
