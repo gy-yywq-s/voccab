@@ -48,6 +48,9 @@ struct NeoWordDetailView: View {
     @State private var showNewListPrompt = false
     @State private var newListName = ""
     @State private var showResetConfirm = false
+    @State private var statsExpanded = false
+    @State private var dragSteps = 0
+    @State private var isDraggingStrength = false
 
     private var dictionaryTabs: [DictionarySource] {
         env.settings.enabledDictionaries.filter { $0 != .chinese }
@@ -59,13 +62,8 @@ struct NeoWordDetailView: View {
                 headword
                 chineseDefinitions
                 noteBlock
-                NeoSectionHeader(title: "Progress") {
-                    Text(Formatting.recallChip(model.recall))
-                        .font(Neo.bodyFont)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.top, 30)
                 studyBlock
+                    .padding(.top, 26)
                 NeoSectionHeader(title: "Dictionary")
                     .padding(.top, 26)
                 tabBar
@@ -279,14 +277,117 @@ struct NeoWordDetailView: View {
         }
     }
 
-    /// The Study section: a compact "I know this word" seeding control, then
-    /// the schedule facts as scannable label/value rows.
+    /// The Study section, collapsed to one compact row. Words with review
+    /// history get "I know this word" + the live recall percent (tap the row
+    /// to disclose the schedule facts; drag the percent to nudge the
+    /// schedule). Never-studied words keep the "How well?" seeding path.
     private var studyBlock: some View {
         let state = model.data.state
-        return VStack(alignment: .leading, spacing: 14) {
-            knownWordRow
-                .padding(.top, 12)
+        return VStack(alignment: .leading, spacing: 0) {
+            if state.timesStudied > 0 {
+                recallRow
+                if statsExpanded {
+                    expandedStats(state: state)
+                        .padding(.top, 10)
+                }
+            } else {
+                seedRow
+            }
+        }
+        .accessibilityIdentifier("word.studyInfo")
+    }
 
+    /// One row carrying the whole progress story: label + disclosure chevron
+    /// on the left, the draggable recall percent trailing.
+    private var recallRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { statsExpanded.toggle() }
+            } label: {
+                HStack(spacing: 6) {
+                    Text("I know this word")
+                        .font(Neo.bodyFont)
+                        .foregroundStyle(.primary)
+                    Image(systemName: statsExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            recallAdjustValue
+        }
+        // Identifier kept from the old familiarity control for UITests.
+        .accessibilityIdentifier("word.familiaritySlider")
+    }
+
+    /// The trailing "91%" doubles as the schedule nudge: drag up for more
+    /// time (×2 per step), down for less (÷2 per step), clamped to ±3 steps.
+    /// While dragging it previews the multiplier and the projected recall —
+    /// pow(recall, pow(2, -steps)), since doubling stability roughly
+    /// square-roots the forgetting. Release commits through the same
+    /// adjustStrength(steps:) path the old ± buttons used.
+    private var recallAdjustValue: some View {
+        VStack(alignment: .trailing, spacing: 1) {
+            HStack(spacing: 5) {
+                if isDraggingStrength {
+                    Text(multiplierText(for: dragSteps))
+                        .font(Neo.caption.weight(.medium).monospacedDigit())
+                }
+                Text(isDraggingStrength ? projectedRecallText : restingRecallText)
+                    .font(Neo.bodyFont.monospacedDigit())
+            }
+            .foregroundStyle(isDraggingStrength ? (dragSteps < 0 ? Neo.warm : Neo.blue) : Color.secondary)
+            if isDraggingStrength {
+                Text("schedule")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
+            }
+        }
+        .contentShape(Rectangle())
+        // High priority so the value's vertical drag beats the page scroll.
+        .highPriorityGesture(strengthDrag)
+        .accessibilityIdentifier("word.adjustStrength")
+    }
+
+    private var strengthDrag: some Gesture {
+        DragGesture(minimumDistance: 4)
+            .onChanged { value in
+                isDraggingStrength = true
+                // Swipe up = more time; ~28pt per halving/doubling step.
+                dragSteps = min(3, max(-3, Int((-value.translation.height / 28).rounded())))
+            }
+            .onEnded { _ in
+                let steps = dragSteps
+                isDraggingStrength = false
+                dragSteps = 0
+                if steps != 0 { model.adjustStrength(steps: steps) }
+            }
+    }
+
+    /// "91%" or "?" — the row's resting value.
+    private var restingRecallText: String {
+        model.recall.map { "\(Int(($0 * 100).rounded()))%" } ?? "?"
+    }
+
+    /// Recall projected at the dragged strength.
+    private var projectedRecallText: String {
+        guard let recall = model.recall else { return "?" }
+        let projected = pow(recall, pow(2, -Double(dragSteps)))
+        return "\(Int((projected * 100).rounded()))%"
+    }
+
+    private func multiplierText(for steps: Int) -> String {
+        if steps > 0 { return "×\(1 << steps)" }
+        if steps < 0 { return "÷\(1 << -steps)" }
+        return "×1"
+    }
+
+    /// Schedule facts disclosed by the recall row, plus the algorithm's own
+    /// summary line.
+    private func expandedStats(state: WordState) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             VStack(spacing: 0) {
                 factRow("Practiced", state.timesStudied == 0 ? "never" : "\(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s")")
                 if let last = state.lastStudiedAt {
@@ -299,70 +400,16 @@ struct NeoWordDetailView: View {
                     factRow("Memory circle", "\(state.memoryCircle)", last: true)
                 }
             }
-
-            if state.timesStudied > 0 {
-                adjustStrengthBlock(state: state)
-            }
-        }
-        .accessibilityIdentifier("word.studyInfo")
-    }
-
-    /// Stepped strength adjuster: each step halves (−) or doubles (+) the
-    /// schedule — a nudge for "the algorithm has this word wrong", distinct
-    /// from Reset.
-    private func adjustStrengthBlock(state: WordState) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
             Text("Algorithm's estimate — \(Formatting.recallChip(model.recall)) · next review in \(Formatting.interval(days: state.intervalDays ?? 0))")
                 .font(Neo.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 0) {
-                strengthSegment("−2", steps: -2)
-                strengthDivider
-                strengthSegment("−1", steps: -1)
-                Text("·")
-                    .font(Neo.caption)
-                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
-                    .frame(width: 24)
-                strengthSegment("+1", steps: 1)
-                strengthDivider
-                strengthSegment("+2", steps: 2)
-            }
-            .frame(height: 38)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Neo.hairline, lineWidth: 0.7)
-            )
-            Text("Each step halves or doubles the schedule. Distinct from Reset.")
-                .font(.system(size: 12))
-                .foregroundStyle(Color(uiColor: .tertiaryLabel))
         }
-        .padding(.top, 2)
-        .accessibilityIdentifier("word.adjustStrength")
     }
 
-    private var strengthDivider: some View {
-        Rectangle()
-            .fill(Neo.hairline)
-            .frame(width: 0.5, height: 20)
-    }
-
-    private func strengthSegment(_ label: String, steps: Int) -> some View {
-        Button {
-            model.adjustStrength(steps: steps)
-        } label: {
-            Text(label)
-                .font(.system(size: 15, weight: .medium).monospacedDigit())
-                .foregroundStyle(steps < 0 ? Neo.warm : Neo.blue)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(NeoPressStyle())
-    }
-
-    /// "I know this word": a quiet hairline menu row seeding the scheduler
-    /// at rung 1-5 (5 = strongest).
-    private var knownWordRow: some View {
+    /// Never-studied words: no recall to show yet, so keep the "How well?"
+    /// seeding menu — quiet secondary text + chevron, settings style.
+    private var seedRow: some View {
         HStack {
             Text("I know this word")
                 .font(Neo.bodyFont)
@@ -379,16 +426,10 @@ struct NeoWordDetailView: View {
                 HStack(spacing: 5) {
                     Text("How well?")
                         .font(Neo.caption)
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(systemName: "chevron.down")
                         .font(.caption2.weight(.semibold))
                 }
-                .foregroundStyle(Neo.blue)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.7)
-                )
+                .foregroundStyle(.secondary)
             }
         }
         // Identifier kept from the old familiarity control for UITests.
