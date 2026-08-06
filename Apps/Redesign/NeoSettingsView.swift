@@ -416,7 +416,7 @@ struct NeoImportWordsView: View {
                 dismiss()
             }
         } message: {
-            Text("Created list “\(importedList?.name ?? "")” with \(importedList?.wordCount ?? 0) words.")
+            Text("Created list “\(importedList?.name ?? "")” with \(importedList?.wordCount ?? 0) words.\(CSVImport.lastMergedNoteCount > 0 ? "\nNotes merged on \(CSVImport.lastMergedNoteCount) existing word\(CSVImport.lastMergedNoteCount == 1 ? "" : "s")." : "")")
         }
     }
 

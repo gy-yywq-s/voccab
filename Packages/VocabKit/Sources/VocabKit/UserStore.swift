@@ -377,6 +377,27 @@ public final class UserStore {
         save(state: s)
     }
 
+    /// Import-time note handling: a word that already carries a different
+    /// note keeps BOTH — the new note is appended on its own line. Returns
+    /// true when a merge (append) happened, so imports can report it.
+    @discardableResult
+    public func mergeNote(_ note: String, for word: String) -> Bool {
+        let incoming = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !incoming.isEmpty else { return false }
+        var s = state(of: word)
+        let existing = s.note.trimmingCharacters(in: .whitespacesAndNewlines)
+        if existing.isEmpty {
+            s.note = incoming
+            save(state: s)
+            return false
+        }
+        // Identical or already contained: nothing to merge.
+        guard !existing.contains(incoming) else { return false }
+        s.note = existing + "\n" + incoming
+        save(state: s)
+        return true
+    }
+
     // MARK: - Study log / stats
 
     public func logStudy(word: String, knew: Bool, wasNew: Bool, at date: Date = Date(),

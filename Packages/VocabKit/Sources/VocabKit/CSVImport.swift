@@ -210,6 +210,10 @@ public enum CSVImport {
     /// Imports rows into a new list — or, when `mergeInto` is given, into an
     /// existing list. Notes land on the word state either way.
     @discardableResult
+    /// Words whose existing notes were merged (not overwritten) during the
+    /// last `importRows` call — read right after importing to report it.
+    public private(set) static var lastMergedNoteCount = 0
+
     public static func importRows(
         _ rows: [ImportedRow],
         listName: String,
@@ -232,14 +236,16 @@ public enum CSVImport {
             guard let list = created else { return nil }
             targetID = list.id
         }
+        var merged = 0
         userStore.withTransaction {
             for row in rows {
                 userStore.add(word: row.word, to: targetID)
                 if !row.note.isEmpty {
-                    userStore.setNote(row.note, for: row.word)
+                    if userStore.mergeNote(row.note, for: row.word) { merged += 1 }
                 }
             }
         }
+        lastMergedNoteCount = merged
         return userStore.lists().first(where: { $0.id == targetID })
     }
 }
