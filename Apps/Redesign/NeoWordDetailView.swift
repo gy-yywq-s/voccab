@@ -104,7 +104,7 @@ struct NeoWordDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
                 Text(model.displayWord)
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.system(size: 32, weight: .bold, design: .serif))
                     .minimumScaleFactor(0.5)
                     .lineLimit(2)
                 Spacer()
@@ -114,7 +114,7 @@ struct NeoWordDetailView: View {
                 if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
                     Text("/\(phonetic)/")
                         .font(.body)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                 }
                 Button {
                     model.speak()
@@ -132,7 +132,7 @@ struct NeoWordDetailView: View {
                     NavigationLink(value: Route.wordDetail(word: base, context: [])) {
                         HStack(spacing: 4) {
                             Text("form of")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Neo.graphite)
                             Text(base)
                                 .foregroundStyle(Neo.blue)
                                 .underline()
@@ -174,7 +174,7 @@ struct NeoWordDetailView: View {
                 }
             }
             .font(Neo.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Neo.graphite)
         }
     }
 
@@ -184,7 +184,7 @@ struct NeoWordDetailView: View {
         } label: {
             Image(systemName: model.isInAnyList ? "bookmark.fill" : "bookmark")
                 .font(.title3)
-                .foregroundStyle(model.isInAnyList ? Neo.blue : Color.secondary)
+                .foregroundStyle(model.isInAnyList ? Neo.blue : Neo.graphite)
                 .frame(width: 44, height: 44, alignment: .topTrailing)
         }
         .accessibilityIdentifier("word.addToMyWords")
@@ -223,7 +223,7 @@ struct NeoWordDetailView: View {
             } else {
                 Text("No dictionary entry")
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .padding(.top, 14)
@@ -235,7 +235,7 @@ struct NeoWordDetailView: View {
             if let pos = parts.pos {
                 Text(pos)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                     .frame(minWidth: 36, alignment: .leading)
             }
             Text(parts.body)
@@ -263,7 +263,7 @@ struct NeoWordDetailView: View {
                     .foregroundStyle(Neo.warm)
                 Text(Formatting.tidy(model.data.state.note))
                     .font(Neo.bodyFont)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Neo.ink)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -307,10 +307,10 @@ struct NeoWordDetailView: View {
                 HStack(spacing: 6) {
                     Text("I know this word")
                         .font(Neo.bodyFont)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Neo.ink)
                     Image(systemName: statsExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                     Spacer(minLength: 0)
                 }
                 .contentShape(Rectangle())
@@ -338,11 +338,11 @@ struct NeoWordDetailView: View {
                 Text(isDraggingStrength ? projectedRecallText : restingRecallText)
                     .font(Neo.bodyFont.monospacedDigit())
             }
-            .foregroundStyle(isDraggingStrength ? (dragSteps < 0 ? Neo.warm : Neo.blue) : Color.secondary)
+            .foregroundStyle(isDraggingStrength ? (dragSteps < 0 ? Neo.warm : Neo.blue) : Neo.graphite)
             if isDraggingStrength {
                 Text("schedule")
                     .font(.system(size: 10))
-                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    .foregroundStyle(Neo.faint)
             }
         }
         .contentShape(Rectangle())
@@ -402,7 +402,7 @@ struct NeoWordDetailView: View {
             }
             Text("Algorithm's estimate — \(Formatting.recallChip(model.recall)) · next review in \(Formatting.interval(days: state.intervalDays ?? 0))")
                 .font(Neo.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -429,7 +429,7 @@ struct NeoWordDetailView: View {
                     Image(systemName: "chevron.down")
                         .font(.caption2.weight(.semibold))
                 }
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             }
         }
         // Identifier kept from the old familiarity control for UITests.
@@ -441,11 +441,11 @@ struct NeoWordDetailView: View {
             HStack {
                 Text(label)
                     .font(Neo.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                 Spacer()
                 Text(value)
                     .font(Neo.caption)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Neo.ink)
             }
             .padding(.vertical, 8)
             if !last {
@@ -544,7 +544,7 @@ struct NeoWordDetailView: View {
             } else {
                 Text("No OpenGloss entry for this word.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .accessibilityIdentifier("word.opengloss")
@@ -557,7 +557,7 @@ struct NeoWordDetailView: View {
             } else {
                 Text("No Webster 1913 entry for this word.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .accessibilityIdentifier("word.webster")
@@ -570,7 +570,7 @@ struct NeoWordDetailView: View {
             } else {
                 Text("No Moby Thesaurus entry for this word.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .accessibilityIdentifier("word.moby")
@@ -581,7 +581,7 @@ struct NeoWordDetailView: View {
             if model.data.related.isEmpty {
                 Text("No related forms.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
             ForEach(model.data.related, id: \.label) { section in
                 VStack(alignment: .leading, spacing: 6) {
@@ -623,7 +623,7 @@ struct NeoWordDetailView: View {
                 } else {
                     Text("No English definition available.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                 }
             }
             ForEach(posOrder.filter { byPos[$0] != nil }, id: \.self) { pos in
@@ -634,14 +634,14 @@ struct NeoWordDetailView: View {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text("\(index + 1).")
                                 .font(.subheadline.monospacedDigit())
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Neo.graphite)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(sense.gloss.prefix(1).capitalized + String(sense.gloss.dropFirst()) + ".")
                                     .font(.body)
                                 ForEach(sense.examples.prefix(2), id: \.self) { example in
                                     Text("“\(example)”")
                                         .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Neo.graphite)
                                 }
                             }
                         }

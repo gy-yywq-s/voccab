@@ -150,12 +150,12 @@ struct NeoWordListView: View {
             VStack(spacing: 12) {
                 Image(systemName: "text.magnifyingglass")
                     .font(.system(size: 48, weight: .light))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                 Text("This word list is empty.")
                     .font(.headline)
                 Text("Search words or pick words from a picture.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 110)
@@ -179,11 +179,11 @@ struct NeoWordListView: View {
                             .font(Neo.sectionLabel)
                             .textCase(.uppercase)
                             .tracking(1.2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                         Spacer()
                         Text("\(section.rows.count)")
                             .font(.footnote.monospacedDigit())
-                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                            .foregroundStyle(Neo.faint)
                     }
                     .padding(.top, 24)
                     .padding(.bottom, 8)
@@ -242,11 +242,11 @@ struct NeoWordListView: View {
                     // Serif for the word itself — words are content.
                     Text(row.word)
                         .font(Font.system(.body, design: .serif).weight(.medium))
-                        .foregroundStyle(row.archived ? Color.secondary : Color.primary)
+                        .foregroundStyle(row.archived ? Neo.graphite : Neo.ink)
                     if row.archived {
                         Image(systemName: "archivebox")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                     }
                 }
                 if row.recall != nil {
@@ -256,10 +256,10 @@ struct NeoWordListView: View {
             Spacer()
             Text(rightMeta(row))
                 .font(Neo.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(Color(uiColor: .quaternaryLabel))
+                .foregroundStyle(Neo.faint.opacity(0.6))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

@@ -78,7 +78,7 @@ struct NeoHomeView: View {
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.body)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .frame(width: 44, height: 44, alignment: .trailing)
                 }
                 .buttonStyle(NeoPressStyle())
@@ -98,7 +98,7 @@ struct NeoHomeView: View {
                 .font(.system(size: 34, weight: .semibold, design: .rounded))
             statText(counts)
                 .font(Neo.bodyFont)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -138,7 +138,7 @@ struct NeoHomeView: View {
             .font(Neo.sectionLabel)
             .textCase(.uppercase)
             .tracking(1.2)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Neo.graphite)
     }
 
     /// Word lists — the primary zone: user lists in their own order, a
@@ -169,7 +169,7 @@ struct NeoHomeView: View {
                 if lists.isEmpty {
                     Text("No word lists yet. Create one or import your own vocabulary.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
                     NeoHairline()
@@ -182,15 +182,15 @@ struct NeoHomeView: View {
                         HStack {
                             Text(list.name)
                                 .font(Neo.rowTitle)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(Neo.ink)
                                 .lineLimit(1)
                             Spacer()
                             Text("\(list.wordCount) words")
                                 .font(Neo.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Neo.graphite)
                             Image(systemName: "chevron.right")
                                 .font(.footnote.weight(.semibold))
-                                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                                .foregroundStyle(Neo.faint)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 13)
@@ -236,12 +236,12 @@ struct NeoHomeView: View {
                     HStack {
                         Text("Every word across your lists")
                             .font(Neo.rowTitle)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Neo.ink)
                         Spacer()
                         NeoChip(text: count == 0 ? "None yet" : "\(count) words")
                         Image(systemName: "chevron.right")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                            .foregroundStyle(Neo.faint)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
@@ -260,7 +260,7 @@ struct NeoHomeView: View {
             NeoCard {
                 Text("Photograph text and tap any word to look it up. The camera button below starts a capture.")
                     .font(Neo.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
                 PromoCarousel(cornerRadius: 10) { word in
@@ -280,7 +280,7 @@ struct NeoHomeView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                     Text("Lookup words or sentences")
                         .foregroundStyle(Color(uiColor: .placeholderText))
                     Spacer()

@@ -40,7 +40,7 @@ struct NeoStudyStartView: View {
                         .font(Neo.pageTitle)
                     Text(model.sessionMessage)
                         .font(Neo.bodyFont)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -57,7 +57,7 @@ struct NeoStudyStartView: View {
                         .font(Neo.sectionLabel)
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .padding(.top, 28)
                         .padding(.bottom, 8)
 
@@ -118,11 +118,11 @@ struct NeoStudyStartView: View {
                     HStack {
                         Text("Start a different practice")
                             .font(.body)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Neo.ink)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                            .foregroundStyle(Neo.faint)
                     }
                     .padding(.vertical, 12)
                     .contentShape(Rectangle())
@@ -159,7 +159,7 @@ struct NeoStudyStartView: View {
         HStack {
             Text("Order")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             Spacer()
             Menu {
                 ForEach(Array(StudyOrder.grouped.enumerated()), id: \.offset) { _, group in
@@ -182,7 +182,7 @@ struct NeoStudyStartView: View {
                     Image(systemName: "chevron.down")
                         .font(.caption.weight(.semibold))
                 }
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .padding(.vertical, 7)
                 .contentShape(Rectangle())
             }
@@ -222,12 +222,12 @@ struct NeoStudyStartView: View {
                 HStack(spacing: 12) {
                     Image(systemName: planSymbol(plan.mode))
                         .font(.body.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .frame(width: 26)
                     VStack(alignment: .leading, spacing: 5) {
                         Text(plan.mode.rawValue)
                             .font(Neo.rowTitle)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Neo.ink)
                         HStack(spacing: 6) {
                             NeoChip(text: "\(plan.newCount) new")
                             NeoChip(text: "\(plan.reviewCount) review",
@@ -237,7 +237,7 @@ struct NeoStudyStartView: View {
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                        .foregroundStyle(Neo.faint)
                 }
                 .padding(.vertical, 12)
                 .contentShape(Rectangle())
@@ -263,7 +263,7 @@ struct NeoStudyStartView: View {
                         Image(systemName: showCustomize ? "chevron.up" : "chevron.down")
                             .font(.caption2.weight(.semibold))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .contentShape(Rectangle())
@@ -304,7 +304,7 @@ struct NeoStudyStartView: View {
 
             Text("For this session only.")
                 .font(.system(size: 12))
-                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                .foregroundStyle(Neo.faint)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
         }
@@ -322,7 +322,7 @@ struct NeoStudyStartView: View {
             Spacer()
             Text("\(value.wrappedValue)")
                 .font(Neo.bodyFont.monospacedDigit())
-                .foregroundStyle(.primary)
+                .foregroundStyle(Neo.ink)
             Stepper("", value: value, in: 0...200, step: 5)
                 .labelsHidden()
         }
@@ -413,11 +413,11 @@ struct NeoFlashcardView: View {
                     HStack(spacing: 10) {
                         Text("\(session.position + 1) of \(session.totalCount)")
                             .font(.footnote.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                         Spacer()
                         Text(session.order.shortLabel)
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                         if model.canUndo, !model.revealed {
                             undoButton
                         }
@@ -443,7 +443,7 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "arrow.uturn.backward")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(width: 30, height: 30)
                 .overlay(Circle().stroke(Neo.hairline, lineWidth: 0.7))
         }
@@ -467,7 +467,7 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(width: 30, height: 30)
         }
         .accessibilityIdentifier("study.menu")
@@ -480,11 +480,11 @@ struct NeoFlashcardView: View {
         return VStack(alignment: .leading, spacing: 0) {
             Text(item.isNew ? "New word" : "Review")
                 .font(Neo.bodyFont)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(maxWidth: .infinity)
 
             Text(dictWord?.word ?? item.word)
-                .font(.system(size: 34, weight: .bold))
+                .font(.system(size: 34, weight: .bold, design: .serif))
                 .minimumScaleFactor(0.4)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
@@ -495,14 +495,14 @@ struct NeoFlashcardView: View {
                 if let phonetic = dictWord?.phonetic, !phonetic.isEmpty {
                     Text("/\(phonetic)/")
                         .font(Neo.bodyFont)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                 }
                 Button {
                     model.speakCurrent()
                 } label: {
                     Image(systemName: "speaker.wave.2")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(NeoPressStyle())
@@ -530,7 +530,7 @@ struct NeoFlashcardView: View {
                                 .foregroundStyle(Neo.warm)
                             Text(Formatting.tidy(note))
                                 .font(Neo.bodyFont)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(Neo.ink)
                                 .lineSpacing(4)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -564,7 +564,7 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "book")
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(width: 30, height: 30)
                 .overlay(Circle().stroke(Neo.hairline, lineWidth: 0.7))
         }
@@ -611,11 +611,11 @@ struct NeoFlashcardView: View {
     private var finished: some View {
         VStack(spacing: 12) {
             Text("Session complete")
-                .font(.title2.weight(.bold))
+                .font(.system(.title2, design: .rounded).weight(.bold))
             let counts = env.userStore.todayCounts()
             Text("Today: \(counts.newWords) new · \(counts.reviewed) reviewed")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             NeoQuietButton(title: "Done", systemImage: "checkmark") {
                 model.endSession()
                 dismiss()
@@ -793,7 +793,7 @@ struct NeoFlashcardView: View {
                         Text("Change answer")
                             .font(.footnote.weight(.medium))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.rechoose")
@@ -817,7 +817,7 @@ struct NeoFlashcardView: View {
     private func lockedCapsule(_ choice: ReviewGrade) -> some View {
         Text(lockedText(choice))
             .font(.footnote.weight(.medium))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Neo.graphite)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Capsule().fill(Neo.cardFill))
@@ -994,7 +994,7 @@ struct NeoFlashcardView: View {
         VStack(spacing: 10) {
             Text("How well do you know this word?")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             NeoSeedWheel { rung in
                 seedTapped(rung, for: item)
             }
@@ -1031,7 +1031,7 @@ struct NeoFlashcardView: View {
                 .foregroundStyle(.blue)
             Text(text)
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
         }
         .frame(maxWidth: .infinity)
         .transition(.scale(scale: 0.95).combined(with: .opacity))

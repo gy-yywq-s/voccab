@@ -220,7 +220,7 @@ struct NeoSearchField: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             TextField(placeholder, text: $text)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
