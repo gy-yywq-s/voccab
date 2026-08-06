@@ -71,8 +71,12 @@ struct SettingsView: View {
 
                 // The headline upgrade: default recitation order.
                 Picker(selection: $order) {
-                    ForEach(StudyOrder.allCases, id: \.self) { order in
-                        Text(order.label).tag(order)
+                    ForEach(Array(StudyOrder.grouped.enumerated()), id: \.offset) { _, group in
+                        Section(group.label) {
+                            ForEach(group.options, id: \.self) { order in
+                                Label(order.label, systemImage: order.symbol).tag(order)
+                            }
+                        }
                     }
                 } label: {
                     Label("Practice Order", systemImage: "arrow.up.arrow.down")

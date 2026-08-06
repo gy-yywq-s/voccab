@@ -32,7 +32,7 @@ struct NeoSettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 NeoSectionHeader(title: "Word")
                     .padding(.top, 20)
-                menuRow("Pronunciation", value: accent.label) {
+                menuRow("Pronunciation", value: accent.label, icon: "waveform") {
                     ForEach(PronunciationAccent.allCases, id: \.self) { option in
                         Button(option.label) {
                             accent = option
@@ -42,7 +42,7 @@ struct NeoSettingsView: View {
                 }
                 .accessibilityIdentifier("settings.pronunciation")
                 NeoHairline()
-                menuRow("Voice", value: pronunciationSource.label) {
+                menuRow("Voice", value: pronunciationSource.label, icon: "person.wave.2") {
                     ForEach(PronunciationSource.allCases, id: \.self) { option in
                         Button(option.label) {
                             pronunciationSource = option
@@ -61,7 +61,7 @@ struct NeoSettingsView: View {
                 NavigationLink {
                     DictionaryPreviewPage()
                 } label: {
-                    valueRow("Dictionaries", value: dictionarySummary, chevron: true)
+                    valueRow("Dictionaries", value: dictionarySummary, chevron: true, icon: "character.book.closed")
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.dictPreview")
@@ -72,28 +72,29 @@ struct NeoSettingsView: View {
                 Button {
                     showGoalSheet = true
                 } label: {
-                    valueRow("Daily Goal", value: "New \(goalNew) · Review \(goalReview)", chevron: true)
+                    valueRow("Daily Goal", value: "New \(goalNew) · Review \(goalReview)", chevron: true, icon: "target")
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.dailyGoal")
                 NeoHairline()
-                menuRow("Order", value: order.shortLabel) {
-                    ForEach(StudyOrder.allCases, id: \.self) { option in
-                        Button {
-                            order = option
-                            env.settings.studyOrder = option
-                        } label: {
-                            if order == option {
-                                Label(option.label, systemImage: "checkmark")
-                            } else {
-                                Text(option.label)
+                menuRow("Order", value: order.shortLabel, icon: "arrow.up.arrow.down") {
+                    ForEach(Array(StudyOrder.grouped.enumerated()), id: \.offset) { _, group in
+                        Section(group.label) {
+                            ForEach(group.options, id: \.self) { option in
+                                Button {
+                                    order = option
+                                    env.settings.studyOrder = option
+                                } label: {
+                                    Label(option.label,
+                                          systemImage: order == option ? "checkmark" : option.symbol)
+                                }
                             }
                         }
                     }
                 }
                 .accessibilityIdentifier("settings.studyOrder")
                 NeoHairline()
-                menuRow("Algorithm", value: scheduler.label) {
+                menuRow("Algorithm", value: scheduler.label, icon: "brain") {
                     ForEach(SchedulerKind.allCases, id: \.self) { kind in
                         Button {
                             requestSwitch(to: kind)
@@ -116,7 +117,7 @@ struct NeoSettingsView: View {
                 NavigationLink {
                     AlgorithmPreviewPage()
                 } label: {
-                    valueRow("Compare Algorithms", value: "", chevron: true)
+                    valueRow("Compare Algorithms", value: "", chevron: true, icon: "chart.line.uptrend.xyaxis")
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.algPreview")
@@ -124,7 +125,7 @@ struct NeoSettingsView: View {
                 NavigationLink {
                     PracticeInputPage()
                 } label: {
-                    valueRow("Practice Input", value: env.settings.answerStyle.label, chevron: true)
+                    valueRow("Practice Input", value: env.settings.answerStyle.label, chevron: true, icon: "hand.tap")
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.practiceInput")
@@ -132,7 +133,7 @@ struct NeoSettingsView: View {
                 NavigationLink {
                     AlgorithmSettingsPage()
                 } label: {
-                    valueRow("Algorithm Settings", value: scheduler.label, chevron: true)
+                    valueRow("Algorithm Settings", value: scheduler.label, chevron: true, icon: "slider.horizontal.3")
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.algSettings")
@@ -143,7 +144,7 @@ struct NeoSettingsView: View {
                 NavigationLink {
                     DataToolsPage()
                 } label: {
-                    valueRow("Export · Import · Clear", value: "", chevron: true)
+                    valueRow("Export · Import · Clear", value: "", chevron: true, icon: "externaldrive")
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.data")
@@ -198,8 +199,15 @@ struct NeoSettingsView: View {
 
     // MARK: Rows
 
-    private func valueRow(_ title: String, value: String, chevron: Bool) -> some View {
+    private func valueRow(_ title: String, value: String, chevron: Bool,
+                          icon: String? = nil) -> some View {
         HStack {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.subheadline)
+                    .foregroundStyle(Neo.blue)
+                    .frame(width: 24, alignment: .leading)
+            }
             Text(title)
                 .font(.body)
                 .foregroundStyle(.primary)
@@ -217,11 +225,18 @@ struct NeoSettingsView: View {
         .contentShape(Rectangle())
     }
 
-    private func menuRow<MenuContent: View>(_ title: String, value: String, @ViewBuilder menu: () -> MenuContent) -> some View {
+    private func menuRow<MenuContent: View>(_ title: String, value: String, icon: String? = nil,
+                                            @ViewBuilder menu: () -> MenuContent) -> some View {
         Menu {
             menu()
         } label: {
             HStack {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.subheadline)
+                        .foregroundStyle(Neo.blue)
+                        .frame(width: 24, alignment: .leading)
+                }
                 Text(title)
                     .font(.body)
                     .foregroundStyle(.primary)

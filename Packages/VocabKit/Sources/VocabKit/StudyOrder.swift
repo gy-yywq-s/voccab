@@ -31,6 +31,30 @@ public enum StudyOrder: String, CaseIterable, Codable, Sendable {
         }
     }
 
+    /// SF Symbol for menus.
+    public var symbol: String {
+        switch self {
+        case .listOrder: return "list.number"
+        case .frequencyHighFirst: return "chart.bar.fill"
+        case .frequencyLowFirst: return "chart.bar"
+        case .recallWeakFirst: return "brain.head.profile"
+        case .recallStrongFirst: return "brain"
+        case .plannedReviewFirst: return "calendar.badge.clock"
+        case .alphabeticalAZ: return "textformat.abc"
+        case .alphabeticalZA: return "textformat.abc.dottedunderline"
+        case .random: return "shuffle"
+        case .forgottenFirst: return "clock.arrow.circlepath"
+        }
+    }
+
+    /// Menu grouping — ten flat options were an eyesore; three families read
+    /// at a glance.
+    public static let grouped: [(label: String, options: [StudyOrder])] = [
+        ("Position", [.listOrder, .alphabeticalAZ, .alphabeticalZA, .random]),
+        ("Frequency", [.frequencyHighFirst, .frequencyLowFirst]),
+        ("Memory", [.recallWeakFirst, .recallStrongFirst, .forgottenFirst, .plannedReviewFirst]),
+    ]
+
     public var shortLabel: String {
         switch self {
         case .listOrder: return "List Order"

@@ -299,8 +299,65 @@ struct NeoWordDetailView: View {
                     factRow("Memory circle", "\(state.memoryCircle)", last: true)
                 }
             }
+
+            if state.timesStudied > 0 {
+                adjustStrengthBlock(state: state)
+            }
         }
         .accessibilityIdentifier("word.studyInfo")
+    }
+
+    /// Stepped strength adjuster: each step halves (−) or doubles (+) the
+    /// schedule — a nudge for "the algorithm has this word wrong", distinct
+    /// from Reset.
+    private func adjustStrengthBlock(state: WordState) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Algorithm's estimate — \(Formatting.recallChip(model.recall)) · next review in \(Formatting.interval(days: state.intervalDays ?? 0))")
+                .font(Neo.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 0) {
+                strengthSegment("−2", steps: -2)
+                strengthDivider
+                strengthSegment("−1", steps: -1)
+                Text("·")
+                    .font(Neo.caption)
+                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    .frame(width: 24)
+                strengthSegment("+1", steps: 1)
+                strengthDivider
+                strengthSegment("+2", steps: 2)
+            }
+            .frame(height: 38)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Neo.hairline, lineWidth: 0.7)
+            )
+            Text("Each step halves or doubles the schedule. Distinct from Reset.")
+                .font(.system(size: 12))
+                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+        }
+        .padding(.top, 2)
+        .accessibilityIdentifier("word.adjustStrength")
+    }
+
+    private var strengthDivider: some View {
+        Rectangle()
+            .fill(Neo.hairline)
+            .frame(width: 0.5, height: 20)
+    }
+
+    private func strengthSegment(_ label: String, steps: Int) -> some View {
+        Button {
+            model.adjustStrength(steps: steps)
+        } label: {
+            Text(label)
+                .font(.system(size: 15, weight: .medium).monospacedDigit())
+                .foregroundStyle(steps < 0 ? Neo.warm : Neo.blue)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(NeoPressStyle())
     }
 
     /// "I know this word": a quiet hairline menu row seeding the scheduler

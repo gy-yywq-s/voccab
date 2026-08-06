@@ -293,6 +293,10 @@ struct WordDetailView: View {
             }
             .font(.callout)
             .foregroundStyle(.secondary)
+
+            if state.timesStudied > 0 {
+                adjustStrengthBlock(state: state)
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -301,6 +305,46 @@ struct WordDetailView: View {
                 .fill(ClassicTheme.cardBackground.opacity(0.7))
         )
         .accessibilityIdentifier("word.studyInfo")
+    }
+
+    /// Stepped strength adjuster: each step halves (−) or doubles (+) the
+    /// schedule — a nudge for "the algorithm has this word wrong", distinct
+    /// from Reset.
+    private func adjustStrengthBlock(state: WordState) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Algorithm's estimate: \(Formatting.recallChip(model.recall)) · next review in \(Formatting.interval(days: state.intervalDays ?? 0))")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 8) {
+                strengthStep("−2", steps: -2)
+                strengthStep("−1", steps: -1)
+                Text("·")
+                    .foregroundStyle(.secondary)
+                strengthStep("+1", steps: 1)
+                strengthStep("+2", steps: 2)
+            }
+            Text("Each step halves or doubles the schedule. Distinct from Reset.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.top, 4)
+        .accessibilityIdentifier("word.adjustStrength")
+    }
+
+    private func strengthStep(_ label: String, steps: Int) -> some View {
+        Button {
+            model.adjustStrength(steps: steps)
+        } label: {
+            Text(label)
+                .font(.callout.weight(.semibold))
+                .monospacedDigit()
+                .frame(maxWidth: .infinity)
+                .frame(height: 34)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
+        .tint(steps < 0 ? .orange : .accentColor)
     }
 
     // MARK: Tabs
