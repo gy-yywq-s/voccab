@@ -159,7 +159,7 @@ struct DraftRowView: View {
             } label: {
                 strip {
                     VStack(alignment: .leading, spacing: 2) {
-                        ForEach(displayLines(for: word), id: \.self) { line in
+                        ForEach(Array(displayLines(for: word).enumerated()), id: \.offset) { _, line in
                             Text(line)
                                 .font(Mac.inline)
                                 .foregroundStyle(.secondary)
@@ -181,11 +181,12 @@ struct DraftRowView: View {
         if lines.isEmpty { lines = word.definitionLines }
         var display = Array(lines.prefix(3))
         let phonetic = word.phonetic.trimmingCharacters(in: .whitespaces)
-        if !phonetic.isEmpty, var first = display.first {
-            first = "/\(phonetic)/  " + first
-            display[0] = first
-        } else if display.isEmpty, !phonetic.isEmpty {
-            display = ["/\(phonetic)/"]
+        if !phonetic.isEmpty {
+            if display.isEmpty {
+                display = ["/\(phonetic)/"]
+            } else {
+                display[0] = "/\(phonetic)/  " + display[0]
+            }
         }
         return display.isEmpty ? [word.word] : display
     }
