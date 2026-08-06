@@ -75,15 +75,25 @@ enum DraftExport {
     @MainActor
     @discardableResult
     static func present(format: Format, rows: [DraftRow]) -> URL? {
+        let title: String
+        let text: String
+        switch format {
+        case .csv:
+            title = "Export Draft as CSV"
+            text = csv(rows: rows)
+        case .markdown:
+            title = "Export Draft as Markdown"
+            text = markdown(rows: rows)
+        }
+
         let panel = NSSavePanel()
         panel.nameFieldStringValue = format.suggestedName
         panel.allowedContentTypes = [format.contentType]
         panel.canCreateDirectories = true
         panel.isExtensionHidden = false
-        panel.title = format == .csv ? "Export Draft as CSV" : "Export Draft as Markdown"
+        panel.title = title
 
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
-        let text = format == .csv ? csv(rows: rows) : markdown(rows: rows)
         guard let data = text.data(using: .utf8) else { return nil }
         do {
             try data.write(to: url, options: [.atomic])

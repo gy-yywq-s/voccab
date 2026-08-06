@@ -123,6 +123,8 @@ struct DraftRowView: View {
         }
         .buttonStyle(.plain)
         .opacity(isHovering ? 1 : 0)
+        // A zero-opacity view still takes clicks; a delete button must not.
+        .allowsHitTesting(isHovering)
         .help("Delete this row")
         .accessibilityLabel("Delete row \(index + 1)")
     }

@@ -21,10 +21,10 @@ enum LookupResult: Equatable {
 /// Everything the inspector shows for one word, gathered in a single pass.
 struct MacWordDetail {
     var term: String
-    var dictWord: DictWord?
+    var dictWord: DictWord? = nil
     var senses: [WordNetSense] = []
-    var webster: [String]?
-    var moby: [String]?
+    var webster: [String]? = nil
+    var moby: [String]? = nil
     var related: [(label: String, words: [String])] = []
 
     var isEmpty: Bool {
@@ -49,9 +49,9 @@ struct MacWordDetail {
                 grouped[sense.pos]?.append(synonym)
             }
         }
-        return order.compactMap { pos in
+        return order.compactMap { pos -> (pos: String, synonyms: [String])? in
             guard let words = grouped[pos], !words.isEmpty else { return nil }
-            return (pos, words)
+            return (pos: pos, synonyms: words)
         }
     }
 }
@@ -121,7 +121,7 @@ final class MacEnvironment: ObservableObject {
     /// Everything the inspector needs for one word.
     func detail(for term: String) -> MacWordDetail {
         let trimmed = term.trimmingCharacters(in: .whitespacesAndNewlines)
-        var detail = MacWordDetail(term: trimmed, dictWord: nil, webster: nil, moby: nil)
+        var detail = MacWordDetail(term: trimmed)
         guard !trimmed.isEmpty, let dictionary else { return detail }
         // Prefer the dictionary's own spelling of the headword for the lookups
         // that follow, so "Corsage" finds the same rows as "corsage".
