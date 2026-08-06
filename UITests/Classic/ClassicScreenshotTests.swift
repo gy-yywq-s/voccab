@@ -69,8 +69,16 @@ final class ClassicScreenshotTests: XCTestCase {
         // Word detail: "some". The header-card identifier is flattened by
         // accessibility grouping, so wait on the dictionary tab bar instead.
         app.staticTexts["some"].firstMatch.waitTap()
-        XCTAssertTrue(app.segmentedControls["word.tabs"].waitForExistence(timeout: 25)
-            || app.staticTexts["/sʌm/"].waitForExistence(timeout: 5))
+        var wordPageOpened = app.segmentedControls["word.tabs"].waitForExistence(timeout: 25)
+            || app.staticTexts["/sʌm/"].waitForExistence(timeout: 5)
+        if !wordPageOpened {
+            // A tap synthesized while the list was still settling lands on
+            // nothing; one retry costs a second and saves the whole run.
+            app.staticTexts["some"].firstMatch.waitTap()
+            wordPageOpened = app.segmentedControls["word.tabs"].waitForExistence(timeout: 25)
+                || app.staticTexts["/sʌm/"].waitForExistence(timeout: 5)
+        }
+        XCTAssertTrue(wordPageOpened)
         snap("05-word-related__\(theme)")
 
         if full {

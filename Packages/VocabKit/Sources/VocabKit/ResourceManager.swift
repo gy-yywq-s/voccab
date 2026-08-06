@@ -32,6 +32,9 @@ public struct AppResource: Identifiable, Sendable {
     /// The definition provider (ECDICT) keeps the app functional — never
     /// deletable even once it moves out of the bundle.
     public let isRequired: Bool
+    /// Public source files fetched on demand; empty means the resource has
+    /// no download path yet.
+    public var downloadURLs: [URL] = []
 
     public var sizeBytes: Int64 {
         switch location {
@@ -106,19 +109,28 @@ public enum ResourceManager {
             AppResource(
                 id: "dict.opengloss",
                 title: "OpenGloss dictionaries",
-                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story.",
+                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story. ~230 MB to fetch, ~815 MB once unpacked.",
                 kind: .dictionary,
                 location: downloadedURL(for: "dict.opengloss").map { .downloaded($0) }
                     ?? .notDownloaded,
-                isRequired: false),
+                isRequired: false,
+                downloadURLs: [
+                    URL(string: "https://voccab-res.gaelis.cc/resources/opengloss.sqlite.gz")!,
+                ]),
             AppResource(
                 id: "tts.libritts-r-medium",
                 title: "Piper voice model (LibriTTS-R)",
-                detail: "904-speaker neural text-to-speech, en_US.",
+                detail: "904-speaker neural text-to-speech, en_US. ~75 MB.",
                 kind: .ttsModel,
                 location: downloadedURL(for: "tts.libritts-r-medium").map { .downloaded($0) }
                     ?? .notDownloaded,
-                isRequired: false),
+                isRequired: false,
+                downloadURLs: [
+                    URL(string: "https://voccab-res.gaelis.cc/resources/en_US-libritts_r-medium.onnx")!,
+                    URL(string: "https://voccab-res.gaelis.cc/resources/tokens.txt")!,
+                    // Expanded into espeak-ng-data/ once downloaded.
+                    URL(string: "https://voccab-res.gaelis.cc/resources/espeak-ng-data.zip")!,
+                ]),
         ]
         // Cached pronunciation recordings (Wikimedia fetches).
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -133,6 +145,64 @@ public enum ResourceManager {
                 isRequired: false))
         }
         return resources
+    }
+
+    /// Fetches every source file of a downloadable resource into its
+    /// downloads folder. Files land under temporary names and move into
+    /// place only after all of them arrive, so a cancelled or failed
+    /// download never leaves a half-installed resource behind.
+    public static func download(_ resource: AppResource) async throws {
+        guard !resource.downloadURLs.isEmpty else { return }
+        let dir = downloadsDirectory.appendingPathComponent(resource.id, isDirectory: true)
+        let staging = downloadsDirectory.appendingPathComponent(".\(resource.id).staging", isDirectory: true)
+        try? FileManager.default.removeItem(at: staging)
+        try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+        do {
+            for url in resource.downloadURLs {
+                let (temp, response) = try await URLSession.shared.download(from: url)
+                guard (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true else {
+                    throw URLError(.badServerResponse)
+                }
+                try Task.checkCancellation()
+                let dest = staging.appendingPathComponent(url.lastPathComponent)
+                try? FileManager.default.removeItem(at: dest)
+                try FileManager.default.moveItem(at: temp, to: dest)
+            }
+            try expandArchives(in: staging)
+            try? FileManager.default.removeItem(at: dir)
+            try FileManager.default.moveItem(at: staging, to: dir)
+        } catch {
+            try? FileManager.default.removeItem(at: staging)
+            throw error
+        }
+    }
+
+    /// Unpacks anything that arrived compressed. espeak-ng's data is a
+    /// directory of ~200 files, so it travels as one store-only zip; the
+    /// OpenGloss database travels gzipped because its text columns shrink
+    /// to about a quarter. Both are expanded in place, and the archive is
+    /// removed so only the usable file is kept.
+    private static func expandArchives(in directory: URL) throws {
+        let manager = FileManager.default
+        let contents = (try? manager.contentsOfDirectory(at: directory,
+                                                         includingPropertiesForKeys: nil)) ?? []
+        for archive in contents where archive.pathExtension == "gz" {
+            try Gunzip.inflate(from: archive, to: archive.deletingPathExtension())
+            try? manager.removeItem(at: archive)
+        }
+        for archive in contents where archive.pathExtension == "zip" {
+            let entries = Zip.extract(try Data(contentsOf: archive))
+            guard !entries.isEmpty else { continue }
+            for (name, payload) in entries {
+                // Entry names are relative and must stay inside the folder.
+                guard !name.hasPrefix("/"), !name.contains("..") else { continue }
+                let destination = directory.appendingPathComponent(name)
+                try manager.createDirectory(at: destination.deletingLastPathComponent(),
+                                            withIntermediateDirectories: true)
+                try payload.write(to: destination)
+            }
+            try? manager.removeItem(at: archive)
+        }
     }
 
     /// Deletes a deletable resource from disk. Returns true on success.

@@ -61,7 +61,7 @@ struct VoiceSettingsPage: View {
                         Label {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Model not downloaded")
-                                Text("The 904-voice model becomes a downloadable resource (Data → Resources) once hosting is set up; until then Piper falls back to the system voice.")
+                                Text("Download it under Settings → Data → Resources (~95 MB). Until then Piper falls back to the system voice.")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }
@@ -81,10 +81,19 @@ struct VoiceSettingsPage: View {
                         }
                     }
                     .accessibilityIdentifier("voice.speaker")
+                    if modelDownloaded {
+                        Button {
+                            env.speech.piperSpeaker = speaker
+                            env.speech.speak("serene", accent: .american, source: .piper)
+                        } label: {
+                            Label("Hear this voice", systemImage: "play.circle")
+                        }
+                        .accessibilityIdentifier("voice.audition")
+                    }
                 } header: {
                     Text("Piper · LibriTTS-R")
                 } footer: {
-                    Text("904 voices from the LibriTTS-R corpus. Voice descriptions and auditioning arrive with the model download.")
+                    Text("904 voices from the LibriTTS-R corpus, described with the LibriTTS-P annotations. Synthesis runs on this device — the first word after switching voices takes a moment while the model loads.")
                 }
             }
         }
@@ -104,7 +113,10 @@ struct VoiceSettingsPage: View {
             }
         }
         .onChange(of: accent) { env.settings.pronunciationAccent = accent }
-        .onChange(of: speaker) { env.settings.piperSpeaker = speaker }
+        .onChange(of: speaker) {
+            env.settings.piperSpeaker = speaker
+            env.speech.piperSpeaker = speaker
+        }
         .onChange(of: rate) {
             env.settings.speechRate = rate
             env.speech.rate = rate
@@ -112,19 +124,21 @@ struct VoiceSettingsPage: View {
     }
 }
 
-/// The 904 LibriTTS-R speakers, lazily listed in banks of 100.
+/// The 904 LibriTTS-R speakers with LibriTTS-P descriptions: majority-vote
+/// gender/pitch/pace plus the annotators' strongest impression adjectives.
 struct PiperSpeakerBrowser: View {
     @Binding var selected: Int
     @State private var query = ""
+    @State private var descriptions: [Int: String] = [:]
 
     private static let total = 904
 
     private var indices: [Int] {
-        let all = Array(0..<Self.total)
-        guard let n = Int(query), n >= 0, n < Self.total else {
-            return query.isEmpty ? all : []
-        }
-        return [n]
+        if query.isEmpty { return Array(0..<Self.total) }
+        if let n = Int(query), n >= 0, n < Self.total { return [n] }
+        // Free-text search over the descriptions ("female", "calm", "deep").
+        let needle = query.lowercased()
+        return (0..<Self.total).filter { descriptions[$0]?.contains(needle) == true }
     }
 
     var body: some View {
@@ -134,8 +148,15 @@ struct PiperSpeakerBrowser: View {
                     selected = index
                 } label: {
                     HStack {
-                        Text("Voice \(index)")
-                            .foregroundStyle(.primary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Voice \(index)")
+                                .foregroundStyle(.primary)
+                            if let desc = descriptions[index] {
+                                Text(desc)
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                         Spacer()
                         if selected == index {
                             Image(systemName: "checkmark")
@@ -145,8 +166,26 @@ struct PiperSpeakerBrowser: View {
                 }
             }
         }
-        .searchable(text: $query, prompt: "Jump to voice number")
+        .searchable(text: $query, prompt: "Voice number, or e.g. “female calm”")
         .navigationTitle("Speaker")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: loadDescriptions)
+    }
+
+    /// Bundled speaker catalog (Data/voices): per-Piper-id "desc" lines
+    /// derived from the LibriTTS-P annotations.
+    private func loadDescriptions() {
+        guard descriptions.isEmpty,
+              let url = Bundle.main.url(forResource: "libritts_r_speakers", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let speakers = root["speakers"] as? [[String: Any]] else { return }
+        var map: [Int: String] = [:]
+        for speaker in speakers {
+            if let id = speaker["id"] as? Int, let desc = speaker["desc"] as? String {
+                map[id] = desc
+            }
+        }
+        descriptions = map
     }
 }

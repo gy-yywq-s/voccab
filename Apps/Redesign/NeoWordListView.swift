@@ -2,9 +2,9 @@ import SwiftUI
 import VocabKit
 
 /// Word list — same zoning as classic (title+count, search, sort/filter,
-/// grouped rows, bottom study action) in the Passage language: native
-/// segmented sort control, capsule search with shadow, bold group headings,
-/// plain hairline rows, compact trailing navy Study commit.
+/// grouped rows, bottom study action): serif page title with a count chip,
+/// native segmented sort control, capsule search with shadow, and word rows
+/// grouped on soft cards under quiet uppercase micro-labels.
 struct NeoWordListView: View {
     @EnvironmentObject private var env: AppEnvironment
     @StateObject var model: WordListModel
@@ -29,7 +29,7 @@ struct NeoWordListView: View {
                 .padding(.horizontal, 20)
             }
             .scrollIndicators(.hidden)
-            .background(Color(uiColor: .systemBackground))
+            .background(Neo.page)
 
             bottomBar
         }
@@ -63,9 +63,7 @@ struct NeoWordListView: View {
                 Text(model.list.name)
                     .font(Neo.pageTitle)
                     .lineLimit(2)
-                Text("\(model.totalCount)")
-                    .font(.title3.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                NeoChip(text: "\(model.totalCount)")
             }
             NeoSearchField(placeholder: "Search", text: $model.searchText) {
                 model.reload()
@@ -152,43 +150,57 @@ struct NeoWordListView: View {
             VStack(spacing: 12) {
                 Image(systemName: "text.magnifyingglass")
                     .font(.system(size: 48, weight: .light))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                 Text("This word list is empty.")
                     .font(.headline)
                 Text("Search words or pick words from a picture.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 110)
             .accessibilityIdentifier("wordList.empty")
         } else {
-            // Section inside the LazyVStack keeps rows individually lazy.
+            // Section inside the LazyVStack keeps rows individually lazy;
+            // the card look is painted per-row (first/last corners) so a
+            // large list still avoids building every row up front.
             ForEach(model.sections) { section in
                 Section {
                     ForEach(section.rows) { row in
-                        rowView(row)
+                        rowView(row,
+                                isFirst: row.id == section.rows.first?.id,
+                                isLast: row.id == section.rows.last?.id)
                     }
                 } header: {
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 6) {
                         HStack(alignment: .firstTextBaseline) {
+                            // .textCase renders uppercase; source string stays
+                            // verbatim for UI-test queries.
                             Text(section.title)
-                                .font(Neo.rowTitle)
+                                .font(Neo.sectionLabel)
+                                .textCase(.uppercase)
+                                .tracking(1.2)
+                                .foregroundStyle(Neo.graphite)
                             Spacer()
                             Text("\(section.rows.count)")
                                 .font(.footnote.monospacedDigit())
-                                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                                .foregroundStyle(Neo.faint)
                         }
-                        .padding(.top, 24)
-                        .padding(.bottom, 6)
-                        NeoHairline()
+                        // Subordinate rule under the band header — lighter
+                        // than the in-card row hairlines so the two levels
+                        // never read as the same line.
+                        Rectangle()
+                            .fill(Neo.hairline.opacity(0.5))
+                            .frame(height: 0.5)
                     }
+                    .padding(.top, 24)
+                    .padding(.bottom, 8)
                 }
             }
         }
     }
 
-    private func rowView(_ row: WordRowInfo) -> some View {
+    private func rowView(_ row: WordRowInfo, isFirst: Bool, isLast: Bool) -> some View {
         Group {
             if batchMarkMode {
                 Menu {
@@ -202,11 +214,11 @@ struct NeoWordListView: View {
                         }
                     }
                 } label: {
-                    rowLabel(row)
+                    rowLabel(row, isFirst: isFirst, isLast: isLast)
                 }
             } else {
                 NavigationLink(value: Route.wordDetail(word: row.word, context: model.visibleWords)) {
-                    rowLabel(row)
+                    rowLabel(row, isFirst: isFirst, isLast: isLast)
                 }
                 .buttonStyle(NeoPressStyle())
             }
@@ -231,37 +243,57 @@ struct NeoWordListView: View {
         }
     }
 
-    private func rowLabel(_ row: WordRowInfo) -> some View {
+    private func rowLabel(_ row: WordRowInfo, isFirst: Bool, isLast: Bool) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(row.word)
-                        .font(Neo.rowTitle)
-                        .foregroundStyle(row.archived ? Color.secondary : Color.primary)
-                    if row.archived {
-                        Image(systemName: "archivebox")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                if row.recall != nil {
-                    Text("Recall \(row.recallPercentText)")
-                        .font(Neo.caption)
-                        .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                // Serif for the word itself — words are content.
+                Text(row.word)
+                    .font(Font.system(.body, design: .serif).weight(.medium))
+                    .foregroundStyle(row.archived ? Neo.graphite : Neo.ink)
+                if row.archived {
+                    Image(systemName: "archivebox")
+                        .font(.caption2)
+                        .foregroundStyle(Neo.graphite)
                 }
             }
             Spacer()
+            // Recall sits in its own fixed trailing column so the green
+            // figures align down the list instead of trailing each word.
+            if row.recall != nil {
+                Text(row.recallPercentText)
+                    .font(Neo.caption.monospacedDigit())
+                    .foregroundStyle(Neo.green)
+                    .frame(width: 44, alignment: .trailing)
+            }
             Text(rightMeta(row))
                 .font(Neo.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(Color(uiColor: .quaternaryLabel))
+                .foregroundStyle(Neo.faint.opacity(0.6))
         }
-        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
+        // Rows paint their own card segment so LazyVStack stays lazy: the
+        // first/last rows round the card's outer corners, and hairlines
+        // separate rows only inside the card.
+        .background(
+            UnevenRoundedRectangle(
+                cornerRadii: .init(
+                    topLeading: isFirst ? Neo.cardRadius : 0,
+                    bottomLeading: isLast ? Neo.cardRadius : 0,
+                    bottomTrailing: isLast ? Neo.cardRadius : 0,
+                    topTrailing: isFirst ? Neo.cardRadius : 0
+                ),
+                style: .continuous
+            )
+            .fill(Neo.cardFill)
+        )
         .overlay(alignment: .bottom) {
-            NeoHairline().padding(.leading, 16)
+            if !isLast {
+                NeoHairline().padding(.leading, 16)
+            }
         }
     }
 

@@ -32,7 +32,7 @@ struct NeoWordDetailPager: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         .navigationTitle(selection)
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
     }
 }
 
@@ -48,6 +48,9 @@ struct NeoWordDetailView: View {
     @State private var showNewListPrompt = false
     @State private var newListName = ""
     @State private var showResetConfirm = false
+    @State private var statsExpanded = false
+    @State private var dragSteps = 0
+    @State private var isDraggingStrength = false
 
     private var dictionaryTabs: [DictionarySource] {
         env.settings.enabledDictionaries.filter { $0 != .chinese }
@@ -59,13 +62,8 @@ struct NeoWordDetailView: View {
                 headword
                 chineseDefinitions
                 noteBlock
-                NeoSectionHeader(title: "Progress") {
-                    Text(Formatting.recallChip(model.recall))
-                        .font(Neo.bodyFont)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.top, 30)
                 studyBlock
+                    .padding(.top, 26)
                 NeoSectionHeader(title: "Dictionary")
                     .padding(.top, 26)
                 tabBar
@@ -77,7 +75,7 @@ struct NeoWordDetailView: View {
             .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
         .toolbar { toolbarItems }
         .onAppear {
             // Open on the user's top-ranked dictionary (Settings order).
@@ -106,35 +104,42 @@ struct NeoWordDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
                 Text(model.displayWord)
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.system(size: 32, weight: .bold, design: .serif))
                     .minimumScaleFactor(0.5)
                     .lineLimit(2)
                 Spacer()
                 addToListControl
             }
-            HStack(spacing: 8) {
-                if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
-                    Text("/\(phonetic)/")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+            // Phonetic and classification share one wrapping row: chips sit
+            // beside the phonetic, and overflow wraps to a fresh full-width
+            // line rather than stacking under the phonetic.
+            FlowLayout(spacing: 8) {
+                // Phonetic and speaker are one flow element so the icon
+                // centers on the phonetic's line instead of floating.
+                HStack(spacing: 6) {
+                    if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
+                        Text("/\(phonetic)/")
+                            .font(.body)
+                            .foregroundStyle(Neo.graphite)
+                    }
+                    Button {
+                        model.speak()
+                    } label: {
+                        Image(systemName: "speaker.wave.2")
+                            .font(.subheadline)
+                            .foregroundStyle(Neo.blue)
+                            .padding(4)
+                    }
+                    .buttonStyle(NeoPressStyle())
+                    .accessibilityIdentifier("word.speak")
                 }
-                Button {
-                    model.speak()
-                } label: {
-                    Image(systemName: "speaker.wave.2")
-                        .font(.subheadline)
-                        .foregroundStyle(Neo.blue)
-                        .frame(width: 32, height: 32)
-                }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("word.speak")
 
                 // Inflected form: link straight to the base word.
                 if let base = model.data.dictWord?.baseForm {
                     NavigationLink(value: Route.wordDetail(word: base, context: [])) {
                         HStack(spacing: 4) {
                             Text("form of")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Neo.graphite)
                             Text(base)
                                 .foregroundStyle(Neo.blue)
                                 .underline()
@@ -144,41 +149,28 @@ struct NeoWordDetailView: View {
                     .buttonStyle(NeoPressStyle())
                     .accessibilityIdentifier("word.baseForm")
                 }
+
+                Group {
+                    NeoChip(text: (model.data.dictWord?.frequencyBand ?? .unknown).label,
+                            tint: Neo.graphite)
+                    if model.data.listNames.isEmpty {
+                        Menu {
+                            listMenuItems
+                        } label: {
+                            NeoChip(text: "+ Word lists")
+                        }
+                    } else {
+                        ForEach(model.data.listNames, id: \.self) { name in
+                            NeoChip(text: name, tint: Neo.graphite)
+                        }
+                    }
+                }
             }
-            classificationCaption
-                .padding(.top, 2)
         }
         .padding(.top, 6)
         .accessibilityIdentifier("word.headerCard")
     }
 
-    /// Quiet classification line in the identity cluster: frequency band,
-    /// exam tags, list memberships.
-    private var classificationCaption: some View {
-        let dictWord = model.data.dictWord
-        return FlowLayout(spacing: 6) {
-            Group {
-                Text((dictWord?.frequencyBand ?? .unknown).label)
-                if model.data.listNames.isEmpty {
-                    Text("·")
-                    Menu {
-                        listMenuItems
-                    } label: {
-                        Text("+ Word lists")
-                            .font(Neo.caption.weight(.medium))
-                            .foregroundStyle(Neo.blue)
-                    }
-                } else {
-                    ForEach(model.data.listNames, id: \.self) { name in
-                        Text("·")
-                        Text(name)
-                    }
-                }
-            }
-            .font(Neo.caption)
-            .foregroundStyle(.secondary)
-        }
-    }
 
     private var addToListControl: some View {
         Menu {
@@ -186,7 +178,7 @@ struct NeoWordDetailView: View {
         } label: {
             Image(systemName: model.isInAnyList ? "bookmark.fill" : "bookmark")
                 .font(.title3)
-                .foregroundStyle(model.isInAnyList ? Neo.blue : Color.secondary)
+                .foregroundStyle(model.isInAnyList ? Neo.blue : Neo.graphite)
                 .frame(width: 44, height: 44, alignment: .topTrailing)
         }
         .accessibilityIdentifier("word.addToMyWords")
@@ -217,15 +209,19 @@ struct NeoWordDetailView: View {
     }
 
     private var chineseDefinitions: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let lines = model.data.dictWord?.translationLines, !lines.isEmpty {
+        // Default definitions honor the chosen source (Settings → Word →
+        // Definitions), falling back to ECDICT when it can't answer.
+        let lines = env.definitionLines(for: model.displayWord,
+                                        dictWord: model.data.dictWord)
+        return VStack(alignment: .leading, spacing: 6) {
+            if !lines.isEmpty {
                 ForEach(lines, id: \.self) { line in
                     definitionLine(line)
                 }
             } else {
                 Text("No dictionary entry")
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .padding(.top, 14)
@@ -237,7 +233,7 @@ struct NeoWordDetailView: View {
             if let pos = parts.pos {
                 Text(pos)
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                     .frame(minWidth: 36, alignment: .leading)
             }
             Text(parts.body)
@@ -258,14 +254,15 @@ struct NeoWordDetailView: View {
         if !model.data.state.note.isEmpty {
             // Reading-first: primary-color text on a quiet warm block; the
             // small tracked label sits close so it reads as one unit.
+            // The quiet warm block exactly as on main — gold accent, 9% fill.
             VStack(alignment: .leading, spacing: 6) {
                 Text("NOTE")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .tracking(1.4)
                     .foregroundStyle(Neo.warm)
                 Text(Formatting.tidy(model.data.state.note))
                     .font(Neo.bodyFont)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Neo.ink)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -279,14 +276,117 @@ struct NeoWordDetailView: View {
         }
     }
 
-    /// The Study section: a compact "I know this word" seeding control, then
-    /// the schedule facts as scannable label/value rows.
+    /// The Study section, collapsed to one compact row. Words with review
+    /// history get "I know this word" + the live recall percent (tap the row
+    /// to disclose the schedule facts; drag the percent to nudge the
+    /// schedule). Never-studied words keep the "How well?" seeding path.
     private var studyBlock: some View {
         let state = model.data.state
-        return VStack(alignment: .leading, spacing: 14) {
-            knownWordRow
-                .padding(.top, 12)
+        return VStack(alignment: .leading, spacing: 0) {
+            if state.timesStudied > 0 {
+                recallRow
+                if statsExpanded {
+                    expandedStats(state: state)
+                        .padding(.top, 10)
+                }
+            } else {
+                seedRow
+            }
+        }
+        .accessibilityIdentifier("word.studyInfo")
+    }
 
+    /// One row carrying the whole progress story: label + disclosure chevron
+    /// on the left, the draggable recall percent trailing.
+    private var recallRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { statsExpanded.toggle() }
+            } label: {
+                HStack(spacing: 6) {
+                    Text("I know this word")
+                        .font(Neo.bodyFont)
+                        .foregroundStyle(Neo.ink)
+                    Image(systemName: statsExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Neo.graphite)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            recallAdjustValue
+        }
+        // Identifier kept from the old familiarity control for UITests.
+        .accessibilityIdentifier("word.familiaritySlider")
+    }
+
+    /// The trailing "91%" doubles as the schedule nudge: drag up for more
+    /// time (×2 per step), down for less (÷2 per step), clamped to ±3 steps.
+    /// While dragging it previews the multiplier and the projected recall —
+    /// pow(recall, pow(2, -steps)), since doubling stability roughly
+    /// square-roots the forgetting. Release commits through the same
+    /// adjustStrength(steps:) path the old ± buttons used.
+    private var recallAdjustValue: some View {
+        VStack(alignment: .trailing, spacing: 1) {
+            HStack(spacing: 5) {
+                if isDraggingStrength {
+                    Text(multiplierText(for: dragSteps))
+                        .font(Neo.caption.weight(.medium).monospacedDigit())
+                }
+                Text(isDraggingStrength ? projectedRecallText : restingRecallText)
+                    .font(Neo.bodyFont.monospacedDigit())
+            }
+            .foregroundStyle(isDraggingStrength ? (dragSteps < 0 ? Neo.warm : Neo.blue) : Neo.graphite)
+            if isDraggingStrength {
+                Text("schedule")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Neo.faint)
+            }
+        }
+        .contentShape(Rectangle())
+        // High priority so the value's vertical drag beats the page scroll.
+        .highPriorityGesture(strengthDrag)
+        .accessibilityIdentifier("word.adjustStrength")
+    }
+
+    private var strengthDrag: some Gesture {
+        DragGesture(minimumDistance: 4)
+            .onChanged { value in
+                isDraggingStrength = true
+                // Swipe up = more time; ~28pt per halving/doubling step.
+                dragSteps = min(3, max(-3, Int((-value.translation.height / 28).rounded())))
+            }
+            .onEnded { _ in
+                let steps = dragSteps
+                isDraggingStrength = false
+                dragSteps = 0
+                if steps != 0 { model.adjustStrength(steps: steps) }
+            }
+    }
+
+    /// "91%" or "?" — the row's resting value.
+    private var restingRecallText: String {
+        model.recall.map { "\(Int(($0 * 100).rounded()))%" } ?? "?"
+    }
+
+    /// Recall projected at the dragged strength.
+    private var projectedRecallText: String {
+        guard let recall = model.recall else { return "?" }
+        let projected = pow(recall, pow(2, -Double(dragSteps)))
+        return "\(Int((projected * 100).rounded()))%"
+    }
+
+    private func multiplierText(for steps: Int) -> String {
+        if steps > 0 { return "×\(1 << steps)" }
+        if steps < 0 { return "÷\(1 << -steps)" }
+        return "×1"
+    }
+
+    /// Schedule facts disclosed by the recall row, plus the algorithm's own
+    /// summary line.
+    private func expandedStats(state: WordState) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
             VStack(spacing: 0) {
                 factRow("Practiced", state.timesStudied == 0 ? "never" : "\(state.timesStudied) time\(state.timesStudied == 1 ? "" : "s")")
                 if let last = state.lastStudiedAt {
@@ -299,70 +399,16 @@ struct NeoWordDetailView: View {
                     factRow("Memory circle", "\(state.memoryCircle)", last: true)
                 }
             }
-
-            if state.timesStudied > 0 {
-                adjustStrengthBlock(state: state)
-            }
-        }
-        .accessibilityIdentifier("word.studyInfo")
-    }
-
-    /// Stepped strength adjuster: each step halves (−) or doubles (+) the
-    /// schedule — a nudge for "the algorithm has this word wrong", distinct
-    /// from Reset.
-    private func adjustStrengthBlock(state: WordState) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
             Text("Algorithm's estimate — \(Formatting.recallChip(model.recall)) · next review in \(Formatting.interval(days: state.intervalDays ?? 0))")
                 .font(Neo.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 0) {
-                strengthSegment("−2", steps: -2)
-                strengthDivider
-                strengthSegment("−1", steps: -1)
-                Text("·")
-                    .font(Neo.caption)
-                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
-                    .frame(width: 24)
-                strengthSegment("+1", steps: 1)
-                strengthDivider
-                strengthSegment("+2", steps: 2)
-            }
-            .frame(height: 38)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Neo.hairline, lineWidth: 0.7)
-            )
-            Text("Each step halves or doubles the schedule. Distinct from Reset.")
-                .font(.system(size: 12))
-                .foregroundStyle(Color(uiColor: .tertiaryLabel))
         }
-        .padding(.top, 2)
-        .accessibilityIdentifier("word.adjustStrength")
     }
 
-    private var strengthDivider: some View {
-        Rectangle()
-            .fill(Neo.hairline)
-            .frame(width: 0.5, height: 20)
-    }
-
-    private func strengthSegment(_ label: String, steps: Int) -> some View {
-        Button {
-            model.adjustStrength(steps: steps)
-        } label: {
-            Text(label)
-                .font(.system(size: 15, weight: .medium).monospacedDigit())
-                .foregroundStyle(steps < 0 ? Neo.warm : Neo.blue)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(NeoPressStyle())
-    }
-
-    /// "I know this word": a quiet hairline menu row seeding the scheduler
-    /// at rung 1-5 (5 = strongest).
-    private var knownWordRow: some View {
+    /// Never-studied words: no recall to show yet, so keep the "How well?"
+    /// seeding menu — quiet secondary text + chevron, settings style.
+    private var seedRow: some View {
         HStack {
             Text("I know this word")
                 .font(Neo.bodyFont)
@@ -379,16 +425,10 @@ struct NeoWordDetailView: View {
                 HStack(spacing: 5) {
                     Text("How well?")
                         .font(Neo.caption)
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(systemName: "chevron.down")
                         .font(.caption2.weight(.semibold))
                 }
-                .foregroundStyle(Neo.blue)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.7)
-                )
+                .foregroundStyle(Neo.graphite)
             }
         }
         // Identifier kept from the old familiarity control for UITests.
@@ -400,11 +440,11 @@ struct NeoWordDetailView: View {
             HStack {
                 Text(label)
                     .font(Neo.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                 Spacer()
                 Text(value)
                     .font(Neo.caption)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Neo.ink)
             }
             .padding(.vertical, 8)
             if !last {
@@ -427,16 +467,15 @@ struct NeoWordDetailView: View {
                     tab = source
                 } label: {
                     Text(label)
-                        .font(.system(size: 13, weight: tab == source ? .medium : .regular))
-                        .foregroundStyle(tab == source ? Color.primary : Color.secondary)
+                        .font(.system(size: 13, weight: tab == source ? .medium : .regular, design: .rounded))
+                        .foregroundStyle(tab == source ? Neo.blue : Neo.graphite)
                         .padding(.horizontal, 10)
                         .frame(maxWidth: .infinity)
                         .frame(height: 24)
                         .background {
                             if tab == source {
                                 RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                    .fill(Color(uiColor: .systemBackground))
-                                    .shadow(color: .black.opacity(0.10), radius: 1.5, y: 0.5)
+                                    .fill(Neo.paleBlue)
                             }
                         }
                 }
@@ -447,7 +486,7 @@ struct NeoWordDetailView: View {
         .padding(2)
         .background(
             RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color(uiColor: .systemGray6))
+                .fill(Neo.hairline.opacity(0.45))
         )
         .accessibilityIdentifier("word.tabs")
     }
@@ -503,7 +542,7 @@ struct NeoWordDetailView: View {
             } else {
                 Text("No OpenGloss entry for this word.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .accessibilityIdentifier("word.opengloss")
@@ -516,7 +555,7 @@ struct NeoWordDetailView: View {
             } else {
                 Text("No Webster 1913 entry for this word.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .accessibilityIdentifier("word.webster")
@@ -529,7 +568,7 @@ struct NeoWordDetailView: View {
             } else {
                 Text("No Moby Thesaurus entry for this word.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
         }
         .accessibilityIdentifier("word.moby")
@@ -540,7 +579,7 @@ struct NeoWordDetailView: View {
             if model.data.related.isEmpty {
                 Text("No related forms.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
             }
             ForEach(model.data.related, id: \.label) { section in
                 VStack(alignment: .leading, spacing: 6) {
@@ -582,7 +621,7 @@ struct NeoWordDetailView: View {
                 } else {
                     Text("No English definition available.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                 }
             }
             ForEach(posOrder.filter { byPos[$0] != nil }, id: \.self) { pos in
@@ -593,14 +632,14 @@ struct NeoWordDetailView: View {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text("\(index + 1).")
                                 .font(.subheadline.monospacedDigit())
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Neo.graphite)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(sense.gloss.prefix(1).capitalized + String(sense.gloss.dropFirst()) + ".")
                                     .font(.body)
                                 ForEach(sense.examples.prefix(2), id: \.self) { example in
                                     Text("“\(example)”")
                                         .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(Neo.graphite)
                                 }
                             }
                         }

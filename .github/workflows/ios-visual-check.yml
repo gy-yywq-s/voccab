@@ -71,7 +71,6 @@ jobs:
             git add Voccab.xcodeproj
             git commit -m "Regenerate Voccab.xcodeproj [skip ci]"
             git push origin "HEAD:${GITHUB_REF_NAME}" || true
-            git push origin HEAD:main || true
           fi
 
       - name: VocabKit unit tests (macOS)

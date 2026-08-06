@@ -1,31 +1,34 @@
 import AVFoundation
 import Foundation
+import SherpaTTS
 import VocabKit
 
-/// Pronunciation. Two modes, chosen in Settings:
+/// Pronunciation. Three modes, chosen in Settings:
 /// - system: on-device text-to-speech in the chosen accent
 /// - recorded: human recordings (Wiktionary-sourced, via the free
 ///   dictionaryapi.dev mirror), downloaded once and cached; falls back to
 ///   TTS when no recording exists or the network is unavailable.
+/// - piper: neural synthesis from the downloaded LibriTTS-R model, run
+///   on-device; falls back to system TTS until that model is installed.
 final class SpeechService {
     private let synthesizer = AVSpeechSynthesizer()
     private var player: AVAudioPlayer?
+    private let piper = PiperEngine()
 
     /// App-scale speech rate (1.0 = default; see AppSettings.speechRate).
     var rate: Double = 1.0
+    /// Voice index within the Piper model (see Settings → Voice → Speaker).
+    var piperSpeaker: Int = 0
 
     func speak(_ text: String, accent: PronunciationAccent, source: PronunciationSource = .system) {
         switch source {
         case .piper:
-            // Piper (LibriTTS-R) synthesizes from the downloadable model; the
-            // model resource isn't hosted yet, so until it is on-device this
-            // falls straight through to system TTS at the app rate.
-            if ResourceManager.downloadedURL(for: "tts.libritts-r-medium") != nil {
-                // Model present: inference wiring lands with the resource
-                // pipeline (sherpa-onnx). Fall back for now.
-                speakTTS(text, accent: .american)
-            } else {
-                speakTTS(text, accent: .american)
+            // 1.0 in the app is 0.75 of the model's native pace, which reads
+            // too fast for study; sherpa-onnx's `speed` multiplies that.
+            piper.speak(text, speaker: piperSpeaker, speed: Float(rate) * 0.75) { [weak self] audio in
+                guard let self else { return }
+                if let audio, self.playPCM(audio) { return }
+                self.speakTTS(text, accent: .american)
             }
         case .recorded where !text.contains(" "):
             // Recordings exist for single words only; sentences use TTS.
@@ -56,6 +59,19 @@ final class SpeechService {
             try? AVAudioSession.sharedInstance().setCategory(.playback, options: .duckOthers)
             try? AVAudioSession.sharedInstance().setActive(true)
             player = try AVAudioPlayer(contentsOf: url)
+            player?.play()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Plays synthesized samples straight from memory as a WAV.
+    private func playPCM(_ audio: PiperVoice.Audio) -> Bool {
+        do {
+            try? AVAudioSession.sharedInstance().setCategory(.playback, options: .duckOthers)
+            try? AVAudioSession.sharedInstance().setActive(true)
+            player = try AVAudioPlayer(data: audio.wavData())
             player?.play()
             return true
         } catch {
@@ -146,6 +162,65 @@ final class SpeechService {
             let audio: String?
         }
         let phonetics: [Phonetic]?
+    }
+
+    // MARK: Piper engine
+
+    /// Loads the downloaded LibriTTS-R voice once and runs synthesis off the
+    /// main thread. Every call answers on the main queue — with nil when the
+    /// model isn't installed or synthesis failed, so the caller can fall
+    /// back to system TTS.
+    final class PiperEngine {
+        private let queue = DispatchQueue(label: "voccab.piper", qos: .userInitiated)
+        private var voice: PiperVoice?
+        private var loaded = false
+
+        func speak(_ text: String, speaker: Int, speed: Float,
+                   completion: @escaping (PiperVoice.Audio?) -> Void) {
+            queue.async { [weak self] in
+                guard let self else { return }
+                let audio = self.load()?.speak(text, speaker: speaker, speed: speed)
+                DispatchQueue.main.async { completion(audio) }
+            }
+        }
+
+        /// True once the model is on disk and opened successfully — drives
+        /// the audition control in Settings.
+        var isAvailable: Bool {
+            queue.sync { load() != nil }
+        }
+
+        /// Forgets a failed or stale load so a fresh download is picked up
+        /// without relaunching the app.
+        func reset() {
+            queue.async { [weak self] in
+                self?.voice = nil
+                self?.loaded = false
+            }
+        }
+
+        private func load() -> PiperVoice? {
+            if loaded { return voice }
+            loaded = true
+            guard let dir = ResourceManager.downloadedURL(for: "tts.libritts-r-medium") else {
+                return nil
+            }
+            voice = PiperVoice(
+                modelPath: dir.appendingPathComponent("en_US-libritts_r-medium.onnx").path,
+                tokensPath: dir.appendingPathComponent("tokens.txt").path,
+                espeakDataPath: dir.appendingPathComponent("espeak-ng-data").path)
+            return voice
+        }
+    }
+
+    /// Re-checks for the voice model after a download or deletion.
+    func refreshPiper() {
+        piper.reset()
+    }
+
+    /// Whether Piper can speak right now (model downloaded and loadable).
+    var isPiperReady: Bool {
+        piper.isAvailable
     }
 
     // MARK: Availability probe (shown in Settings)

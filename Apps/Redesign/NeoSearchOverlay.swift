@@ -33,7 +33,7 @@ struct NeoSearchOverlay: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.body.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .frame(width: 44, height: 44, alignment: .trailing)
                 }
                 .buttonStyle(NeoPressStyle())
@@ -79,7 +79,7 @@ struct NeoSearchOverlay: View {
 
             searchField
         }
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
         .onAppear { focused = true }
         .alert("New List", isPresented: $showNewListPrompt) {
             TextField("List name", text: $newListName)
@@ -108,11 +108,11 @@ struct NeoSearchOverlay: View {
                     HStack {
                         Text(item.term)
                             .font(Neo.rowTitle)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Neo.ink)
                         Spacer()
                         Text(Formatting.relative(item.searchedAt))
                             .font(Neo.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                     }
                     .padding(.vertical, 12)
                     .contentShape(Rectangle())
@@ -144,7 +144,7 @@ struct NeoSearchOverlay: View {
             } else {
                 Text("No results")
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 60)
             }
@@ -160,12 +160,12 @@ struct NeoSearchOverlay: View {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(word.word)
                     .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Neo.ink)
                     .minimumScaleFactor(0.5)
                 if !word.phonetic.isEmpty {
                     Text("/\(word.phonetic)/")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                 }
                 Spacer()
                 // Space held for the add-to-list menu overlaid on the card.
@@ -174,7 +174,7 @@ struct NeoSearchOverlay: View {
             ForEach(word.translationLines.prefix(3), id: \.self) { line in
                 Text(line)
                     .font(.body)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Neo.ink)
                     .lineLimit(2)
             }
             HStack(spacing: 6) {
@@ -184,14 +184,14 @@ struct NeoSearchOverlay: View {
                             .foregroundStyle(Neo.warm)
                     } else {
                         Text("Recall ?")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                     }
-                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    Text("·").foregroundStyle(Neo.faint)
                     Text(word.frequencyBand.label)
-                        .foregroundStyle(.secondary)
-                    Text("·").foregroundStyle(Color(uiColor: .tertiaryLabel))
+                        .foregroundStyle(Neo.graphite)
+                    Text("·").foregroundStyle(Neo.faint)
                     Text(lists.isEmpty ? "Not in any list" : lists.joined(separator: ", "))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .lineLimit(1)
                 }
                 .font(.footnote)
@@ -202,7 +202,7 @@ struct NeoSearchOverlay: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(uiColor: .systemBackground))
+                .fill(Neo.page)
                 .shadow(color: .black.opacity(0.10), radius: 8, y: 2)
         )
     }
@@ -252,8 +252,8 @@ struct NeoSearchOverlay: View {
     private var searchField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-            TextField("Lookup words or sentences", text: $model.query)
+                .foregroundStyle(Neo.graphite)
+            TextField("Lookup", text: $model.query)
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
@@ -268,7 +268,7 @@ struct NeoSearchOverlay: View {
                     model.query = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                        .foregroundStyle(Neo.faint)
                 }
             } else {
                 Button {
@@ -285,7 +285,7 @@ struct NeoSearchOverlay: View {
         .padding(.horizontal, 16)
         .frame(height: 46)
         .background(
-            Capsule().fill(Color(uiColor: .secondarySystemBackground))
+            Capsule().fill(Neo.cardFill)
         )
         .padding(.horizontal, 16)
         .padding(.bottom, 10)

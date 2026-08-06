@@ -173,6 +173,7 @@ public final class AppSettings {
         static let dailyGoalReview = "settings.dailyGoalReview"
         static let studyOrder = "settings.studyOrder"
         static let enabledDictionaries = "settings.enabledDictionaries"
+        static let defaultDefinitions = "settings.defaultDefinitions"
         static let scheduler = "settings.scheduler"
         static let pronunciationSource = "settings.pronunciationSource"
         static let answerStyle = "settings.answerStyle"
@@ -353,6 +354,21 @@ public final class AppSettings {
         }
         set { defaults.set(newValue.map(\.rawValue), forKey: Key.enabledDictionaries) }
     }
+
+    /// Which dictionary supplies the default definitions on cards and word
+    /// headers. Phonetics always come from ECDICT, and anything that can't
+    /// answer for a word falls back to ECDICT at render time.
+    public var defaultDefinitionSource: DictionarySource {
+        get {
+            defaults.string(forKey: Key.defaultDefinitions)
+                .flatMap(DictionarySource.init) ?? .chinese
+        }
+        set { defaults.set(newValue.rawValue, forKey: Key.defaultDefinitions) }
+    }
+
+    /// Sources that carry definition text usable as the default gloss.
+    public static let definitionCapableSources: [DictionarySource] =
+        [.chinese, .english, .webster, .openGloss]
 
     public func isDictionaryEnabled(_ source: DictionarySource) -> Bool {
         enabledDictionaries.contains(source)

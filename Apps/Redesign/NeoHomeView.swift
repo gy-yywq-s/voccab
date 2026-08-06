@@ -2,9 +2,9 @@ import SwiftUI
 import VocabKit
 
 /// Home — identical zoning to the classic app (greeting/stats, word lists,
-/// All Words aggregate, camera promo, bottom lookup bar) in the Passage
-/// language: white page, centered masthead over a hairline, bold sans
-/// section titles, plain rows, pale-blue actions.
+/// All Words aggregate, camera promo, bottom lookup bar), grouped the way
+/// the original app groups: quiet uppercase micro-labels over soft rounded
+/// cards, rows separated by hairlines inside the card, status as chips.
 struct NeoHomeView: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var path = NavigationPath()
@@ -29,7 +29,7 @@ struct NeoHomeView: View {
                     .padding(.horizontal, 20)
                 }
                 .scrollIndicators(.hidden)
-                .background(Color(uiColor: .systemBackground))
+                .background(Neo.page)
 
                 bottomBar
             }
@@ -78,7 +78,7 @@ struct NeoHomeView: View {
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.body)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .frame(width: 44, height: 44, alignment: .trailing)
                 }
                 .buttonStyle(NeoPressStyle())
@@ -95,10 +95,10 @@ struct NeoHomeView: View {
         return VStack(alignment: .leading, spacing: 7) {
             // A real heading: large serif, editorial weight, varied line.
             Text(greetingLine)
-                .font(.system(size: 34, weight: .semibold, design: .serif))
+                .font(.system(size: 34, weight: .semibold, design: .rounded))
             statText(counts)
                 .font(Neo.bodyFont)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -130,132 +130,146 @@ struct NeoHomeView: View {
         return Text("\(counts.newWords) new · \(counts.reviewed) revisited today — nice pace.")
     }
 
+    /// Quiet uppercase micro-label sitting above a card.
+    private func microLabel(_ text: String) -> some View {
+        // .textCase renders uppercase while the source string (queried by
+        // UI tests) stays verbatim in code.
+        Text(text)
+            .font(Neo.sectionLabel)
+            .textCase(.uppercase)
+            .tracking(1.2)
+            .foregroundStyle(Neo.graphite)
+    }
+
     /// Word lists — the primary zone: user lists in their own order, a
-    /// new-list action, and an always-visible import row.
+    /// new-list action, and an always-visible import row, all grouped on
+    /// one card.
     private var listsZone: some View {
         let lists = env.userStore.lists()
-        return VStack(alignment: .leading, spacing: 0) {
-            NeoSectionHeader(title: "Word lists") {
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                microLabel("Word lists")
+                Spacer()
                 Button {
                     newListName = ""
                     showNewListPrompt = true
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "plus")
+                            .font(.footnote.weight(.medium))
                         Text("New List")
                     }
-                    .font(.body.weight(.medium))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(Neo.blue)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("home.newList")
             }
-            .padding(.top, 30)
-            if lists.isEmpty {
-                Text("No word lists yet. Create one or import your own vocabulary.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 14)
-            }
-            VStack(spacing: 0) {
+            NeoCard(padding: 0) {
+                if lists.isEmpty {
+                    Text("No word lists yet. Create one or import your own vocabulary.")
+                        .font(.subheadline)
+                        .foregroundStyle(Neo.graphite)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                    NeoHairline()
+                        .padding(.leading, 16)
+                }
                 ForEach(lists) { list in
                     Button {
                         path.append(Route.wordList(list))
                     } label: {
                         HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(list.name)
-                                    .font(Neo.rowTitle)
-                                    .foregroundStyle(.primary)
-                                    .lineLimit(1)
-                                Text("\(list.wordCount) words")
-                                    .font(Neo.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                            Text(list.name)
+                                .font(Neo.rowTitle)
+                                .foregroundStyle(Neo.ink)
+                                .lineLimit(1)
                             Spacer()
+                            Text("\(list.wordCount) words")
+                                .font(Neo.caption)
+                                .foregroundStyle(Neo.graphite)
                             Image(systemName: "chevron.right")
                                 .font(.footnote.weight(.semibold))
-                                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                                .foregroundStyle(Neo.faint)
                         }
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 13)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(NeoPressStyle())
                     .accessibilityIdentifier("home.list.\(list.name)")
                     NeoHairline()
+                        .padding(.leading, 16)
                 }
-            }
-            .padding(.top, 4)
-            Button {
-                path.append(Route.importWords)
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.subheadline.weight(.medium))
-                    Text("Import Words")
-                        .font(.body.weight(.medium))
-                    Spacer()
+                Button {
+                    path.append(Route.importWords)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.subheadline.weight(.medium))
+                        Text("Import Words")
+                            .font(.body.weight(.medium))
+                        Spacer()
+                    }
+                    .foregroundStyle(Neo.blue)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .contentShape(Rectangle())
                 }
-                .foregroundStyle(Neo.blue)
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("home.import")
             }
-            .buttonStyle(NeoPressStyle())
-            .accessibilityIdentifier("home.import")
         }
-        .padding(.top, 2)
+        .padding(.top, 30)
     }
 
     /// All Words — the aggregate of every list, replacing the old builtin
     /// "My Words" collection.
     private var allWordsZone: some View {
         let count = env.userStore.allWordsCount()
-        return VStack(alignment: .leading, spacing: 0) {
-            NeoHairline()
-            NeoSectionHeader(title: "All Words")
-                .padding(.top, 24)
-            Button {
-                path.append(Route.wordList(.aggregate))
-            } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
+        return VStack(alignment: .leading, spacing: 10) {
+            microLabel("All Words")
+            NeoCard(padding: 0) {
+                Button {
+                    path.append(Route.wordList(.aggregate))
+                } label: {
+                    HStack {
                         Text("Every word across your lists")
-                            .font(Neo.caption)
-                            .foregroundStyle(.secondary)
-                        Text(count == 0 ? "None yet" : "\(count) words")
                             .font(Neo.rowTitle)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Neo.ink)
+                        Spacer()
+                        NeoChip(text: count == 0 ? "None yet" : "\(count) words")
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Neo.faint)
                     }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .contentShape(Rectangle())
                 }
-                .padding(.vertical, 14)
-                .contentShape(Rectangle())
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("home.myWords")
             }
-            .buttonStyle(NeoPressStyle())
-            .accessibilityIdentifier("home.myWords")
         }
-        .padding(.top, 18)
+        .padding(.top, 24)
     }
 
     private var promoZone: some View {
         VStack(alignment: .leading, spacing: 10) {
-            NeoHairline()
-            NeoSectionHeader(title: "Snap words")
-                .padding(.top, 24)
-            Text("Photograph text and tap any word to look it up. The camera button below starts a capture.")
-                .font(Neo.bodyFont)
-                .foregroundStyle(.secondary)
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-            PromoCarousel(cornerRadius: 10) { word in
-                path.append(Route.wordDetail(word: word, context: []))
+            microLabel("Snap words")
+            NeoCard {
+                Text("Photograph text and tap any word to look it up. The camera button below starts a capture.")
+                    .font(Neo.caption)
+                    .foregroundStyle(Neo.graphite)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                PromoCarousel(cornerRadius: 10) { word in
+                    path.append(Route.wordDetail(word: word, context: []))
+                }
+                .padding(.top, 12)
             }
-            .padding(.top, 6)
         }
-        .padding(.top, 18)
+        .padding(.top, 24)
     }
 
     private var bottomBar: some View {
@@ -266,8 +280,8 @@ struct NeoHomeView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.secondary)
-                    Text("Lookup words or sentences")
+                        .foregroundStyle(Neo.graphite)
+                    Text("Lookup")
                         .foregroundStyle(Color(uiColor: .placeholderText))
                     Spacer()
                 }
@@ -275,7 +289,7 @@ struct NeoHomeView: View {
                 .padding(.horizontal, 16)
                 .frame(height: 46)
                 .background(
-                    Capsule().fill(Color(uiColor: .systemBackground))
+                    Capsule().fill(Neo.page)
                         .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
                 )
             }

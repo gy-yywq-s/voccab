@@ -1,14 +1,13 @@
 import SwiftUI
 import VocabKit
 
-/// Deep teal-green "Easy" signal used across the study controls.
-private let neoEasy = Color(red: 0.13, green: 0.5, blue: 0.42)
 
 /// Session start — same zones (list identity, progress message, order,
-/// "Start with" options) in the Passage language: bold sans headings with a
-/// short rule, caption-over-value rows, native menu for the order override.
-/// A paused session no longer auto-resumes: it surfaces as a primary Resume
-/// bar with quieter escape hatches beneath it.
+/// "Start with" options) in the grouped-card language: serif list title,
+/// quiet greeting, a compact order row, and an uppercase micro-label over
+/// one soft card holding the three mode rows with count chips. A paused
+/// session no longer auto-resumes: it surfaces as a primary Resume bar with
+/// quieter escape hatches grouped on the same card language beneath it.
 struct NeoStudyStartView: View {
     @EnvironmentObject private var env: AppEnvironment
     @StateObject var model: StudyModel
@@ -41,7 +40,7 @@ struct NeoStudyStartView: View {
                         .font(Neo.pageTitle)
                     Text(model.sessionMessage)
                         .font(Neo.bodyFont)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -54,18 +53,29 @@ struct NeoStudyStartView: View {
                     orderRow
                         .padding(.top, 22)
 
-                    NeoSectionHeader(title: "Start with")
+                    Text("Start with")
+                        .font(Neo.sectionLabel)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Neo.graphite)
                         .padding(.top, 28)
-                        .padding(.bottom, 2)
+                        .padding(.bottom, 8)
 
-                    planList
+                    // Zero card padding: the rows' own 12pt vertical padding
+                    // then reads identically at the card edges and at the
+                    // hairlines, so Mix's top and All Review's bottom match
+                    // the internal rhythm instead of doubling it.
+                    NeoCard(padding: 0) {
+                        planList
+                            .padding(.horizontal, 16)
+                    }
                 }
                 Color.clear.frame(height: 40)
             }
             .padding(.horizontal, 20)
         }
         .scrollIndicators(.hidden)
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
         .accessibilityIdentifier("study.start")
         .onAppear { model.reloadPlans() }
         .confirmationDialog("Discard the paused session?",
@@ -101,20 +111,20 @@ struct NeoStudyStartView: View {
             }
             .accessibilityIdentifier("study.resume")
 
-            VStack(spacing: 0) {
+            NeoCard {
                 Button {
                     showDiscardConfirm = true
                 } label: {
                     HStack {
                         Text("Start a different practice")
                             .font(.body)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Neo.ink)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                            .foregroundStyle(Neo.faint)
                     }
-                    .padding(.vertical, 13)
+                    .padding(.vertical, 12)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
@@ -131,7 +141,7 @@ struct NeoStudyStartView: View {
                             .foregroundStyle(Neo.red)
                         Spacer()
                     }
-                    .padding(.vertical, 13)
+                    .padding(.vertical, 12)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
@@ -142,12 +152,14 @@ struct NeoStudyStartView: View {
 
     // MARK: Plan chooser
 
-    /// Order override: label left, current value + chevrons right (native
-    /// inline-value row, "Target reading pace" style).
+    /// Order override: quiet compact row above the plan card — secondary
+    /// label left, current value + small chevron right (settings menuRow
+    /// style, no chrome).
     private var orderRow: some View {
         HStack {
             Text("Order")
                 .font(.body)
+                .foregroundStyle(Neo.graphite)
             Spacer()
             Menu {
                 ForEach(Array(StudyOrder.grouped.enumerated()), id: \.offset) { _, group in
@@ -167,22 +179,14 @@ struct NeoStudyStartView: View {
                 HStack(spacing: 5) {
                     Text(model.order.shortLabel)
                         .font(.body)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2.weight(.semibold))
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
                 }
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 12)
+                .foregroundStyle(Neo.graphite)
                 .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.7)
-                )
+                .contentShape(Rectangle())
             }
             .accessibilityIdentifier("study.orderPicker")
-        }
-        .padding(.vertical, 4)
-        .overlay(alignment: .bottom) {
-            NeoHairline().offset(y: 12)
         }
     }
 
@@ -215,25 +219,33 @@ struct NeoStudyStartView: View {
                 model.start(plan: plan)
                 entered = true
             } label: {
-                HStack(spacing: 12) {
+                // Title and count chips share one line, centered vertically;
+                // new counts wear blue, review counts green. Nothing in the
+                // row may wrap: the title is the only flexible element, so
+                // without a hard single line it is what breaks when the Mix
+                // row also has to fit Customize.
+                HStack(spacing: 10) {
                     Image(systemName: planSymbol(plan.mode))
                         .font(.body.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .frame(width: 26)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(plan.mode.rawValue)
-                            .font(Neo.rowTitle)
-                            .foregroundStyle(.primary)
-                        Text("\(plan.newCount) new · \(plan.reviewCount) review")
-                            .font(Neo.caption)
-                            .foregroundStyle(.secondary)
+                    Text(plan.mode.rawValue)
+                        .font(Neo.rowTitle)
+                        .foregroundStyle(Neo.ink)
+                        .lineLimit(1)
+                        .fixedSize()
+                    NeoChip(text: "\(plan.newCount) new")
+                    NeoChip(text: "\(plan.reviewCount) review", tint: Neo.green)
+                    Spacer(minLength: 4)
+                    // The Mix row's width goes to Customize; only rows
+                    // without a trailing control keep the nav chevron.
+                    if plan.mode != .mix {
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Neo.faint)
                     }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
                 }
-                .padding(.vertical, 13)
+                .padding(.vertical, 14)
                 .contentShape(Rectangle())
                 .opacity(plan.isEmpty ? 0.35 : 1)
             }
@@ -251,19 +263,16 @@ struct NeoStudyStartView: View {
                         showCustomize.toggle()
                     }
                 } label: {
-                    HStack(spacing: 4) {
-                        Text("Customize")
-                            .font(Neo.caption.weight(.medium))
-                        Image(systemName: showCustomize ? "chevron.up" : "chevron.down")
-                            .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .stroke(Neo.hairline, lineWidth: 0.7)
-                    )
+                    // No chevron: the Mix row has to hold a title, two chips
+                    // and this control, and the arrow is what pushed it over.
+                    Text("Customize")
+                        .font(Neo.caption.weight(.medium))
+                        .foregroundStyle(showCustomize ? Neo.blue : Neo.graphite)
+                        .lineLimit(1)
+                        .fixedSize()
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.plan.customize")
@@ -285,12 +294,12 @@ struct NeoStudyStartView: View {
             } label: {
                 Text("Start custom mix")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.blue)
+                    .foregroundStyle(Neo.blue)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.blue.opacity(0.08))
+                            .fill(Neo.paleBlue)
                     )
             }
             .buttonStyle(NeoPressStyle())
@@ -301,14 +310,14 @@ struct NeoStudyStartView: View {
 
             Text("For this session only.")
                 .font(.system(size: 12))
-                .foregroundStyle(Color(uiColor: .tertiaryLabel))
+                .foregroundStyle(Neo.faint)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 8)
         }
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Neo.hairline, lineWidth: 0.7)
+                .fill(Neo.page)
         )
     }
 
@@ -319,7 +328,7 @@ struct NeoStudyStartView: View {
             Spacer()
             Text("\(value.wrappedValue)")
                 .font(Neo.bodyFont.monospacedDigit())
-                .foregroundStyle(.primary)
+                .foregroundStyle(Neo.ink)
             Stepper("", value: value, in: 0...200, step: 5)
                 .labelsHidden()
         }
@@ -354,8 +363,8 @@ struct NeoFlashcardView: View {
     @State private var longPressFired = false
     @State private var easyFlash = false
     @State private var lastSeed: NeoSeedRecord?
-    /// Momentary solid fill on the tapped seed segment before the bar
-    /// collapses; nil when nothing is mid-selection.
+    /// Rung locked on the seed slider before the control collapses; nil
+    /// when nothing is mid-selection.
     @State private var seedTapSelection: Int?
     @State private var detailTarget: NeoDetailTarget?
     @State private var showEndConfirm = false
@@ -375,7 +384,7 @@ struct NeoFlashcardView: View {
             bottomControls
         }
         .frame(maxWidth: .infinity)
-        .background(Color(uiColor: .systemBackground))
+        .background(Neo.page)
         .accessibilityIdentifier("study.flashcard")
         .onDisappear { model.pause() }
         .onChange(of: model.session?.current?.word) {
@@ -410,11 +419,11 @@ struct NeoFlashcardView: View {
                     HStack(spacing: 10) {
                         Text("\(session.position + 1) of \(session.totalCount)")
                             .font(.footnote.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                         Spacer()
                         Text(session.order.shortLabel)
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Neo.graphite)
                         if model.canUndo, !model.revealed {
                             undoButton
                         }
@@ -440,7 +449,7 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "arrow.uturn.backward")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(width: 30, height: 30)
                 .overlay(Circle().stroke(Neo.hairline, lineWidth: 0.7))
         }
@@ -464,7 +473,7 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(width: 30, height: 30)
         }
         .accessibilityIdentifier("study.menu")
@@ -477,11 +486,11 @@ struct NeoFlashcardView: View {
         return VStack(alignment: .leading, spacing: 0) {
             Text(item.isNew ? "New word" : "Review")
                 .font(Neo.bodyFont)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(maxWidth: .infinity)
 
             Text(dictWord?.word ?? item.word)
-                .font(.system(size: 34, weight: .bold))
+                .font(.system(size: 34, weight: .bold, design: .serif))
                 .minimumScaleFactor(0.4)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
@@ -492,14 +501,14 @@ struct NeoFlashcardView: View {
                 if let phonetic = dictWord?.phonetic, !phonetic.isEmpty {
                     Text("/\(phonetic)/")
                         .font(Neo.bodyFont)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                 }
                 Button {
                     model.speakCurrent()
                 } label: {
                     Image(systemName: "speaker.wave.2")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Neo.graphite)
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(NeoPressStyle())
@@ -511,7 +520,7 @@ struct NeoFlashcardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     NeoHairline()
                         .padding(.vertical, 14)
-                    ForEach(dictWord?.translationLines ?? [], id: \.self) { line in
+                    ForEach(env.definitionLines(for: item.word, dictWord: dictWord), id: \.self) { line in
                         Text(line)
                             .font(Neo.bodyFont)
                             .lineSpacing(2)
@@ -527,7 +536,7 @@ struct NeoFlashcardView: View {
                                 .foregroundStyle(Neo.warm)
                             Text(Formatting.tidy(note))
                                 .font(Neo.bodyFont)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(Neo.ink)
                                 .lineSpacing(4)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -561,7 +570,7 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "book")
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
                 .frame(width: 30, height: 30)
                 .overlay(Circle().stroke(Neo.hairline, lineWidth: 0.7))
         }
@@ -608,11 +617,11 @@ struct NeoFlashcardView: View {
     private var finished: some View {
         VStack(spacing: 12) {
             Text("Session complete")
-                .font(.title2.weight(.bold))
+                .font(.system(.title2, design: .rounded).weight(.bold))
             let counts = env.userStore.todayCounts()
             Text("Today: \(counts.newWords) new · \(counts.reviewed) reviewed")
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
             NeoQuietButton(title: "Done", systemImage: "checkmark") {
                 model.endSession()
                 dismiss()
@@ -682,15 +691,13 @@ struct NeoFlashcardView: View {
             Button {
                 chooseTapped(.again)
             } label: {
-                HStack {
-                    Text("I Don't Know")
-                        .font(.system(size: 18, weight: .semibold))
-                    Spacer()
+                HStack(spacing: 7) {
                     Image(systemName: "xmark")
                         .font(.subheadline.weight(.medium))
+                    Text("I Don't Know")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(Neo.red)
-                .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
                 .background(
@@ -713,20 +720,18 @@ struct NeoFlashcardView: View {
             }
             chooseTapped(.good)
         } label: {
-            HStack {
-                Text(easyFlash ? "Easy" : "I Know")
-                    .font(.system(size: 18, weight: .semibold))
-                Spacer()
+            HStack(spacing: 7) {
                 Image(systemName: easyFlash ? "sparkles" : "checkmark")
                     .font(.subheadline.weight(.medium))
+                Text(easyFlash ? "Easy" : "I Know")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
             }
-            .foregroundStyle(easyFlash ? neoEasy : Color.blue)
-            .padding(.horizontal, 16)
+            .foregroundStyle(easyFlash ? Neo.green : Neo.blue)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(easyFlash ? neoEasy.opacity(0.12) : Color.blue.opacity(0.08))
+                    .fill(easyFlash ? Neo.green.opacity(0.12) : Neo.blue.opacity(0.08))
             )
         }
         .buttonStyle(NeoPressStyle())
@@ -754,7 +759,7 @@ struct NeoFlashcardView: View {
         HStack(spacing: 8) {
             swipeHintChip("arrow.left", "Again", Neo.red)
             swipeHintChip("arrow.right", "Good", .blue)
-            swipeHintChip("arrow.up", "Easy", neoEasy)
+            swipeHintChip("arrow.up", "Easy", Neo.green)
             swipeHintChip("arrow.down", "Hard", Neo.warm)
         }
     }
@@ -790,7 +795,7 @@ struct NeoFlashcardView: View {
                         Text("Change answer")
                             .font(.footnote.weight(.medium))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Neo.graphite)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.rechoose")
@@ -814,10 +819,10 @@ struct NeoFlashcardView: View {
     private func lockedCapsule(_ choice: ReviewGrade) -> some View {
         Text(lockedText(choice))
             .font(.footnote.weight(.medium))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Neo.graphite)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Capsule().fill(Color(uiColor: .systemGray6)))
+            .background(Capsule().fill(Neo.cardFill))
     }
 
     private func lockedText(_ choice: ReviewGrade) -> String {
@@ -845,13 +850,13 @@ struct NeoFlashcardView: View {
                 Image(systemName: "arrow.right")
                     .font(.subheadline.weight(.medium))
             }
-            .foregroundStyle(Color.blue)
+            .foregroundStyle(Neo.blue)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.blue.opacity(0.08))
+                    .fill(Neo.blue.opacity(0.08))
             )
         }
         .buttonStyle(NeoPressStyle())
@@ -870,12 +875,12 @@ struct NeoFlashcardView: View {
                     Text("Hard — barely")
                         .font(.footnote.weight(.semibold))
                 }
-                .foregroundStyle(Neo.warm)
+                .foregroundStyle(Neo.neutral)
                 .frame(maxWidth: .infinity)
                 .frame(height: 40)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Neo.warm.opacity(0.10))
+                        .fill(Neo.neutral.opacity(0.12))
                 )
             }
             .buttonStyle(NeoPressStyle())
@@ -890,12 +895,12 @@ struct NeoFlashcardView: View {
                     Text("Easy — trivial")
                         .font(.footnote.weight(.semibold))
                 }
-                .foregroundStyle(neoEasy)
+                .foregroundStyle(Neo.green)
                 .frame(maxWidth: .infinity)
                 .frame(height: 40)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(neoEasy.opacity(0.10))
+                        .fill(Neo.green.opacity(0.10))
                 )
             }
             .buttonStyle(NeoPressStyle())
@@ -955,7 +960,7 @@ struct NeoFlashcardView: View {
         let colors = gradeColors(grade)
         return Button(action: action) {
             Text(grade.label)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(colors.tint)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
@@ -971,9 +976,10 @@ struct NeoFlashcardView: View {
     private func gradeColors(_ grade: ReviewGrade) -> (tint: Color, fill: Color) {
         switch grade {
         case .again: return (Neo.red, Neo.red.opacity(0.08))
-        case .hard: return (Neo.warm, Neo.warm.opacity(0.10))
-        case .good: return (Color.blue, Color.blue.opacity(0.08))
-        case .easy: return (neoEasy, neoEasy.opacity(0.10))
+        // Hard is the burnt-gray neutral — gold stays reserved for notes.
+        case .hard: return (Neo.neutral, Neo.neutral.opacity(0.12))
+        case .good: return (Neo.blue, Neo.paleBlue)
+        case .easy: return (Neo.green, Neo.green.opacity(0.13))
         }
     }
 
@@ -982,59 +988,29 @@ struct NeoFlashcardView: View {
     private static let seedLabels = ["Not at all", "Barely", "A little",
                                      "Somewhat", "Well", "Very well"]
 
-    /// "How well do you know this word?" — one long segmented familiarity
-    /// bar on unseeded new cards: a single pale-blue track split into six
-    /// equal segments. One tap gives the scheduler a head start (rung 1–5);
+    /// "How well do you know this word?" — a snap wheel on unseeded new
+    /// cards: spin (or tap a row) to a rung; the wheel rests on 0. The
+    /// settled rung gives the scheduler its head start (1–5), and
     /// "Not at all" opens the word page to learn it first.
     private func seedBar(for item: StudyItem) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Text("How well do you know this word?")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
-            HStack(spacing: 0) {
-                ForEach(0..<6, id: \.self) { rung in
-                    seedSegment(rung, for: item)
-                }
+                .foregroundStyle(Neo.graphite)
+            NeoSeedWheel { rung in
+                seedTapped(rung, for: item)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.blue.opacity(0.08))
-            )
-            .animation(.spring(duration: 0.3), value: seedTapSelection)
         }
         .transition(.scale(scale: 0.95, anchor: .bottom).combined(with: .opacity))
-    }
-
-    private func seedSegment(_ rung: Int, for item: StudyItem) -> some View {
-        Button {
-            seedTapped(rung, for: item)
-        } label: {
-            Text(rung == 0 ? "Not at all" : "\(rung)")
-                .font(.system(size: 12, weight: .medium))
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .foregroundStyle(seedTapSelection == rung ? Color.white : Color.secondary)
-                .padding(.horizontal, 2)
-                .frame(maxWidth: .infinity)
-                .frame(height: 36)
-                .background {
-                    if seedTapSelection == rung {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.blue)
-                    }
-                }
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("study.seed.\(rung)")
     }
 
     private func seedTapped(_ rung: Int, for item: StudyItem) {
         guard seedTapSelection == nil else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         seedTapSelection = rung
-        // Let the tapped segment fill read for a beat, then collapse the bar
-        // to its one-line caption with a single animated state change.
+        // Let the thumb settle on the chosen detent for a beat, then collapse
+        // the slider to its one-line caption with a single animated state
+        // change.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             guard model.session?.current?.word == item.word else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
@@ -1057,10 +1033,96 @@ struct NeoFlashcardView: View {
                 .foregroundStyle(.blue)
             Text(text)
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Neo.graphite)
         }
         .frame(maxWidth: .infinity)
         .transition(.scale(scale: 0.95).combined(with: .opacity))
+    }
+}
+
+// MARK: - Seed slider
+
+/// "How well?" snap wheel: a three-row drum resting on rung 0. Spinning
+/// snaps row to row with a selection tick and commits the settled rung
+/// after a short pause; tapping a row commits it immediately. Rows fade
+/// and shrink toward the drum's edges; the center row sits on a pale-blue
+/// lens. Feeds `select` — the same seeding path as every earlier control.
+private struct NeoSeedWheel: View {
+    /// Concise description beside each rung number, rung 0 first.
+    private static let labels = ["Not at all", "Seen it", "Recognize it",
+                                 "Know it", "Know it well", "Know it cold"]
+
+    let select: (Int) -> Void
+
+    @State private var centered: Int? = 0
+    @State private var commitWork: DispatchWorkItem?
+
+    private let rowHeight: CGFloat = 38
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Neo.paleBlue)
+                .frame(height: rowHeight)
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 0) {
+                    ForEach(0...5, id: \.self) { rung in
+                        row(rung)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollPosition(id: $centered, anchor: .center)
+            .scrollTargetBehavior(.viewAligned)
+            .scrollIndicators(.hidden)
+            .contentMargins(.vertical, rowHeight, for: .scrollContent)
+            .frame(height: rowHeight * 3)
+            .onChange(of: centered) { old, new in
+                guard let new, old != nil, old != new else { return }
+                UISelectionFeedbackGenerator().selectionChanged()
+                scheduleCommit(new)
+            }
+        }
+        .frame(maxWidth: 240)
+    }
+
+    /// A spin settles for half a second before committing, so passing rows
+    /// on the way to the one you want never fires the seed.
+    private func scheduleCommit(_ rung: Int) {
+        commitWork?.cancel()
+        let work = DispatchWorkItem { select(rung) }
+        commitWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
+    }
+
+    private func row(_ rung: Int) -> some View {
+        let active = centered == rung
+        return Button {
+            commitWork?.cancel()
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                centered = rung
+            }
+            select(rung)
+        } label: {
+            HStack(spacing: 8) {
+                Text("\(rung)")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded).monospacedDigit())
+                Text(Self.labels[rung])
+                    .font(.system(size: 14, weight: active ? .medium : .regular, design: .rounded))
+            }
+            .foregroundStyle(active ? Neo.ink : Neo.faint)
+            .frame(maxWidth: .infinity)
+            .frame(height: rowHeight)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .id(rung)
+        .scrollTransition(.interactive, axis: .vertical) { content, phase in
+            content
+                .opacity(1 - abs(phase.value) * 0.55)
+                .scaleEffect(1 - abs(phase.value) * 0.12)
+        }
+        .accessibilityIdentifier("study.seed.\(rung)")
     }
 }
 
