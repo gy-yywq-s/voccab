@@ -80,10 +80,6 @@ final class DraftStore: ObservableObject {
         rows.filter(\.isSubstantive)
     }
 
-    var isEmptyDraft: Bool {
-        rows.allSatisfy(\.isBlank)
-    }
-
     // MARK: - Editing
 
     /// Inserts a row below `id` (or below the focused row, or at the end) and
@@ -116,10 +112,6 @@ final class DraftStore: ObservableObject {
         let destination = index + offset
         guard rows.indices.contains(destination) else { return }
         rows.swapAt(index, destination)
-    }
-
-    func move(fromOffsets source: IndexSet, toOffset destination: Int) {
-        rows.move(fromOffsets: source, toOffset: destination)
     }
 
     /// Wipes the draft back to a single empty row. Guarded by a confirmation in
