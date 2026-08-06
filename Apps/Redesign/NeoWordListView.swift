@@ -2,9 +2,9 @@ import SwiftUI
 import VocabKit
 
 /// Word list — same zoning as classic (title+count, search, sort/filter,
-/// grouped rows, bottom study action) in the Passage language: native
-/// segmented sort control, capsule search with shadow, bold group headings,
-/// plain hairline rows, compact trailing navy Study commit.
+/// grouped rows, bottom study action): serif page title with a count chip,
+/// native segmented sort control, capsule search with shadow, and word rows
+/// grouped on soft cards under quiet uppercase micro-labels.
 struct NeoWordListView: View {
     @EnvironmentObject private var env: AppEnvironment
     @StateObject var model: WordListModel
@@ -63,9 +63,7 @@ struct NeoWordListView: View {
                 Text(model.list.name)
                     .font(Neo.pageTitle)
                     .lineLimit(2)
-                Text("\(model.totalCount)")
-                    .font(.title3.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                NeoChip(text: "\(model.totalCount)")
             }
             NeoSearchField(placeholder: "Search", text: $model.searchText) {
                 model.reload()
@@ -163,32 +161,38 @@ struct NeoWordListView: View {
             .padding(.top, 110)
             .accessibilityIdentifier("wordList.empty")
         } else {
-            // Section inside the LazyVStack keeps rows individually lazy.
+            // Section inside the LazyVStack keeps rows individually lazy;
+            // the card look is painted per-row (first/last corners) so a
+            // large list still avoids building every row up front.
             ForEach(model.sections) { section in
                 Section {
                     ForEach(section.rows) { row in
-                        rowView(row)
+                        rowView(row,
+                                isFirst: row.id == section.rows.first?.id,
+                                isLast: row.id == section.rows.last?.id)
                     }
                 } header: {
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(section.title)
-                                .font(Neo.rowTitle)
-                            Spacer()
-                            Text("\(section.rows.count)")
-                                .font(.footnote.monospacedDigit())
-                                .foregroundStyle(Color(uiColor: .tertiaryLabel))
-                        }
-                        .padding(.top, 24)
-                        .padding(.bottom, 6)
-                        NeoHairline()
+                    HStack(alignment: .firstTextBaseline) {
+                        // .textCase renders uppercase; source string stays
+                        // verbatim for UI-test queries.
+                        Text(section.title)
+                            .font(Neo.sectionLabel)
+                            .textCase(.uppercase)
+                            .tracking(1.2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(section.rows.count)")
+                            .font(.footnote.monospacedDigit())
+                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
                     }
+                    .padding(.top, 24)
+                    .padding(.bottom, 8)
                 }
             }
         }
     }
 
-    private func rowView(_ row: WordRowInfo) -> some View {
+    private func rowView(_ row: WordRowInfo, isFirst: Bool, isLast: Bool) -> some View {
         Group {
             if batchMarkMode {
                 Menu {
@@ -198,15 +202,15 @@ struct NeoWordListView: View {
                             env.userStore.seedKnownWord(row.word, rung: item.rung)
                             env.touch()
                         } label: {
-                            Label(item.label, systemImage: item.symbol)
+                            rowLabel(row, isFirst: isFirst, isLast: isLast)
                         }
                     }
                 } label: {
-                    rowLabel(row)
+                    rowLabel(row, isFirst: isFirst, isLast: isLast)
                 }
             } else {
                 NavigationLink(value: Route.wordDetail(word: row.word, context: model.visibleWords)) {
-                    rowLabel(row)
+                    rowLabel(row, isFirst: isFirst, isLast: isLast)
                 }
                 .buttonStyle(NeoPressStyle())
             }

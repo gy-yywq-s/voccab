@@ -5,10 +5,11 @@ import VocabKit
 private let neoEasy = Color(red: 0.13, green: 0.5, blue: 0.42)
 
 /// Session start — same zones (list identity, progress message, order,
-/// "Start with" options) in the Passage language: bold sans headings with a
-/// short rule, caption-over-value rows, native menu for the order override.
-/// A paused session no longer auto-resumes: it surfaces as a primary Resume
-/// bar with quieter escape hatches beneath it.
+/// "Start with" options) in the grouped-card language: serif list title,
+/// quiet greeting, a compact order row, and an uppercase micro-label over
+/// one soft card holding the three mode rows with count chips. A paused
+/// session no longer auto-resumes: it surfaces as a primary Resume bar with
+/// quieter escape hatches grouped on the same card language beneath it.
 struct NeoStudyStartView: View {
     @EnvironmentObject private var env: AppEnvironment
     @StateObject var model: StudyModel
@@ -54,11 +55,17 @@ struct NeoStudyStartView: View {
                     orderRow
                         .padding(.top, 22)
 
-                    NeoSectionHeader(title: "Start with")
+                    Text("Start with")
+                        .font(Neo.sectionLabel)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(.secondary)
                         .padding(.top, 28)
-                        .padding(.bottom, 2)
+                        .padding(.bottom, 8)
 
-                    planList
+                    NeoCard {
+                        planList
+                    }
                 }
                 Color.clear.frame(height: 40)
             }
@@ -101,7 +108,7 @@ struct NeoStudyStartView: View {
             }
             .accessibilityIdentifier("study.resume")
 
-            VStack(spacing: 0) {
+            NeoCard {
                 Button {
                     showDiscardConfirm = true
                 } label: {
@@ -114,7 +121,7 @@ struct NeoStudyStartView: View {
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(Color(uiColor: .tertiaryLabel))
                     }
-                    .padding(.vertical, 13)
+                    .padding(.vertical, 12)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
@@ -131,7 +138,7 @@ struct NeoStudyStartView: View {
                             .foregroundStyle(Neo.red)
                         Spacer()
                     }
-                    .padding(.vertical, 13)
+                    .padding(.vertical, 12)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
@@ -142,12 +149,14 @@ struct NeoStudyStartView: View {
 
     // MARK: Plan chooser
 
-    /// Order override: label left, current value + chevrons right (native
-    /// inline-value row, "Target reading pace" style).
+    /// Order override: quiet compact row above the plan card — secondary
+    /// label left, current value + chevrons right (native inline-value
+    /// control).
     private var orderRow: some View {
         HStack {
             Text("Order")
                 .font(.body)
+                .foregroundStyle(.secondary)
             Spacer()
             Menu {
                 ForEach(Array(StudyOrder.grouped.enumerated()), id: \.offset) { _, group in
@@ -179,10 +188,6 @@ struct NeoStudyStartView: View {
                 )
             }
             .accessibilityIdentifier("study.orderPicker")
-        }
-        .padding(.vertical, 4)
-        .overlay(alignment: .bottom) {
-            NeoHairline().offset(y: 12)
         }
     }
 
@@ -220,20 +225,22 @@ struct NeoStudyStartView: View {
                         .font(.body.weight(.medium))
                         .foregroundStyle(.secondary)
                         .frame(width: 26)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 5) {
                         Text(plan.mode.rawValue)
                             .font(Neo.rowTitle)
                             .foregroundStyle(.primary)
-                        Text("\(plan.newCount) new · \(plan.reviewCount) review")
-                            .font(Neo.caption)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 6) {
+                            NeoChip(text: "\(plan.newCount) new")
+                            NeoChip(text: "\(plan.reviewCount) review",
+                                    tint: Neo.graphite)
+                        }
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(Color(uiColor: .tertiaryLabel))
                 }
-                .padding(.vertical, 13)
+                .padding(.vertical, 12)
                 .contentShape(Rectangle())
                 .opacity(plan.isEmpty ? 0.35 : 1)
             }
@@ -285,12 +292,12 @@ struct NeoStudyStartView: View {
             } label: {
                 Text("Start custom mix")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.blue)
+                    .foregroundStyle(Neo.blue)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.blue.opacity(0.08))
+                            .fill(Neo.paleBlue)
                     )
             }
             .buttonStyle(NeoPressStyle())
@@ -308,7 +315,7 @@ struct NeoStudyStartView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Neo.hairline, lineWidth: 0.7)
+                .fill(Color(uiColor: .systemBackground))
         )
     }
 
