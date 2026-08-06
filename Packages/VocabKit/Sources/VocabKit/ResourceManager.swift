@@ -109,13 +109,13 @@ public enum ResourceManager {
             AppResource(
                 id: "dict.opengloss",
                 title: "OpenGloss dictionaries",
-                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story. ~800 MB — the etymology and encyclopedia text is most of it.",
+                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story. ~230 MB to fetch, ~815 MB once unpacked.",
                 kind: .dictionary,
                 location: downloadedURL(for: "dict.opengloss").map { .downloaded($0) }
                     ?? .notDownloaded,
                 isRequired: false,
                 downloadURLs: [
-                    URL(string: "https://voccab-res.gaelis.cc/resources/opengloss.sqlite")!,
+                    URL(string: "https://voccab-res.gaelis.cc/resources/opengloss.sqlite.gz")!,
                 ]),
             AppResource(
                 id: "tts.libritts-r-medium",
@@ -177,13 +177,19 @@ public enum ResourceManager {
         }
     }
 
-    /// Unpacks any archive that arrived with a resource — espeak-ng's data
-    /// is a directory of ~200 files, so it travels as one store-only zip
-    /// and is expanded here, next to the model that needs it.
+    /// Unpacks anything that arrived compressed. espeak-ng's data is a
+    /// directory of ~200 files, so it travels as one store-only zip; the
+    /// OpenGloss database travels gzipped because its text columns shrink
+    /// to about a quarter. Both are expanded in place, and the archive is
+    /// removed so only the usable file is kept.
     private static func expandArchives(in directory: URL) throws {
         let manager = FileManager.default
         let contents = (try? manager.contentsOfDirectory(at: directory,
                                                          includingPropertiesForKeys: nil)) ?? []
+        for archive in contents where archive.pathExtension == "gz" {
+            try Gunzip.inflate(from: archive, to: archive.deletingPathExtension())
+            try? manager.removeItem(at: archive)
+        }
         for archive in contents where archive.pathExtension == "zip" {
             let entries = Zip.extract(try Data(contentsOf: archive))
             guard !entries.isEmpty else { continue }
