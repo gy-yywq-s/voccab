@@ -258,13 +258,16 @@ struct NeoStudyStartView: View {
                         showCustomize.toggle()
                     }
                 } label: {
-                    // No chevron — the one-line row needs the width.
-                    Text("Customize")
-                        .font(Neo.caption.weight(.medium))
-                        .foregroundStyle(Neo.graphite)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .contentShape(Rectangle())
+                    HStack(spacing: 4) {
+                        Text("Customize")
+                            .font(Neo.caption.weight(.medium))
+                        Image(systemName: showCustomize ? "chevron.up" : "chevron.down")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .foregroundStyle(Neo.graphite)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.plan.customize")
@@ -512,7 +515,7 @@ struct NeoFlashcardView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     NeoHairline()
                         .padding(.vertical, 14)
-                    ForEach(dictWord?.translationLines ?? [], id: \.self) { line in
+                    ForEach(env.definitionLines(for: item.word, dictWord: dictWord), id: \.self) { line in
                         Text(line)
                             .font(Neo.bodyFont)
                             .lineSpacing(2)

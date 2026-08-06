@@ -209,8 +209,12 @@ struct NeoWordDetailView: View {
     }
 
     private var chineseDefinitions: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let lines = model.data.dictWord?.translationLines, !lines.isEmpty {
+        // Default definitions honor the chosen source (Settings → Word →
+        // Definitions), falling back to ECDICT when it can't answer.
+        let lines = env.definitionLines(for: model.displayWord,
+                                        dictWord: model.data.dictWord)
+        return VStack(alignment: .leading, spacing: 6) {
+            if !lines.isEmpty {
                 ForEach(lines, id: \.self) { line in
                     definitionLine(line)
                 }

@@ -255,15 +255,16 @@ struct NeoWordListView: View {
                         .font(.caption2)
                         .foregroundStyle(Neo.graphite)
                 }
-                // Recall rides inline as plain green figures — a chip per
-                // row would turn the whole list into capsules.
-                if row.recall != nil {
-                    Text(row.recallPercentText)
-                        .font(Neo.caption.monospacedDigit())
-                        .foregroundStyle(Neo.green)
-                }
             }
             Spacer()
+            // Recall sits in its own fixed trailing column so the green
+            // figures align down the list instead of trailing each word.
+            if row.recall != nil {
+                Text(row.recallPercentText)
+                    .font(Neo.caption.monospacedDigit())
+                    .foregroundStyle(Neo.green)
+                    .frame(width: 44, alignment: .trailing)
+            }
             Text(rightMeta(row))
                 .font(Neo.caption.monospacedDigit())
                 .foregroundStyle(Neo.graphite)

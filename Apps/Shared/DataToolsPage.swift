@@ -9,7 +9,6 @@ struct DataToolsPage: View {
     @State private var showImporter = false
     @State private var confirmClear = false
     @State private var message: String?
-    @State private var resources: [AppResource] = []
 
     var body: some View {
         List {
@@ -39,48 +38,14 @@ struct DataToolsPage: View {
             }
 
             Section {
-                ForEach(resources) { resource in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text(resource.title)
-                                if resource.isRequired {
-                                    Text("REQUIRED")
-                                        .font(.caption2.weight(.bold))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            Text(resource.detail)
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if case .notDownloaded = resource.location {
-                            Text("Not downloaded")
-                                .font(.footnote)
-                                .foregroundStyle(.tertiary)
-                        } else {
-                            Text(ByteCountFormatter.string(fromByteCount: resource.sizeBytes,
-                                                           countStyle: .file))
-                                .font(.footnote.monospacedDigit())
-                                .foregroundStyle(.secondary)
-                        }
-                        if resource.isDeletable {
-                            Button(role: .destructive) {
-                                _ = ResourceManager.delete(resource)
-                                resources = ResourceManager.all()
-                            } label: {
-                                Image(systemName: "trash")
-                                    .font(.footnote)
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                    }
+                NavigationLink {
+                    ResourcesPage()
+                } label: {
+                    Label("Resources", systemImage: "internaldrive")
                 }
-            } header: {
-                Text("Resources")
+                .accessibilityIdentifier("data.resources")
             } footer: {
-                Text("Dictionaries and voice models on this device. Bundled items ship with the app; downloaded items can be removed here. The definition provider (ECDICT) is required.")
+                Text("Dictionaries and voice models on this device.")
             }
 
             Section {
@@ -94,7 +59,6 @@ struct DataToolsPage: View {
                 Text("Deletes lists, words, notes, progress, logs, and history on this device. Settings and the bundled dictionaries stay.")
             }
         }
-        .onAppear { resources = ResourceManager.all() }
         .navigationTitle("Data")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.zip]) { result in
@@ -125,6 +89,94 @@ struct DataToolsPage: View {
     private func exportRow(title: String, subtitle: String, make: @escaping () -> URL?) -> some View {
         // Build lazily on tap so exports reflect the moment of sharing.
         ExportShareRow(title: title, subtitle: subtitle, make: make)
+    }
+}
+
+/// Settings subpage: every dictionary, voice model and cache on this device —
+/// what it is, how big it is, and (for downloads) a delete action. Deleting
+/// the dictionary that currently provides the default definitions warns that
+/// definitions fall back to English-Chinese.
+struct ResourcesPage: View {
+    @EnvironmentObject private var env: AppEnvironment
+    @State private var resources: [AppResource] = []
+    @State private var pendingDelete: AppResource?
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(resources) { resource in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(resource.title)
+                                if resource.isRequired {
+                                    Text("REQUIRED")
+                                        .font(.caption2.weight(.bold))
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Text(resource.detail)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if case .notDownloaded = resource.location {
+                            Text("Not downloaded")
+                                .font(.footnote)
+                                .foregroundStyle(.tertiary)
+                        } else {
+                            Text(ByteCountFormatter.string(fromByteCount: resource.sizeBytes,
+                                                           countStyle: .file))
+                                .font(.footnote.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        if resource.isDeletable {
+                            Button(role: .destructive) {
+                                pendingDelete = resource
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.footnote)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                    .accessibilityIdentifier("resources.\(resource.id)")
+                }
+            } footer: {
+                Text("Bundled items ship with the app; downloaded items can be removed here and fetched again later. The definition provider (ECDICT) is required and never leaves.")
+            }
+        }
+        .onAppear { resources = ResourceManager.all() }
+        .navigationTitle("Resources")
+        .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(
+            "Delete \(pendingDelete?.title ?? "")?",
+            isPresented: Binding(
+                get: { pendingDelete != nil },
+                set: { if !$0 { pendingDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let resource = pendingDelete {
+                    _ = ResourceManager.delete(resource)
+                    resources = ResourceManager.all()
+                    env.touch()
+                }
+                pendingDelete = nil
+            }
+            Button("Cancel", role: .cancel) { pendingDelete = nil }
+        } message: {
+            Text(deleteWarning)
+        }
+    }
+
+    private var deleteWarning: String {
+        guard let resource = pendingDelete else { return "" }
+        if resource.id == "dict.opengloss",
+           env.settings.defaultDefinitionSource == .openGloss {
+            return "OpenGloss currently provides your default definitions. After deleting, definitions fall back to English-Chinese (ECDICT) until it is downloaded again."
+        }
+        return "This removes the download from this device. You can download it again later."
     }
 }
 

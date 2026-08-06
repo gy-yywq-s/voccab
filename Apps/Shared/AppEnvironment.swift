@@ -15,6 +15,30 @@ final class AppEnvironment: ObservableObject {
     /// takes effect immediately; nil while the download isn't on the device.
     var openGloss: OpenGlossStore? { OpenGlossStore() }
 
+    /// The default definition lines for a word, honoring the chosen source
+    /// and falling back to ECDICT whenever that source can't answer —
+    /// including after its resource was deleted.
+    func definitionLines(for word: String, dictWord: DictWord?) -> [String] {
+        switch settings.defaultDefinitionSource {
+        case .english:
+            let senses = dictionary?.senses(for: word) ?? []
+            if !senses.isEmpty {
+                return senses.prefix(4).map { "\($0.pos). \($0.gloss)" }
+            }
+        case .webster:
+            if let paragraphs = dictionary?.websterEntry(for: word), !paragraphs.isEmpty {
+                return Array(paragraphs.prefix(3))
+            }
+        case .openGloss:
+            if let entry = openGloss?.entry(for: word), !entry.senses.isEmpty {
+                return entry.senses.prefix(4).map { "\($0.pos). \($0.definition)" }
+            }
+        default:
+            break
+        }
+        return dictWord?.translationLines ?? []
+    }
+
     /// Bumped whenever user data changes so views refresh.
     @Published var dataVersion = 0
 

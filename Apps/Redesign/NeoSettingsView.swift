@@ -33,6 +33,7 @@ struct NeoSettingsView: View {
     @State private var order: StudyOrder = .listOrder
     @State private var scheduler: SchedulerKind = .circles
     @State private var enabledDictionaries: Set<DictionarySource> = []
+    @State private var defaultDefinitions: DictionarySource = .chinese
     @State private var showGoalSheet = false
     @State private var pendingKind: SchedulerKind?
     @State private var switchPlan: AlgorithmSwitch.Plan?
@@ -70,6 +71,29 @@ struct NeoSettingsView: View {
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.dictPreview")
+                NeoHairline()
+                menuRow("Definitions", value: defaultDefinitions.label, icon: "text.book.closed") {
+                    ForEach(AppSettings.definitionCapableSources, id: \.self) { source in
+                        Button {
+                            defaultDefinitions = source
+                            env.settings.defaultDefinitionSource = source
+                        } label: {
+                            if defaultDefinitions == source {
+                                Label(source.label, systemImage: "checkmark")
+                            } else {
+                                Text(source.label)
+                            }
+                        }
+                    }
+                }
+                .accessibilityIdentifier("settings.definitions")
+                NeoSubHairline()
+                Text("The dictionary behind the default gloss on cards and word pages. Phonetics stay with English-Chinese, and anything it can't answer falls back there too.")
+                    .font(.footnote)
+                    .foregroundStyle(Neo.graphite)
+                    .padding(.leading, 40)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
                 NeoHairline()
 
                 NeoSectionHeader(title: "Practice")
@@ -147,6 +171,14 @@ struct NeoSettingsView: View {
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.data")
+                NeoHairline()
+                NavigationLink {
+                    ResourcesPage()
+                } label: {
+                    valueRow("Resources", value: "", chevron: true, icon: "internaldrive")
+                }
+                .buttonStyle(NeoPressStyle())
+                .accessibilityIdentifier("settings.resources")
                 NeoHairline()
 
                 NeoSectionHeader(title: "About")
@@ -331,6 +363,7 @@ struct NeoSettingsView: View {
         order = env.settings.studyOrder
         scheduler = env.settings.scheduler
         enabledDictionaries = Set(env.settings.enabledDictionaries)
+        defaultDefinitions = env.settings.defaultDefinitionSource
     }
 }
 
