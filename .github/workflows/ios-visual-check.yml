@@ -19,6 +19,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  mac-build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build VoccabMac
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          xcodebuild build \
+            -project Voccab.xcodeproj \
+            -scheme VoccabMac \
+            -destination "platform=macOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee artifacts/mac-build.log | tail -60
+
+      - name: Upload mac build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-build-log
+          path: artifacts/mac-build.log
+
   visual-check:
     runs-on: macos-15
     timeout-minutes: 60
