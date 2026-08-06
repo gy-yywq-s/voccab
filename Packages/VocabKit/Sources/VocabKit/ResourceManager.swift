@@ -109,7 +109,7 @@ public enum ResourceManager {
             AppResource(
                 id: "dict.opengloss",
                 title: "OpenGloss dictionaries",
-                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story. ~250 MB.",
+                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story. ~800 MB — the etymology and encyclopedia text is most of it.",
                 kind: .dictionary,
                 location: downloadedURL(for: "dict.opengloss").map { .downloaded($0) }
                     ?? .notDownloaded,
