@@ -202,7 +202,7 @@ struct NeoWordListView: View {
                             env.userStore.seedKnownWord(row.word, rung: item.rung)
                             env.touch()
                         } label: {
-                            rowLabel(row, isFirst: isFirst, isLast: isLast)
+                            Label(item.label, systemImage: item.symbol)
                         }
                     }
                 } label: {
@@ -235,12 +235,13 @@ struct NeoWordListView: View {
         }
     }
 
-    private func rowLabel(_ row: WordRowInfo) -> some View {
+    private func rowLabel(_ row: WordRowInfo, isFirst: Bool, isLast: Bool) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
+                    // Serif for the word itself — words are content.
                     Text(row.word)
-                        .font(Neo.rowTitle)
+                        .font(Font.system(.body, design: .serif).weight(.medium))
                         .foregroundStyle(row.archived ? Color.secondary : Color.primary)
                     if row.archived {
                         Image(systemName: "archivebox")
@@ -249,9 +250,7 @@ struct NeoWordListView: View {
                     }
                 }
                 if row.recall != nil {
-                    Text("Recall \(row.recallPercentText)")
-                        .font(Neo.caption)
-                        .foregroundStyle(.secondary)
+                    NeoChip(text: "Recall \(row.recallPercentText)", tint: .green)
                 }
             }
             Spacer()
@@ -262,10 +261,28 @@ struct NeoWordListView: View {
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(Color(uiColor: .quaternaryLabel))
         }
-        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
+        // Rows paint their own card segment so LazyVStack stays lazy: the
+        // first/last rows round the card's outer corners, and hairlines
+        // separate rows only inside the card.
+        .background(
+            UnevenRoundedRectangle(
+                cornerRadii: .init(
+                    topLeading: isFirst ? Neo.cardRadius : 0,
+                    bottomLeading: isLast ? Neo.cardRadius : 0,
+                    bottomTrailing: isLast ? Neo.cardRadius : 0,
+                    topTrailing: isFirst ? Neo.cardRadius : 0
+                ),
+                style: .continuous
+            )
+            .fill(Neo.cardFill)
+        )
         .overlay(alignment: .bottom) {
-            NeoHairline().padding(.leading, 16)
+            if !isLast {
+                NeoHairline().padding(.leading, 16)
+            }
         }
     }
 
