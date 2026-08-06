@@ -45,7 +45,7 @@ OPENGLOSS_DB = "opengloss.sqlite"
 # build_frameworks) so Xcode can link it alongside sherpa-onnx itself.
 ORT_SOURCE = ("https://github.com/willwade/sherpa-onnx-spm/releases/download/"
               "1.13.3/onnxruntime.xcframework.zip")
-ORT_REPACK = "onnxruntime-noheaders.xcframework.zip"
+ORT_REPACK = "onnxruntime-slim.xcframework.zip"
 
 MAX_SYNONYMS, MAX_ANTONYMS, MAX_EXAMPLES = 8, 4, 2
 MAX_COLLOCATIONS, MAX_FORMS = 24, 12
@@ -229,7 +229,8 @@ def build_frameworks():
     headers come out and the collision disappears. Symlinks are skipped:
     each slice's Info.plist already points at the real `libonnxruntime.a`.
     """
-    import shutil
+    import plistlib
+    import stat
     import zipfile
 
     final = os.path.join(RESOURCES, ORT_REPACK)
@@ -242,46 +243,38 @@ def build_frameworks():
     if not os.path.exists(source):
         fetch(ORT_SOURCE, source)
 
+    # Zip to zip, never touching the filesystem in between: entry order
+    # follows the source and every timestamp is fixed, so rebuilding this
+    # file byte-for-byte reproduces the checksum the app pins.
     state["frameworks"] = "repacking"
-    extracted = os.path.join(WORK, "ort")
-    shutil.rmtree(extracted, ignore_errors=True)
-    with zipfile.ZipFile(source) as zf:
-        zf.extractall(extracted)
-
-    root = None
-    for base, dirs, _ in os.walk(extracted):
-        for name in dirs:
-            if name.endswith(".xcframework"):
-                root = os.path.join(base, name)
-                break
-        if root:
-            break
-    if root is None:
-        raise RuntimeError("no .xcframework inside the onnxruntime archive")
-
-    import plistlib
-    plist_path = os.path.join(root, "Info.plist")
-    with open(plist_path, "rb") as f:
-        plist = plistlib.load(f)
-    for library in plist.get("AvailableLibraries", []):
-        library.pop("HeadersPath", None)
-    with open(plist_path, "wb") as f:
-        plistlib.dump(plist, f)
-    for base, dirs, _ in os.walk(root):
-        for name in list(dirs):
-            if name == "Headers":
-                shutil.rmtree(os.path.join(base, name), ignore_errors=True)
-                dirs.remove(name)
-
-    with zipfile.ZipFile(final + ".part", "w", zipfile.ZIP_DEFLATED) as out:
-        for base, _, files in os.walk(root):
-            for name in files:
-                path = os.path.join(base, name)
-                if os.path.islink(path):
-                    continue
-                out.write(path, os.path.relpath(path, os.path.dirname(root)))
+    fixed_time = (1980, 1, 1, 0, 0, 0)
+    with zipfile.ZipFile(source) as src, \
+            zipfile.ZipFile(final + ".part", "w", zipfile.ZIP_DEFLATED) as out:
+        for info in src.infolist():
+            if info.is_dir():
+                continue
+            mode = (info.external_attr >> 16) & 0o170000
+            if mode == stat.S_IFLNK:
+                continue          # symlinked alias of the real static library
+            # Keep paths rooted at the .xcframework, whatever wraps it.
+            parts = info.filename.split("/")
+            root = next((i for i, p in enumerate(parts) if p.endswith(".xcframework")), None)
+            if root is None:
+                continue
+            name = "/".join(parts[root:])
+            if "/Headers/" in name:
+                continue          # the colliding module.modulemap lives here
+            payload = src.read(info)
+            if name.endswith(".xcframework/Info.plist"):
+                plist = plistlib.loads(payload)
+                for library in plist.get("AvailableLibraries", []):
+                    library.pop("HeadersPath", None)
+                payload = plistlib.dumps(plist)
+            entry = zipfile.ZipInfo(name, date_time=fixed_time)
+            entry.compress_type = zipfile.ZIP_DEFLATED
+            entry.external_attr = 0o644 << 16
+            out.writestr(entry, payload)
     os.replace(final + ".part", final)
-    shutil.rmtree(extracted, ignore_errors=True)
     os.remove(source)
     state["frameworks"] = "ready"
 
