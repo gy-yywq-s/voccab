@@ -46,10 +46,13 @@ public enum Gunzip {
         let output = try FileHandle(forWritingTo: temp)
         defer { try? output.close() }
 
-        var stream = compression_stream()
-        var status = compression_stream_init(&stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB)
+        // compression_stream has no Swift initializer of its own, so it is
+        // allocated and initialized through the C API.
+        let stream = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
+        defer { stream.deallocate() }
+        var status = compression_stream_init(stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB)
         guard status == COMPRESSION_STATUS_OK else { throw Error.corrupt }
-        defer { compression_stream_destroy(&stream) }
+        defer { compression_stream_destroy(stream) }
 
         let bufferSize = 1 << 20
         let outBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
@@ -59,17 +62,17 @@ public enum Gunzip {
         while !finished {
             let chunk = try input.read(upToCount: bufferSize) ?? Data()
             let isLast = chunk.isEmpty
+            let flags = isLast ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0
             try chunk.withUnsafeBytes { (raw: UnsafeRawBufferPointer) in
-                stream.src_ptr = raw.bindMemory(to: UInt8.self).baseAddress
+                stream.pointee.src_ptr = raw.bindMemory(to: UInt8.self).baseAddress
                     ?? UnsafePointer(outBuffer)  // never read: empty chunk only
-                stream.src_size = chunk.count
+                stream.pointee.src_size = chunk.count
                 repeat {
-                    stream.dst_ptr = outBuffer
-                    stream.dst_size = bufferSize
-                    status = compression_stream_process(
-                        &stream, isLast ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0)
+                    stream.pointee.dst_ptr = outBuffer
+                    stream.pointee.dst_size = bufferSize
+                    status = compression_stream_process(stream, flags)
                     guard status != COMPRESSION_STATUS_ERROR else { throw Error.corrupt }
-                    let produced = bufferSize - stream.dst_size
+                    let produced = bufferSize - stream.pointee.dst_size
                     if produced > 0 {
                         try output.write(contentsOf: Data(bytes: outBuffer, count: produced))
                     }
@@ -78,7 +81,7 @@ public enum Gunzip {
                         break
                     }
                     // Keep draining while the decoder fills the whole buffer.
-                } while stream.src_size > 0 || stream.dst_size == 0
+                } while stream.pointee.src_size > 0 || stream.pointee.dst_size == 0
             }
             if isLast && !finished {
                 // Truncated file: deflate never signalled its end.
