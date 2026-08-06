@@ -32,6 +32,9 @@ public struct AppResource: Identifiable, Sendable {
     /// The definition provider (ECDICT) keeps the app functional — never
     /// deletable even once it moves out of the bundle.
     public let isRequired: Bool
+    /// Public source files fetched on demand; empty means the resource has
+    /// no download path yet.
+    public var downloadURLs: [URL] = []
 
     public var sizeBytes: Int64 {
         switch location {
@@ -114,11 +117,15 @@ public enum ResourceManager {
             AppResource(
                 id: "tts.libritts-r-medium",
                 title: "Piper voice model (LibriTTS-R)",
-                detail: "904-speaker neural text-to-speech, en_US.",
+                detail: "904-speaker neural text-to-speech, en_US. ~75 MB from Hugging Face.",
                 kind: .ttsModel,
                 location: downloadedURL(for: "tts.libritts-r-medium").map { .downloaded($0) }
                     ?? .notDownloaded,
-                isRequired: false),
+                isRequired: false,
+                downloadURLs: [
+                    URL(string: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx")!,
+                    URL(string: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx.json")!,
+                ]),
         ]
         // Cached pronunciation recordings (Wikimedia fetches).
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -133,6 +140,35 @@ public enum ResourceManager {
                 isRequired: false))
         }
         return resources
+    }
+
+    /// Fetches every source file of a downloadable resource into its
+    /// downloads folder. Files land under temporary names and move into
+    /// place only after all of them arrive, so a cancelled or failed
+    /// download never leaves a half-installed resource behind.
+    public static func download(_ resource: AppResource) async throws {
+        guard !resource.downloadURLs.isEmpty else { return }
+        let dir = downloadsDirectory.appendingPathComponent(resource.id, isDirectory: true)
+        let staging = downloadsDirectory.appendingPathComponent(".\(resource.id).staging", isDirectory: true)
+        try? FileManager.default.removeItem(at: staging)
+        try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+        do {
+            for url in resource.downloadURLs {
+                let (temp, response) = try await URLSession.shared.download(from: url)
+                guard (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true else {
+                    throw URLError(.badServerResponse)
+                }
+                try Task.checkCancellation()
+                let dest = staging.appendingPathComponent(url.lastPathComponent)
+                try? FileManager.default.removeItem(at: dest)
+                try FileManager.default.moveItem(at: temp, to: dest)
+            }
+            try? FileManager.default.removeItem(at: dir)
+            try FileManager.default.moveItem(at: staging, to: dir)
+        } catch {
+            try? FileManager.default.removeItem(at: staging)
+            throw error
+        }
     }
 
     /// Deletes a deletable resource from disk. Returns true on success.

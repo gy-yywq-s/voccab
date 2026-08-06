@@ -100,6 +100,8 @@ struct ResourcesPage: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var resources: [AppResource] = []
     @State private var pendingDelete: AppResource?
+    @State private var downloading: [String: Task<Void, Never>] = [:]
+    @State private var downloadError: String?
 
     var body: some View {
         List {
@@ -120,17 +122,37 @@ struct ResourcesPage: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        if case .notDownloaded = resource.location {
-                            Text("Not downloaded")
-                                .font(.footnote)
-                                .foregroundStyle(.tertiary)
+                        if downloading[resource.id] != nil {
+                            ProgressView()
+                            Button {
+                                downloading[resource.id]?.cancel()
+                                downloading[resource.id] = nil
+                            } label: {
+                                Image(systemName: "xmark.circle")
+                                    .font(.footnote)
+                            }
+                            .buttonStyle(.borderless)
+                        } else if case .notDownloaded = resource.location {
+                            if resource.downloadURLs.isEmpty {
+                                Text("Not downloaded")
+                                    .font(.footnote)
+                                    .foregroundStyle(.tertiary)
+                            } else {
+                                Button {
+                                    start(resource)
+                                } label: {
+                                    Image(systemName: "arrow.down.circle")
+                                }
+                                .buttonStyle(.borderless)
+                                .accessibilityIdentifier("resources.download.\(resource.id)")
+                            }
                         } else {
                             Text(ByteCountFormatter.string(fromByteCount: resource.sizeBytes,
                                                            countStyle: .file))
                                 .font(.footnote.monospacedDigit())
                                 .foregroundStyle(.secondary)
                         }
-                        if resource.isDeletable {
+                        if resource.isDeletable, downloading[resource.id] == nil {
                             Button(role: .destructive) {
                                 pendingDelete = resource
                             } label: {
@@ -168,6 +190,14 @@ struct ResourcesPage: View {
         } message: {
             Text(deleteWarning)
         }
+        .alert("Download failed", isPresented: Binding(
+            get: { downloadError != nil },
+            set: { if !$0 { downloadError = nil } }
+        )) {
+            Button("OK") { downloadError = nil }
+        } message: {
+            Text(downloadError ?? "")
+        }
     }
 
     private var deleteWarning: String {
@@ -177,6 +207,22 @@ struct ResourcesPage: View {
             return "OpenGloss currently provides your default definitions. After deleting, definitions fall back to English-Chinese (ECDICT) until it is downloaded again."
         }
         return "This removes the download from this device. You can download it again later."
+    }
+
+    private func start(_ resource: AppResource) {
+        guard downloading[resource.id] == nil else { return }
+        downloading[resource.id] = Task {
+            do {
+                try await ResourceManager.download(resource)
+            } catch is CancellationError {
+                // User cancelled — nothing to report.
+            } catch {
+                downloadError = "Could not download \(resource.title). Check the connection and try again."
+            }
+            downloading[resource.id] = nil
+            resources = ResourceManager.all()
+            env.touch()
+        }
     }
 }
 

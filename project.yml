@@ -48,6 +48,8 @@ targets:
         buildPhase: resources
       - path: Data/seed/sat_rw_vocab.csv
         buildPhase: resources
+      - path: Data/voices/libritts_r_speakers.json
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.yywq.voccab.classic
@@ -63,6 +65,8 @@ targets:
       - path: Data/dict/voccab-extras.sqlite
         buildPhase: resources
       - path: Data/seed/sat_rw_vocab.csv
+        buildPhase: resources
+      - path: Data/voices/libritts_r_speakers.json
         buildPhase: resources
     settings:
       base:
@@ -99,6 +103,8 @@ targets:
       - path: Data/dict/voccab-extras.sqlite
         buildPhase: resources
       - path: Data/seed/sat_rw_vocab.csv
+        buildPhase: resources
+      - path: Data/voices/libritts_r_speakers.json
         buildPhase: resources
     settings:
       base:
