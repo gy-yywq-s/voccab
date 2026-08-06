@@ -81,7 +81,9 @@ targets:
     dependencies:
       - package: VocabKit
     info:
-      path: ${target_name}-Info.plist
+      # Literal name: XcodeGen leaves ${target_name} unresolved in this
+      # target's INFOPLIST_FILE, which broke the build with '-Info.plist'.
+      path: VoccabMac-Info.plist
       properties:
         # Required for an AppKit-hosted SwiftUI app; without it the app has no
         # principal class to instantiate at launch.
