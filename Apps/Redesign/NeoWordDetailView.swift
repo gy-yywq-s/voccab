@@ -110,7 +110,10 @@ struct NeoWordDetailView: View {
                 Spacer()
                 addToListControl
             }
-            HStack(spacing: 8) {
+            // Phonetic and classification share one wrapping row: chips sit
+            // beside the phonetic, and overflow wraps to a fresh full-width
+            // line rather than stacking under the phonetic.
+            FlowLayout(spacing: 8) {
                 if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
                     Text("/\(phonetic)/")
                         .font(.body)
@@ -122,7 +125,7 @@ struct NeoWordDetailView: View {
                     Image(systemName: "speaker.wave.2")
                         .font(.subheadline)
                         .foregroundStyle(Neo.blue)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("word.speak")
@@ -142,41 +145,28 @@ struct NeoWordDetailView: View {
                     .buttonStyle(NeoPressStyle())
                     .accessibilityIdentifier("word.baseForm")
                 }
+
+                Group {
+                    NeoChip(text: (model.data.dictWord?.frequencyBand ?? .unknown).label,
+                            tint: Neo.graphite)
+                    if model.data.listNames.isEmpty {
+                        Menu {
+                            listMenuItems
+                        } label: {
+                            NeoChip(text: "+ Word lists")
+                        }
+                    } else {
+                        ForEach(model.data.listNames, id: \.self) { name in
+                            NeoChip(text: name, tint: Neo.graphite)
+                        }
+                    }
+                }
             }
-            classificationCaption
-                .padding(.top, 2)
         }
         .padding(.top, 6)
         .accessibilityIdentifier("word.headerCard")
     }
 
-    /// Quiet classification line in the identity cluster: frequency band,
-    /// exam tags, list memberships.
-    private var classificationCaption: some View {
-        let dictWord = model.data.dictWord
-        return FlowLayout(spacing: 6) {
-            Group {
-                Text((dictWord?.frequencyBand ?? .unknown).label)
-                if model.data.listNames.isEmpty {
-                    Text("·")
-                    Menu {
-                        listMenuItems
-                    } label: {
-                        Text("+ Word lists")
-                            .font(Neo.caption.weight(.medium))
-                            .foregroundStyle(Neo.blue)
-                    }
-                } else {
-                    ForEach(model.data.listNames, id: \.self) { name in
-                        Text("·")
-                        Text(name)
-                    }
-                }
-            }
-            .font(Neo.caption)
-            .foregroundStyle(Neo.graphite)
-        }
-    }
 
     private var addToListControl: some View {
         Menu {
@@ -256,7 +246,7 @@ struct NeoWordDetailView: View {
         if !model.data.state.note.isEmpty {
             // Reading-first: primary-color text on a quiet warm block; the
             // small tracked label sits close so it reads as one unit.
-            // Sand gold lives HERE and only here — the one emphasized block.
+            // The quiet warm block exactly as on main — gold accent, 9% fill.
             VStack(alignment: .leading, spacing: 6) {
                 Text("NOTE")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -264,7 +254,7 @@ struct NeoWordDetailView: View {
                     .foregroundStyle(Neo.warm)
                 Text(Formatting.tidy(model.data.state.note))
                     .font(Neo.bodyFont)
-                    .foregroundStyle(Neo.onSand)
+                    .foregroundStyle(Neo.ink)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -272,7 +262,7 @@ struct NeoWordDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Neo.sand.opacity(0.45))
+                    .fill(Neo.warm.opacity(0.09))
             )
             .padding(.top, 14)
         }

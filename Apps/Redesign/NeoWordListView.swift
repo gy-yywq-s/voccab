@@ -172,18 +172,26 @@ struct NeoWordListView: View {
                                 isLast: row.id == section.rows.last?.id)
                     }
                 } header: {
-                    HStack(alignment: .firstTextBaseline) {
-                        // .textCase renders uppercase; source string stays
-                        // verbatim for UI-test queries.
-                        Text(section.title)
-                            .font(Neo.sectionLabel)
-                            .textCase(.uppercase)
-                            .tracking(1.2)
-                            .foregroundStyle(Neo.graphite)
-                        Spacer()
-                        Text("\(section.rows.count)")
-                            .font(.footnote.monospacedDigit())
-                            .foregroundStyle(Neo.faint)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline) {
+                            // .textCase renders uppercase; source string stays
+                            // verbatim for UI-test queries.
+                            Text(section.title)
+                                .font(Neo.sectionLabel)
+                                .textCase(.uppercase)
+                                .tracking(1.2)
+                                .foregroundStyle(Neo.graphite)
+                            Spacer()
+                            Text("\(section.rows.count)")
+                                .font(.footnote.monospacedDigit())
+                                .foregroundStyle(Neo.faint)
+                        }
+                        // Subordinate rule under the band header — lighter
+                        // than the in-card row hairlines so the two levels
+                        // never read as the same line.
+                        Rectangle()
+                            .fill(Neo.hairline.opacity(0.5))
+                            .frame(height: 0.5)
                     }
                     .padding(.top, 24)
                     .padding(.bottom, 8)
@@ -237,20 +245,22 @@ struct NeoWordListView: View {
 
     private func rowLabel(_ row: WordRowInfo, isFirst: Bool, isLast: Bool) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    // Serif for the word itself — words are content.
-                    Text(row.word)
-                        .font(Font.system(.body, design: .serif).weight(.medium))
-                        .foregroundStyle(row.archived ? Neo.graphite : Neo.ink)
-                    if row.archived {
-                        Image(systemName: "archivebox")
-                            .font(.caption2)
-                            .foregroundStyle(Neo.graphite)
-                    }
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                // Serif for the word itself — words are content.
+                Text(row.word)
+                    .font(Font.system(.body, design: .serif).weight(.medium))
+                    .foregroundStyle(row.archived ? Neo.graphite : Neo.ink)
+                if row.archived {
+                    Image(systemName: "archivebox")
+                        .font(.caption2)
+                        .foregroundStyle(Neo.graphite)
                 }
+                // Recall rides inline as plain green figures — a chip per
+                // row would turn the whole list into capsules.
                 if row.recall != nil {
-                    NeoChip(text: "Recall \(row.recallPercentText)", tint: .green)
+                    Text(row.recallPercentText)
+                        .font(Neo.caption.monospacedDigit())
+                        .foregroundStyle(Neo.green)
                 }
             }
             Spacer()

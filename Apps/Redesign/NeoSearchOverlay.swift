@@ -253,7 +253,7 @@ struct NeoSearchOverlay: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Neo.graphite)
-            TextField("Lookup words or sentences", text: $model.query)
+            TextField("Lookup", text: $model.query)
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)

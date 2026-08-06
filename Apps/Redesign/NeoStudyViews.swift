@@ -219,27 +219,24 @@ struct NeoStudyStartView: View {
                 model.start(plan: plan)
                 entered = true
             } label: {
+                // Title and count chips share one line, centered vertically;
+                // review counts wear green, new counts blue.
                 HStack(spacing: 12) {
                     Image(systemName: planSymbol(plan.mode))
                         .font(.body.weight(.medium))
                         .foregroundStyle(Neo.graphite)
                         .frame(width: 26)
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(plan.mode.rawValue)
-                            .font(Neo.rowTitle)
-                            .foregroundStyle(Neo.ink)
-                        HStack(spacing: 6) {
-                            NeoChip(text: "\(plan.newCount) new")
-                            NeoChip(text: "\(plan.reviewCount) review",
-                                    tint: Neo.graphite)
-                        }
-                    }
+                    Text(plan.mode.rawValue)
+                        .font(Neo.rowTitle)
+                        .foregroundStyle(Neo.ink)
+                    NeoChip(text: "\(plan.newCount) new")
+                    NeoChip(text: "\(plan.reviewCount) review", tint: Neo.green)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(Neo.faint)
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 14)
                 .contentShape(Rectangle())
                 .opacity(plan.isEmpty ? 0.35 : 1)
             }
@@ -257,16 +254,13 @@ struct NeoStudyStartView: View {
                         showCustomize.toggle()
                     }
                 } label: {
-                    HStack(spacing: 4) {
-                        Text("Customize")
-                            .font(Neo.caption.weight(.medium))
-                        Image(systemName: showCustomize ? "chevron.up" : "chevron.down")
-                            .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(Neo.graphite)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
+                    // No chevron — the one-line row needs the width.
+                    Text("Customize")
+                        .font(Neo.caption.weight(.medium))
+                        .foregroundStyle(Neo.graphite)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.plan.customize")
@@ -685,15 +679,13 @@ struct NeoFlashcardView: View {
             Button {
                 chooseTapped(.again)
             } label: {
-                HStack {
-                    Text("I Don't Know")
-                        .font(.system(size: 18, weight: .semibold))
-                    Spacer()
+                HStack(spacing: 7) {
                     Image(systemName: "xmark")
                         .font(.subheadline.weight(.medium))
+                    Text("I Don't Know")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(Neo.red)
-                .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
                 .background(
@@ -716,15 +708,13 @@ struct NeoFlashcardView: View {
             }
             chooseTapped(.good)
         } label: {
-            HStack {
-                Text(easyFlash ? "Easy" : "I Know")
-                    .font(.system(size: 18, weight: .semibold))
-                Spacer()
+            HStack(spacing: 7) {
                 Image(systemName: easyFlash ? "sparkles" : "checkmark")
                     .font(.subheadline.weight(.medium))
+                Text(easyFlash ? "Easy" : "I Know")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
             }
             .foregroundStyle(easyFlash ? Neo.green : Neo.blue)
-            .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
             .background(

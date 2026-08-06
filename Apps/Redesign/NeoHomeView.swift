@@ -281,7 +281,7 @@ struct NeoHomeView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(Neo.graphite)
-                    Text("Lookup words or sentences")
+                    Text("Lookup")
                         .foregroundStyle(Color(uiColor: .placeholderText))
                     Spacer()
                 }
