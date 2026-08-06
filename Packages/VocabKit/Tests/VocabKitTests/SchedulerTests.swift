@@ -428,3 +428,27 @@ final class GraduationPolicyTests: XCTestCase {
         XCTAssertTrue(StudyEngine.isGraduated(state, policy: .byAlgorithm, kind: .fsrs7))
     }
 }
+
+final class ResponseTimeGraderTests: XCTestCase {
+    func testColdStartThresholds() {
+        let calibration = ResponseTimeGrader.calibration(fromPassResponseMs: [])
+        XCTAssertEqual(ResponseTimeGrader.grade(correct: true, responseMs: 800,
+                                               calibration: calibration), .easy)
+        XCTAssertEqual(ResponseTimeGrader.grade(correct: true, responseMs: 3_000,
+                                               calibration: calibration), .good)
+        XCTAssertEqual(ResponseTimeGrader.grade(correct: true, responseMs: 9_000,
+                                               calibration: calibration), .hard)
+        XCTAssertEqual(ResponseTimeGrader.grade(correct: false, responseMs: 500,
+                                               calibration: calibration), .again)
+    }
+
+    func testPersonalCalibrationFromHistory() {
+        // 100 samples spread 1s...10s: P30 ≈ 3.7s, P80 ≈ 8.2s.
+        let samples = (0..<100).map { 1_000 + $0 * 91 }
+        let calibration = ResponseTimeGrader.calibration(fromPassResponseMs: samples)
+        XCTAssertGreaterThan(calibration.fastMs, ResponseTimeGrader.coldStart.fastMs)
+        XCTAssertLessThan(calibration.fastMs, calibration.slowMs)
+        XCTAssertEqual(ResponseTimeGrader.grade(correct: true, responseMs: calibration.fastMs - 1,
+                                               calibration: calibration), .easy)
+    }
+}

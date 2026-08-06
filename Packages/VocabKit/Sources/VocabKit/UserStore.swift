@@ -543,6 +543,47 @@ extension UserStore {
         """, [.text(word)])
     }
 
+    /// Recent correct-answer response times (ms) for the timed-input
+    /// calibration, newest first.
+    public func passResponseTimes(limit: Int = 500) -> [Int] {
+        let rows = (try? db.execute("""
+            SELECT response_ms FROM study_log
+            WHERE knew = 1 AND response_ms IS NOT NULL
+            ORDER BY studied_at DESC LIMIT ?
+        """, [.int(Int64(limit))])) ?? []
+        return rows.compactMap { $0.optionalDouble("response_ms").map { Int($0) } }
+    }
+
+    /// Nudges a word's memory strength up or down by whole tiers — the word
+    /// page's "adjust" control, distinct from Reset. One step doubles (or
+    /// halves) the interval and stability and moves the ladder rung one
+    /// place, then reschedules from today, so every algorithm sees the
+    /// adjustment in its own terms.
+    public func adjustStrength(word: String, steps: Int) {
+        guard steps != 0 else { return }
+        var s = state(of: word)
+        guard s.timesStudied > 0 else { return }
+        let factor = pow(2.0, Double(steps))
+        let interval = max(1.0 / 24, min(730, (s.intervalDays ?? 1) * factor))
+        s.intervalDays = interval
+        if let stability = s.stability {
+            s.stability = max(0.01, min(36_500, stability * factor))
+        }
+        s.memoryCircle = max(1, min(12, s.memoryCircle + steps))
+        if var model = s.ebisuModel {
+            model.halflifeHours = max(1, min(24_000, model.halflifeHours * factor))
+            s.ebisuModel = model
+        }
+        let calendar = Calendar.current
+        if interval < 1 {
+            s.nextPlannedAt = Date().addingTimeInterval(interval * 86_400)
+        } else {
+            s.nextPlannedAt = calendar.date(byAdding: .day, value: Int(interval.rounded()),
+                                            to: calendar.startOfDay(for: Date()))
+        }
+        save(state: s)
+    }
+
     /// Total logged reviews — gates the on-device optimizer.
     public func totalReviewCount() -> Int {
         let rows = (try? db.execute("SELECT COUNT(*) AS c FROM study_log")) ?? []

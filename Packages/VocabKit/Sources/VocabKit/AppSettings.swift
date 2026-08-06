@@ -26,6 +26,9 @@ public enum AnswerStyle: String, CaseIterable, Codable, Sendable {
     case threeButtons // three buttons: Again / Good / Easy
     case graded       // four buttons: Again / Hard / Good / Easy
     case refine       // two buttons, then a brief optional Hard/Easy refine
+    case longPress    // two buttons; holding I Know answers Easy
+    case swipe        // card swipes: left Again, right Good, up Easy, down Hard
+    case timeImplicit // two buttons; your response time refines correct answers
 
     public var label: String {
         switch self {
@@ -33,6 +36,9 @@ public enum AnswerStyle: String, CaseIterable, Codable, Sendable {
         case .threeButtons: return "Graded (3 buttons)"
         case .graded: return "Graded (4 buttons)"
         case .refine: return "Simple + refine"
+        case .longPress: return "Simple + long-press"
+        case .swipe: return "Swipe the card"
+        case .timeImplicit: return "Timed (2 buttons)"
         }
     }
 
@@ -42,6 +48,17 @@ public enum AnswerStyle: String, CaseIterable, Codable, Sendable {
         case .threeButtons: return "Again / Good / Easy. One quick call: missed it, knew it, or knew it cold — without the Hard/Good hair-split."
         case .graded: return "Again / Hard / Good / Easy. Richer signal for every algorithm."
         case .refine: return "Answer with two buttons, then optionally tap Hard or Easy for a moment to refine."
+        case .longPress: return "Two buttons, one accelerator: hold I Know for a beat to answer Easy. Never on the miss side — a hold there stays Again."
+        case .swipe: return "Swipe left = Again, right = Good, up = Easy, down = Hard. The word page opens from a button in this mode."
+        case .timeImplicit: return "Two buttons; how fast you answered refines correct answers (quick = Easy, slow = Hard), calibrated to your own history — the SlimStampen idea."
+        }
+    }
+
+    /// Styles whose base interaction is the two binary buttons.
+    public var isBinaryBase: Bool {
+        switch self {
+        case .simple, .refine, .longPress, .timeImplicit: return true
+        case .threeButtons, .graded, .swipe: return false
         }
     }
 }

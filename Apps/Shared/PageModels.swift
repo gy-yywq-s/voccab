@@ -278,6 +278,14 @@ final class WordDetailModel: ObservableObject {
         reload()
     }
 
+    /// Tiered strength adjustment (each step doubles or halves the schedule)
+    /// — the word page's up/down control, distinct from Reset.
+    func adjustStrength(steps: Int) {
+        env.userStore.adjustStrength(word: displayWord, steps: steps)
+        env.touch()
+        reload()
+    }
+
     /// Ebisu-predicted recall probability for the word right now.
     var recall: Double? {
         data.state.predictedRecall()
@@ -387,6 +395,78 @@ final class StudyModel: ObservableObject {
 
     func reveal() {
         revealed = true
+    }
+
+    // MARK: Choice state machine (pre-reveal commitment)
+
+    /// The grade locked in BEFORE the reveal, nil when the card was revealed
+    /// by tapping it. Views branch the post-reveal controls on this: a pass
+    /// choice offers Hard/Easy refinement, a miss offers none, and a
+    /// secondary "re-choose" always allows overriding with any grade.
+    @Published private(set) var initialChoice: ReviewGrade?
+    private var choiceResponseMs: Int?
+    private var rtCalibration: ResponseTimeGrader.Calibration?
+
+    /// Pre-reveal answer: locks the choice (refined by response time in the
+    /// Timed style) and flips the card.
+    func choose(_ grade: ReviewGrade) {
+        let ms = min(600_000, Int(Date().timeIntervalSince(cardShownAt) * 1000))
+        choiceResponseMs = ms
+        var chosen = grade
+        if env.settings.answerStyle == .timeImplicit {
+            let calibration = rtCalibration
+                ?? ResponseTimeGrader.calibration(fromPassResponseMs: env.userStore.passResponseTimes())
+            rtCalibration = calibration
+            chosen = ResponseTimeGrader.grade(correct: grade.isPass, responseMs: ms,
+                                              calibration: calibration)
+        }
+        initialChoice = chosen
+        revealed = true
+    }
+
+    /// Post-reveal commit: `final` overrides (refine or re-choose); nil
+    /// commits the locked pre-reveal choice.
+    func commit(_ final: ReviewGrade? = nil) {
+        let grade = final ?? initialChoice ?? .good
+        initialChoice = nil
+        choiceResponseMs = nil
+        answer(grade: grade)
+    }
+
+    // MARK: New-word seeding
+
+    /// Words seeded via the on-card "How well do you know this?" control
+    /// this session (the control shows once per word).
+    @Published private(set) var seededThisSession: Set<String> = []
+
+    func seedCurrentNewWord(rung: Int) {
+        guard let word = session?.current?.word else { return }
+        seededThisSession.insert(word)
+        guard rung > 0 else { return }        // 0 = Not at all: no seed
+        env.userStore.seedKnownWord(word, rung: rung)
+        env.touch()
+    }
+
+    /// Starts a Mix session with per-session counts (the daily goal is only
+    /// the default; these caps are absolute for this one session).
+    func startCustomMix(newCount: Int, reviewCount: Int) {
+        let states = env.userStore.states(of: candidateWords)
+        let dictWords = env.dictionary?.lookup(words: candidateWords) ?? [:]
+        let custom = StudyEngine.plans(
+            listWords: candidateWords,
+            states: states,
+            dictWords: dictWords,
+            dailyGoalNew: max(0, newCount),
+            dailyGoalReview: max(0, reviewCount),
+            order: order,
+            alreadyStudiedToday: (0, 0),
+            graduationPolicy: env.settings.graduationPolicy,
+            schedulerKind: env.settings.scheduler,
+            config: env.settings.algorithmConfig
+        )
+        if let mix = custom.first(where: { $0.mode == .mix }) {
+            start(plan: mix)
+        }
     }
 
     func answer(grade: ReviewGrade) {
