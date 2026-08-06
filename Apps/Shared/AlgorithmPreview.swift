@@ -1,14 +1,17 @@
 import SwiftUI
 import VocabKit
 
-/// Settings subpage: a compact, simulation-driven comparison of the memory
-/// algorithms. Every number below is produced by running the REAL scheduler
-/// code on the same story — five correct answers, one miss, two recoveries —
-/// so the differences you see are exactly what the app would do.
+/// Settings subpage: "Compare Algorithms". A simulation-driven comparison of
+/// the seven schedulers — every number on this page is produced by running the
+/// REAL scheduler code on the same story (five correct answers, one miss, two
+/// recoveries), so the differences shown are exactly what the app would do.
 ///
-/// Two layers: an always-visible comparison table (one row per algorithm
-/// with an interval sparkline, total span, and the cost of the single miss),
-/// and a tap-to-expand detail with the full timeline and a "Use" button.
+/// Structure: a two-line intro, then the algorithms grouped into three quiet
+/// families (fixed ladders / adaptive / modern models). Each row shows the
+/// serif algorithm name, an 8-bar interval sparkline (red bar = the miss),
+/// and the schedule's reach. Tapping a row expands an inset detail card with
+/// the full timeline, labeled quick facts, a link into the per-algorithm
+/// AlgorithmInfoPage, and the guarded "Use" switch flow.
 struct AlgorithmPreviewPage: View {
     @EnvironmentObject private var env: AppEnvironment
     @State private var selected: SchedulerKind = .circles
@@ -17,23 +20,33 @@ struct AlgorithmPreviewPage: View {
     @State private var switchPlan: AlgorithmSwitch.Plan?
     @State private var showSwitchConfirm = false
 
+    /// The three algorithm families, in escalating sophistication.
+    private static let families: [(name: String, blurb: String, kinds: [SchedulerKind])] = [
+        ("Fixed Ladders",
+         "Preset interval sequences — every word climbs the same stairs.",
+         [.circles, .leitner, .memrise, .pimsleur]),
+        ("Adaptive",
+         "Each word earns its own pace from your answers.",
+         [.sm2]),
+        ("Modern Models",
+         "Statistical memory models that predict when you'll forget.",
+         [.fsrs, .fsrs7]),
+    ]
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Every row runs the real scheduler on the same story: five correct answers, one miss, two recoveries. Bars show the wait after each review (red = the miss). \"Reach\" is how far out the schedule stretches after those eight reviews. Tap a row for the full timeline.")
-                    .font(.subheadline)
+            VStack(alignment: .leading, spacing: 28) {
+                Text("Every row replays the same eight answers — five right, one miss, two recoveries — on the real scheduler. Red bar = the miss; tap a row to expand it.")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .padding(.top, 8)
-                    .padding(.bottom, 8)
+                    .padding(.top, 12)
 
-                ForEach(SchedulerKind.allCases, id: \.self) { kind in
-                    Divider()
-                    algorithmRow(kind)
+                ForEach(Array(Self.families.enumerated()), id: \.offset) { _, family in
+                    familySection(family.name, family.blurb, family.kinds)
                 }
-                Divider()
-                Color.clear.frame(height: 40)
             }
             .padding(.horizontal, 20)
+            .padding(.bottom, 40)
         }
         .background(Color(uiColor: .systemBackground))
         .navigationTitle("Algorithms")
@@ -55,7 +68,29 @@ struct AlgorithmPreviewPage: View {
         }
     }
 
-    // MARK: Layer 1 — comparison table
+    // MARK: Family sections
+
+    private func familySection(_ name: String, _ blurb: String, _ kinds: [SchedulerKind]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(name.uppercased())
+                .font(.caption.weight(.semibold))
+                .tracking(1.2)
+                .foregroundStyle(.secondary)
+            Text(blurb)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.top, 2)
+                .padding(.bottom, 8)
+
+            ForEach(kinds, id: \.self) { kind in
+                Divider()
+                algorithmRow(kind)
+            }
+            Divider()
+        }
+    }
+
+    // MARK: Rows
 
     private func algorithmRow(_ kind: SchedulerKind) -> some View {
         let sim = Self.simulation(for: kind)
@@ -70,7 +105,7 @@ struct AlgorithmPreviewPage: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 10) {
                         Text(kind.label)
-                            .font(.subheadline.weight(.semibold))
+                            .font(Font.custom("Iowan Old Style", size: 17, relativeTo: .subheadline))
                             .foregroundStyle(.primary)
                             .lineLimit(1)
                         if isActive {
@@ -84,7 +119,6 @@ struct AlgorithmPreviewPage: View {
                         Spacer(minLength: 8)
                         sparkline(sim.steps)
                     }
-                    // Self-labeled facts instead of cramped columns.
                     (Text("Reach after 8 reviews: ")
                         + Text(Formatting.interval(days: sim.perfectTotalDays)).bold()
                         + Text(" perfect · ")
@@ -108,6 +142,7 @@ struct AlgorithmPreviewPage: View {
     }
 
     /// Eight tiny bars, one per review; height is log-scaled to the interval.
+    /// Width is constant (8 bars), so the sparklines form an aligned column.
     private func sparkline(_ steps: [Step]) -> some View {
         HStack(alignment: .bottom, spacing: 2) {
             ForEach(Array(steps.enumerated()), id: \.offset) { _, step in
@@ -119,10 +154,10 @@ struct AlgorithmPreviewPage: View {
         .frame(height: 24, alignment: .bottom)
     }
 
-    // MARK: Layer 2 — expanded detail
+    // MARK: Expanded detail card
 
     private func detail(_ kind: SchedulerKind, sim: Sim, isActive: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             // Full interval timeline from the real scheduler.
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
@@ -139,7 +174,7 @@ struct AlgorithmPreviewPage: View {
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(step.knew
-                                      ? Color(uiColor: .secondarySystemBackground)
+                                      ? Color(uiColor: .tertiarySystemBackground)
                                       : Color.red.opacity(0.12))
                         )
                     }
@@ -149,28 +184,105 @@ struct AlgorithmPreviewPage: View {
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
 
-            Text(kind.summary)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             Text(Self.character(kind))
-                .font(.caption)
+                .font(.footnote)
                 .foregroundStyle(.secondary)
                 .italic()
 
-            if !isActive {
-                Button("Use \(kind.label)") {
-                    pendingKind = kind
-                    switchPlan = AlgorithmSwitch.plan(from: env.settings.scheduler, to: kind,
-                                                      settings: env.settings, store: env.userStore)
-                    showSwitchConfirm = true
+            quickFacts(kind)
+
+            Divider()
+
+            VStack(spacing: 8) {
+                NavigationLink {
+                    AlgorithmInfoPage(kind: kind)
+                } label: {
+                    HStack {
+                        Text("About \(kind.label)")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.bordered)
                 .font(.subheadline.weight(.medium))
-                .accessibilityIdentifier("algPreview.use.\(kind.rawValue)")
-                .padding(.top, 2)
+
+                if !isActive {
+                    Button {
+                        pendingKind = kind
+                        switchPlan = AlgorithmSwitch.plan(from: env.settings.scheduler, to: kind,
+                                                          settings: env.settings, store: env.userStore)
+                        showSwitchConfirm = true
+                    } label: {
+                        Text("Use \(kind.label)")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .font(.subheadline.weight(.medium))
+                    .accessibilityIdentifier("algPreview.use.\(kind.rawValue)")
+                }
             }
         }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemBackground))
+        )
         .padding(.bottom, 14)
         .transition(.opacity)
+    }
+
+    /// Three labeled one-line facts, derived from each algorithm's semantics.
+    private func quickFacts(_ kind: SchedulerKind) -> some View {
+        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 5) {
+            ForEach(Array(Self.facts(kind).enumerated()), id: \.offset) { _, fact in
+                GridRow(alignment: .firstTextBaseline) {
+                    Text(fact.label.uppercased())
+                        .font(.caption2.weight(.semibold))
+                        .tracking(0.6)
+                        .foregroundStyle(.tertiary)
+                        .gridColumnAlignment(.leading)
+                    Text(fact.value)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    static func facts(_ kind: SchedulerKind) -> [(label: String, value: String)] {
+        switch kind {
+        case .circles:
+            return [("Scale", "Days — 1 to 30d, doubling past the end"),
+                    ("On a miss", "Full reset to the first rung"),
+                    ("Grades", "Partial — Hard holds, Easy climbs two")]
+        case .leitner:
+            return [("Scale", "Days — five boxes, 1 to 16d"),
+                    ("On a miss", "Back to box 1"),
+                    ("Grades", "Partial — Hard holds, Easy jumps two boxes")]
+        case .memrise:
+            return [("Scale", "Hours to days — 4h up to 180d"),
+                    ("On a miss", "Reset to the 4-hour rung"),
+                    ("Grades", "Partial — Hard holds, Easy climbs two")]
+        case .pimsleur:
+            return [("Scale", "Seconds to years — 5s up to 2y"),
+                    ("On a miss", "Drops one rung — the gentlest penalty here"),
+                    ("Grades", "Partial — Hard holds, Easy climbs two")]
+        case .sm2:
+            return [("Scale", "Days — 1d, 6d, then × ease factor"),
+                    ("On a miss", "Interval restarts; the ease factor drops"),
+                    ("Grades", "Full — mapped to SM-2 quality 2–5")]
+        case .fsrs:
+            return [("Scale", "Days, from predicted recall probability"),
+                    ("On a miss", "Modeled stability collapses; difficulty rises"),
+                    ("Grades", "Full — FSRS ratings 1–4")]
+        case .fsrs7:
+            return [("Scale", "Hours to days — fractional intervals"),
+                    ("On a miss", "Model collapse, then hour-scale relearning"),
+                    ("Grades", "Full — FSRS ratings 1–4")]
+        }
     }
 
     // MARK: Layout constants
