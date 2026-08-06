@@ -50,7 +50,8 @@ ORT_REPACK = "onnxruntime-slim.xcframework.zip"
 MAX_SYNONYMS, MAX_ANTONYMS, MAX_EXAMPLES = 8, 4, 2
 MAX_COLLOCATIONS, MAX_FORMS = 24, 12
 
-state = {"frameworks": "pending", "piper": "pending", "opengloss": "pending", "detail": ""}
+state = {"frameworks": "pending", "piper": "pending", "opengloss": "pending",
+         "opengloss_gz": "pending", "detail": ""}
 app = Flask(__name__)
 
 
@@ -282,6 +283,27 @@ def build_frameworks():
 STALE_FILES = ["onnxruntime-noheaders.xcframework.zip", "en_US-libritts_r-medium.onnx.json"]
 
 
+def build_gzip():
+    """Transfer-sized copy of the OpenGloss database: the text columns
+    compress to roughly a quarter, so devices pull ~230 MB instead of
+    ~815 MB and inflate locally."""
+    import gzip
+
+    src = os.path.join(RESOURCES, OPENGLOSS_DB)
+    final = src + ".gz"
+    if os.path.exists(final):
+        state["opengloss_gz"] = "ready"
+        return
+    if not os.path.exists(src):
+        return
+    state["opengloss_gz"] = "compressing"
+    with open(src, "rb") as inp, gzip.open(final + ".part", "wb", compresslevel=6) as out:
+        while chunk := inp.read(1 << 20):
+            out.write(chunk)
+    os.replace(final + ".part", final)
+    state["opengloss_gz"] = "ready"
+
+
 def build_worker():
     try:
         for name in STALE_FILES:
@@ -291,6 +313,7 @@ def build_worker():
         build_frameworks()
         build_piper()
         build_opengloss()
+        build_gzip()
     except Exception as error:  # surfaced in the status JSON, not lost to logs
         state["detail"] = f"{type(error).__name__}: {error}"
         for key in ("frameworks", "piper", "opengloss"):
