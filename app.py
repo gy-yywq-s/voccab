@@ -30,12 +30,11 @@ RESOURCES = os.path.join(DATA_DIR, "resources")
 WORK = os.path.join(DATA_DIR, "work")
 
 HF = "https://huggingface.co"
-PIPER_FILES = [
-    ("en_US-libritts_r-medium.onnx",
-     f"{HF}/rhasspy/piper-voices/resolve/main/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx"),
-    ("en_US-libritts_r-medium.onnx.json",
-     f"{HF}/rhasspy/piper-voices/resolve/main/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx.json"),
-]
+PIPER_MODEL = "en_US-libritts_r-medium.onnx"
+PIPER_PACKAGE = (
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/"
+    "vits-piper-en_US-libritts_r-medium.tar.bz2"
+)
 OPENGLOSS_SHARDS = [
     f"{HF}/datasets/mjbommar/opengloss-dictionary/resolve/main/data/train-{i:05d}-of-00008.parquet"
     for i in range(8)
@@ -83,12 +82,19 @@ def build_opengloss():
     if os.path.exists(final):
         state["opengloss"] = "ready"
         return
+    # A redeploy restarts the worker, so record how far the build got and
+    # resume there instead of throwing away an hour of shards.
     building = os.path.join(WORK, OPENGLOSS_DB)
-    if os.path.exists(building):
+    progress_file = os.path.join(WORK, "opengloss.progress")
+    done = 0
+    if os.path.exists(building) and os.path.exists(progress_file):
+        with open(progress_file) as f:
+            done = int((f.read().strip() or "0"))
+    elif os.path.exists(building):
         os.remove(building)
     db = sqlite3.connect(building)
     db.execute("""
-        CREATE TABLE entries (
+        CREATE TABLE IF NOT EXISTS entries (
             word TEXT PRIMARY KEY COLLATE NOCASE,
             senses TEXT NOT NULL,
             collocations TEXT NOT NULL,
@@ -99,6 +105,8 @@ def build_opengloss():
         )
     """)
     for index, url in enumerate(OPENGLOSS_SHARDS):
+        if index < done:
+            continue
         state["opengloss"] = f"building shard {index + 1}/8"
         shard = os.path.join(WORK, f"shard-{index}.parquet")
         if not os.path.exists(shard):
@@ -123,21 +131,91 @@ def build_opengloss():
                     ))
         db.commit()
         os.remove(shard)
+        with open(progress_file, "w") as f:
+            f.write(str(index + 1))
     db.execute("VACUUM")
     db.commit()
     db.close()
     os.replace(building, final)
+    os.remove(progress_file)
     state["opengloss"] = "ready"
+
+
+def stored_zip(entries):
+    """Minimal store-only (method 0) ZIP, matching the app's own reader."""
+    import struct
+    import zlib
+
+    out, central, offset = bytearray(), bytearray(), 0
+    for name, payload in entries:
+        raw = name.encode()
+        crc = zlib.crc32(payload) & 0xFFFFFFFF
+        header = struct.pack("<IHHHHHIIIHH", 0x04034B50, 20, 0, 0, 0, 0,
+                             crc, len(payload), len(payload), len(raw), 0)
+        central += struct.pack("<IHHHHHHIIIHHHHHII", 0x02014B50, 20, 20, 0, 0, 0, 0,
+                               crc, len(payload), len(payload), len(raw),
+                               0, 0, 0, 0, 0, offset) + raw
+        offset += len(header) + len(raw) + len(payload)
+        out += header + raw + payload
+    start = len(out)
+    out += central
+    out += struct.pack("<IHHHHIIH", 0x06054B50, 0, 0, len(entries), len(entries),
+                       len(central), start, 0)
+    return bytes(out)
+
+
+def build_piper():
+    """The Piper voice as sherpa-onnx needs it: the ONNX model, the token
+    table, and espeak-ng-data (zipped, since it is a directory of ~200
+    files). Taken from the sherpa-onnx model package so the tokens and the
+    model are guaranteed to match."""
+    import tarfile
+
+    model = os.path.join(RESOURCES, PIPER_MODEL)
+    tokens = os.path.join(RESOURCES, "tokens.txt")
+    espeak = os.path.join(RESOURCES, "espeak-ng-data.zip")
+    if all(os.path.exists(p) for p in (model, tokens, espeak)):
+        state["piper"] = "ready"
+        return
+
+    state["piper"] = "fetching model package"
+    archive = os.path.join(WORK, "piper.tar.bz2")
+    if not os.path.exists(archive):
+        fetch(PIPER_PACKAGE, archive)
+
+    state["piper"] = "unpacking"
+    espeak_entries = []
+    with tarfile.open(archive, "r:bz2") as tar:
+        for member in tar.getmembers():
+            if not member.isfile():
+                continue
+            # Paths inside the package are <dir>/<name>; keep the tail.
+            parts = member.name.split("/", 1)
+            rel = parts[1] if len(parts) > 1 else parts[0]
+            if rel.endswith(".onnx"):
+                with tar.extractfile(member) as src, open(model + ".part", "wb") as out:
+                    while chunk := src.read(1 << 20):
+                        out.write(chunk)
+                os.replace(model + ".part", model)
+            elif rel == "tokens.txt":
+                with tar.extractfile(member) as src, open(tokens + ".part", "wb") as out:
+                    out.write(src.read())
+                os.replace(tokens + ".part", tokens)
+            elif rel.startswith("espeak-ng-data/"):
+                with tar.extractfile(member) as src:
+                    espeak_entries.append((rel, src.read()))
+
+    state["piper"] = "packing espeak data"
+    with open(espeak + ".part", "wb") as out:
+        out.write(stored_zip(espeak_entries))
+    os.replace(espeak + ".part", espeak)
+    os.remove(archive)
+    state["piper"] = "ready"
 
 
 def build_worker():
     try:
-        state["piper"] = "mirroring"
-        for name, url in PIPER_FILES:
-            dest = os.path.join(RESOURCES, name)
-            if not os.path.exists(dest):
-                fetch(url, dest)
-        state["piper"] = "ready"
+        build_piper()
         build_opengloss()
     except Exception as error:  # surfaced in the status JSON, not lost to logs
         state["detail"] = f"{type(error).__name__}: {error}"
