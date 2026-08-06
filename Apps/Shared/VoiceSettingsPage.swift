@@ -61,7 +61,7 @@ struct VoiceSettingsPage: View {
                         Label {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Model not downloaded")
-                                Text("Download it under Settings → Data → Resources (~75 MB, from Hugging Face). Until then Piper falls back to the system voice.")
+                                Text("Download it under Settings → Data → Resources (~75 MB). Until then Piper falls back to the system voice.")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }

@@ -109,22 +109,25 @@ public enum ResourceManager {
             AppResource(
                 id: "dict.opengloss",
                 title: "OpenGloss dictionaries",
-                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story.",
+                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story. ~250 MB.",
                 kind: .dictionary,
                 location: downloadedURL(for: "dict.opengloss").map { .downloaded($0) }
                     ?? .notDownloaded,
-                isRequired: false),
+                isRequired: false,
+                downloadURLs: [
+                    URL(string: "https://voccab-res.gaelis.cc/resources/opengloss.sqlite")!,
+                ]),
             AppResource(
                 id: "tts.libritts-r-medium",
                 title: "Piper voice model (LibriTTS-R)",
-                detail: "904-speaker neural text-to-speech, en_US. ~75 MB from Hugging Face.",
+                detail: "904-speaker neural text-to-speech, en_US. ~75 MB.",
                 kind: .ttsModel,
                 location: downloadedURL(for: "tts.libritts-r-medium").map { .downloaded($0) }
                     ?? .notDownloaded,
                 isRequired: false,
                 downloadURLs: [
-                    URL(string: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx")!,
-                    URL(string: "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx.json")!,
+                    URL(string: "https://voccab-res.gaelis.cc/resources/en_US-libritts_r-medium.onnx")!,
+                    URL(string: "https://voccab-res.gaelis.cc/resources/en_US-libritts_r-medium.onnx.json")!,
                 ]),
         ]
         // Cached pronunciation recordings (Wikimedia fetches).
