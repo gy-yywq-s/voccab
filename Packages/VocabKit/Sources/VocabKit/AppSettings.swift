@@ -110,12 +110,15 @@ public enum PronunciationSource: String, CaseIterable, Codable, Sendable {
 
 /// The dictionaries whose sections/tabs can be shown on the word page.
 public enum DictionarySource: String, CaseIterable, Codable, Sendable {
-    case chinese      // ECDICT English-Chinese (header card content)
-    case english      // WordNet English definitions
-    case synonyms     // WordNet synonyms/thesaurus
-    case webster      // GCIDE / Webster's 1913 (public domain)
-    case moby         // Moby Thesaurus II (public domain)
-    case apple        // system dictionary, embedded inline
+    case chinese        // ECDICT English-Chinese (header card content)
+    case english        // WordNet English definitions
+    case synonyms       // WordNet synonyms/thesaurus
+    case webster        // GCIDE / Webster's 1913 (public domain)
+    case moby           // Moby Thesaurus II (public domain)
+    case apple          // system dictionary, embedded inline
+    case openGloss      // OpenGloss senses + examples (downloadable)
+    case openGlossUsage // OpenGloss collocations + word forms (same download)
+    case openGlossStory // OpenGloss etymology + encyclopedia (same download)
 
     public var label: String {
         switch self {
@@ -125,10 +128,13 @@ public enum DictionarySource: String, CaseIterable, Codable, Sendable {
         case .webster: return "Webster 1913"
         case .moby: return "Moby Thesaurus"
         case .apple: return "Apple Dictionary"
+        case .openGloss: return "OpenGloss"
+        case .openGlossUsage: return "OpenGloss Usage"
+        case .openGlossStory: return "OpenGloss Story"
         }
     }
 
-    /// One-line provenance note, shown in the dictionary preview page.
+    /// One-line note introducing each dictionary, shown in the manager page.
     public var sourceNote: String {
         switch self {
         case .chinese: return "ECDICT — open English-Chinese dictionary with frequency data."
@@ -137,11 +143,19 @@ public enum DictionarySource: String, CaseIterable, Codable, Sendable {
         case .webster: return "GCIDE / Webster's 1913 — the classic unabridged dictionary, public domain."
         case .moby: return "Moby Thesaurus II — the largest public-domain English thesaurus."
         case .apple: return "Apple's built-in dictionaries, embedded in the page."
+        case .openGloss: return "OpenGloss (2025) — AI-generated dictionary with clear numbered senses and examples; readable, but not expert-checked."
+        case .openGlossUsage: return "Collocations, word forms and derivations from OpenGloss — how the word combines in real use."
+        case .openGlossStory: return "Word origin plus a short encyclopedia article from OpenGloss — AI-written, plausible rather than scholarly."
         }
     }
 
     public var hasBundledData: Bool {
-        true  // Every remaining source ships in the bundled databases.
+        switch self {
+        case .openGloss, .openGlossUsage, .openGlossStory:
+            return false  // Served by the downloadable OpenGloss resource.
+        default:
+            return true
+        }
     }
 }
 

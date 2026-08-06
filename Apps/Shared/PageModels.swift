@@ -180,6 +180,8 @@ struct WordDetailData {
     var oxford: [String]?
     var webster: [String]?
     var mobySynonyms: [String]?
+    var openGloss: OpenGlossEntry?
+    var openGlossAvailable: Bool = false
 
     var synonymSections: [(pos: String, synonyms: [String])] {
         var result: [(String, [String])] = []
@@ -216,6 +218,12 @@ final class WordDetailModel: ObservableObject {
 
     static func load(word: String, env: AppEnvironment) -> WordDetailData {
         let dictWord = env.dictionary?.lookup(word)
+        // Opened once per page load; only touched when an OpenGloss
+        // dictionary is enabled so nobody pays for a disabled feature.
+        let wantsOpenGloss = env.settings.enabledDictionaries.contains {
+            [.openGloss, .openGlossUsage, .openGlossStory].contains($0)
+        }
+        let openGlossStore = wantsOpenGloss ? env.openGloss : nil
         let state = env.userStore.state(of: word)
         let allLists = env.userStore.lists()
         return WordDetailData(
@@ -228,7 +236,9 @@ final class WordDetailModel: ObservableObject {
             senses: env.dictionary?.senses(for: word) ?? [],
             oxford: env.dictionary?.oxfordEntry(for: word),
             webster: env.dictionary?.websterEntry(for: word),
-            mobySynonyms: env.dictionary?.mobySynonyms(for: word)
+            mobySynonyms: env.dictionary?.mobySynonyms(for: word),
+            openGloss: openGlossStore?.entry(for: word),
+            openGlossAvailable: openGlossStore != nil
         )
     }
 

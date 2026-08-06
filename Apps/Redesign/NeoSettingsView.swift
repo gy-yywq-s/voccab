@@ -259,7 +259,7 @@ struct NeoSettingsView: View {
                 Text(source.label)
                     .font(.body)
                 if !source.hasBundledData {
-                    Text("no data")
+                    Text("download")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

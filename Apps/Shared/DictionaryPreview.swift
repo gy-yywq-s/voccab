@@ -270,6 +270,22 @@ struct DictionaryPreviewPage: View {
             }
         case .apple:
             return  // Rendered as an embedded view, never cached as text.
+        case .openGloss, .openGlossUsage, .openGlossStory:
+            if let entry = env.openGloss?.entry(for: term) {
+                switch source {
+                case .openGlossUsage:
+                    text = entry.collocations.isEmpty ? nil
+                        : entry.collocations.prefix(10).joined(separator: ", ")
+                case .openGlossStory:
+                    text = entry.etymology ?? entry.encyclopedia.map { String($0.prefix(220)) }
+                default:
+                    text = entry.senses.isEmpty ? nil : entry.senses.prefix(2)
+                        .map { "(\($0.pos)) \($0.definition)" }
+                        .joined(separator: "\n")
+                }
+            } else {
+                text = "Not downloaded yet — one download under Data → Resources powers all three OpenGloss dictionaries."
+            }
         }
         if let text, !text.isEmpty {
             previewCache[source] = .text(text)

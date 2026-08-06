@@ -366,6 +366,9 @@ struct WordDetailView: View {
         case .webster: return "Webster"
         case .moby: return "Moby"
         case .apple: return "Apple"
+        case .openGloss: return "Gloss"
+        case .openGlossUsage: return "Usage"
+        case .openGlossStory: return "Story"
         default: return source.label
         }
     }
@@ -385,7 +388,33 @@ struct WordDetailView: View {
             mobyTab
         case .apple:
             appleTab
+        case .openGloss, .openGlossUsage, .openGlossStory:
+            openGlossTab(for: tab)
         }
+    }
+
+    @ViewBuilder
+    private func openGlossTab(for source: DictionarySource) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if !model.data.openGlossAvailable {
+                OpenGlossUnavailableView()
+            } else if let entry = model.data.openGloss {
+                switch source {
+                case .openGlossUsage:
+                    OpenGlossUsageView(entry: entry)
+                case .openGlossStory:
+                    OpenGlossStoryView(entry: entry)
+                default:
+                    OpenGlossDefinitionsView(entry: entry)
+                }
+            } else {
+                Text("No OpenGloss entry for this word.")
+                    .font(.headline)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 12)
+        .accessibilityIdentifier("word.openglossTab")
     }
 
     private var websterTab: some View {

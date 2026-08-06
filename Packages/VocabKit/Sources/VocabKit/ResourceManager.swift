@@ -104,6 +104,14 @@ public enum ResourceManager {
                 location: bundled("voccab-extras", "sqlite"),
                 isRequired: false),
             AppResource(
+                id: "dict.opengloss",
+                title: "OpenGloss dictionaries",
+                detail: "One download powering OpenGloss, OpenGloss Usage and OpenGloss Story.",
+                kind: .dictionary,
+                location: downloadedURL(for: "dict.opengloss").map { .downloaded($0) }
+                    ?? .notDownloaded,
+                isRequired: false),
+            AppResource(
                 id: "tts.libritts-r-medium",
                 title: "Piper voice model (LibriTTS-R)",
                 detail: "904-speaker neural text-to-speech, en_US.",

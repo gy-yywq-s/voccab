@@ -11,6 +11,10 @@ final class AppEnvironment: ObservableObject {
     let settings: AppSettings
     let speech = SpeechService()
 
+    /// Opened fresh on each access so downloading or deleting the resource
+    /// takes effect immediately; nil while the download isn't on the device.
+    var openGloss: OpenGlossStore? { OpenGlossStore() }
+
     /// Bumped whenever user data changes so views refresh.
     @Published var dataVersion = 0
 
