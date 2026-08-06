@@ -354,8 +354,8 @@ struct NeoFlashcardView: View {
     @State private var longPressFired = false
     @State private var easyFlash = false
     @State private var lastSeed: NeoSeedRecord?
-    /// Momentary solid fill on the tapped seed segment before the bar
-    /// collapses; nil when nothing is mid-selection.
+    /// Rung locked on the seed slider before the control collapses; nil
+    /// when nothing is mid-selection.
     @State private var seedTapSelection: Int?
     @State private var detailTarget: NeoDetailTarget?
     @State private var showEndConfirm = false
@@ -982,59 +982,31 @@ struct NeoFlashcardView: View {
     private static let seedLabels = ["Not at all", "Barely", "A little",
                                      "Somewhat", "Well", "Very well"]
 
-    /// "How well do you know this word?" — one long segmented familiarity
-    /// bar on unseeded new cards: a single pale-blue track split into six
-    /// equal segments. One tap gives the scheduler a head start (rung 1–5);
-    /// "Not at all" opens the word page to learn it first.
+    /// "How well do you know this word?" — vertical detent slider on
+    /// unseeded new cards: a six-detent rail with rung 0 at the bottom and
+    /// a pale-blue fill climbing below the thumb. Dragging snaps detent to
+    /// detent, tapping a detent jumps straight to it; either gives the
+    /// scheduler a head start (rung 1–5), and "Not at all" opens the word
+    /// page to learn it first.
     private func seedBar(for item: StudyItem) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 10) {
             Text("How well do you know this word?")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-            HStack(spacing: 0) {
-                ForEach(0..<6, id: \.self) { rung in
-                    seedSegment(rung, for: item)
-                }
+            NeoSeedDetentSlider { rung in
+                seedTapped(rung, for: item)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color.blue.opacity(0.08))
-            )
-            .animation(.spring(duration: 0.3), value: seedTapSelection)
         }
         .transition(.scale(scale: 0.95, anchor: .bottom).combined(with: .opacity))
-    }
-
-    private func seedSegment(_ rung: Int, for item: StudyItem) -> some View {
-        Button {
-            seedTapped(rung, for: item)
-        } label: {
-            Text(rung == 0 ? "Not at all" : "\(rung)")
-                .font(.system(size: 12, weight: .medium))
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-                .foregroundStyle(seedTapSelection == rung ? Color.white : Color.secondary)
-                .padding(.horizontal, 2)
-                .frame(maxWidth: .infinity)
-                .frame(height: 36)
-                .background {
-                    if seedTapSelection == rung {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.blue)
-                    }
-                }
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("study.seed.\(rung)")
     }
 
     private func seedTapped(_ rung: Int, for item: StudyItem) {
         guard seedTapSelection == nil else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         seedTapSelection = rung
-        // Let the tapped segment fill read for a beat, then collapse the bar
-        // to its one-line caption with a single animated state change.
+        // Let the thumb settle on the chosen detent for a beat, then collapse
+        // the slider to its one-line caption with a single animated state
+        // change.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             guard model.session?.current?.word == item.word else { return }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
@@ -1061,6 +1033,114 @@ struct NeoFlashcardView: View {
         }
         .frame(maxWidth: .infinity)
         .transition(.scale(scale: 0.95).combined(with: .opacity))
+    }
+}
+
+// MARK: - Seed slider
+
+/// Vertical six-detent familiarity slider: rung 0 at the bottom of the
+/// rail, 5 at the top, a pale-blue track with a blue fill climbing below
+/// the blue thumb. Dragging snaps detent to detent with a light tick;
+/// tapping a detent row jumps the thumb there. Release (or a tap) hands
+/// the rung to `select` — the same seeding path the old segmented bar fed.
+private struct NeoSeedDetentSlider: View {
+    /// Concise description beside each detent number, rung 0 first.
+    private static let detentLabels = ["Not at all", "Seen it", "Recognize it",
+                                       "Know it", "Know it well", "Know it cold"]
+
+    let select: (Int) -> Void
+
+    /// Current detent — the single animated value: thumb, fill and label
+    /// emphasis all derive from it.
+    @State private var value = 0
+
+    private let rowHeight: CGFloat = 34
+    private var railHeight: CGFloat { rowHeight * 6 }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            rail
+            VStack(spacing: 0) {
+                ForEach((0...5).reversed(), id: \.self) { rung in
+                    detentRow(rung)
+                }
+            }
+        }
+        .frame(maxWidth: 250)
+        .frame(height: railHeight)
+        .animation(.spring(response: 0.28, dampingFraction: 0.8), value: value)
+    }
+
+    /// Thumb center, measured up from the rail's bottom edge.
+    private var thumbCenter: CGFloat {
+        CGFloat(value) * rowHeight + rowHeight / 2
+    }
+
+    private var rail: some View {
+        ZStack(alignment: .bottom) {
+            Capsule()
+                .fill(Neo.paleBlue)
+                .frame(width: 6)
+            Capsule()
+                .fill(Neo.blue)
+                .frame(width: 6, height: thumbCenter)
+            Circle()
+                .fill(Neo.blue)
+                .frame(width: 22, height: 22)
+                .overlay(
+                    Circle()
+                        .fill(Color(uiColor: .systemBackground))
+                        .frame(width: 7, height: 7)
+                )
+                .offset(y: -(thumbCenter - 11))
+        }
+        .frame(width: 32, height: railHeight)
+        .contentShape(Rectangle())
+        .gesture(railDrag)
+    }
+
+    /// Snap-while-dragging: the thumb chases the nearest detent (never the
+    /// finger), ticking once per rung change; release commits the rung.
+    private var railDrag: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { drag in
+                let rung = rung(atRailY: drag.location.y)
+                if rung != value {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    value = rung
+                }
+            }
+            .onEnded { _ in
+                select(value)
+            }
+    }
+
+    private func rung(atRailY y: CGFloat) -> Int {
+        let row = Int((y / rowHeight).rounded(.down))
+        return max(0, min(5, 5 - row))
+    }
+
+    private func detentRow(_ rung: Int) -> some View {
+        let active = rung == value
+        return Button {
+            value = rung
+            select(rung)
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 7) {
+                Text("\(rung)")
+                    .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                    .frame(width: 14, alignment: .trailing)
+                Text(Self.detentLabels[rung])
+                    .font(.system(size: 12, weight: active ? .medium : .regular))
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(active ? Color.primary : Color(uiColor: .tertiaryLabel))
+            .scaleEffect(active ? 1.12 : 1, anchor: .leading)
+            .frame(height: rowHeight)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("study.seed.\(rung)")
     }
 }
 
