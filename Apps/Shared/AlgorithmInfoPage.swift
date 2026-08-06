@@ -161,7 +161,7 @@ struct AlgorithmInfoPage: View {
     private static func essence(_ kind: SchedulerKind) -> String {
         switch kind {
         case .circles:
-            return "The original app's fixed Ebbinghaus-style review ladder."
+            return "A fixed Ebbinghaus-style review ladder."
         case .leitner:
             return "The 1972 card-box system that started systematized flashcards."
         case .memrise:
@@ -302,7 +302,7 @@ struct AlgorithmInfoPage: View {
             return [
                 .bullets("Choose it when", [
                     "You want completely predictable review dates.",
-                    "You are continuing a deck from the original app and want identical behavior.",
+                    "You want the most predictable schedule there is — the same ladder for every word.",
                     "Your words are of fairly uniform difficulty.",
                 ]),
                 .bullets("Look elsewhere when", [

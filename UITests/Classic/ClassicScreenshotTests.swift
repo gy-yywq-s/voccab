@@ -89,9 +89,9 @@ final class ClassicScreenshotTests: XCTestCase {
                 tabs.buttons["Synonyms"].tap()
                 sleep(1)
                 snap("08-word-synonyms__\(theme)")
-                tabs.buttons["Oxford"].tap()
+                tabs.buttons["Webster 1913"].tap()
                 sleep(1)
-                snap("09-word-oxford__\(theme)")
+                snap("09-word-webster__\(theme)")
             }
         }
 

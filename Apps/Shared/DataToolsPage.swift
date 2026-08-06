@@ -9,6 +9,7 @@ struct DataToolsPage: View {
     @State private var showImporter = false
     @State private var confirmClear = false
     @State private var message: String?
+    @State private var resources: [AppResource] = []
 
     var body: some View {
         List {
@@ -38,6 +39,51 @@ struct DataToolsPage: View {
             }
 
             Section {
+                ForEach(resources) { resource in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(resource.title)
+                                if resource.isRequired {
+                                    Text("REQUIRED")
+                                        .font(.caption2.weight(.bold))
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Text(resource.detail)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if case .notDownloaded = resource.location {
+                            Text("Not downloaded")
+                                .font(.footnote)
+                                .foregroundStyle(.tertiary)
+                        } else {
+                            Text(ByteCountFormatter.string(fromByteCount: resource.sizeBytes,
+                                                           countStyle: .file))
+                                .font(.footnote.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        if resource.isDeletable {
+                            Button(role: .destructive) {
+                                _ = ResourceManager.delete(resource)
+                                resources = ResourceManager.all()
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.footnote)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+            } header: {
+                Text("Resources")
+            } footer: {
+                Text("Dictionaries and voice models on this device. Bundled items ship with the app; downloaded items can be removed here. The definition provider (ECDICT) is required.")
+            }
+
+            Section {
                 Button(role: .destructive) {
                     confirmClear = true
                 } label: {
@@ -48,6 +94,7 @@ struct DataToolsPage: View {
                 Text("Deletes lists, words, notes, progress, logs, and history on this device. Settings and the bundled dictionaries stay.")
             }
         }
+        .onAppear { resources = ResourceManager.all() }
         .navigationTitle("Data")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.zip]) { result in

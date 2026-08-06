@@ -218,7 +218,7 @@ struct NeoStudyStartView: View {
                 HStack(spacing: 12) {
                     Image(systemName: planSymbol(plan.mode))
                         .font(.body.weight(.medium))
-                        .foregroundStyle(Neo.blue)
+                        .foregroundStyle(.secondary)
                         .frame(width: 26)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(plan.mode.rawValue)
@@ -257,7 +257,7 @@ struct NeoStudyStartView: View {
                         Image(systemName: showCustomize ? "chevron.up" : "chevron.down")
                             .font(.caption2.weight(.semibold))
                     }
-                    .foregroundStyle(Neo.blue)
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(
@@ -285,12 +285,12 @@ struct NeoStudyStartView: View {
             } label: {
                 Text("Start custom mix")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(Neo.blue)
+                    .foregroundStyle(Color.blue)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Neo.paleBlue)
+                            .fill(Color.blue.opacity(0.08))
                     )
             }
             .buttonStyle(NeoPressStyle())
@@ -319,7 +319,7 @@ struct NeoStudyStartView: View {
             Spacer()
             Text("\(value.wrappedValue)")
                 .font(Neo.bodyFont.monospacedDigit())
-                .foregroundStyle(Neo.blue)
+                .foregroundStyle(.primary)
             Stepper("", value: value, in: 0...200, step: 5)
                 .labelsHidden()
         }
@@ -354,6 +354,9 @@ struct NeoFlashcardView: View {
     @State private var longPressFired = false
     @State private var easyFlash = false
     @State private var lastSeed: NeoSeedRecord?
+    /// Momentary solid fill on the tapped seed segment before the bar
+    /// collapses; nil when nothing is mid-selection.
+    @State private var seedTapSelection: Int?
     @State private var detailTarget: NeoDetailTarget?
     @State private var showEndConfirm = false
 
@@ -380,6 +383,7 @@ struct NeoFlashcardView: View {
             rechooseOpen = false
             longPressFired = false
             easyFlash = false
+            seedTapSelection = nil
         }
         .sheet(item: $detailTarget) { target in
             NeoStudyDetailSheet(word: target.word)
@@ -436,9 +440,8 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "arrow.uturn.backward")
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(Neo.blue)
+                .foregroundStyle(.secondary)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(Neo.paleBlue))
                 .overlay(Circle().stroke(Neo.hairline, lineWidth: 0.7))
         }
         .buttonStyle(NeoPressStyle())
@@ -472,7 +475,10 @@ struct NeoFlashcardView: View {
     private func card(for item: StudyItem) -> some View {
         let dictWord = model.currentDictWord()
         return VStack(alignment: .leading, spacing: 0) {
-            badgeRow(for: item)
+            Text(item.isNew ? "New word" : "Review")
+                .font(Neo.bodyFont)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
 
             Text(dictWord?.word ?? item.word)
                 .font(.system(size: 34, weight: .bold))
@@ -480,7 +486,7 @@ struct NeoFlashcardView: View {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 12)
+                .padding(.top, 10)
 
             HStack(spacing: 8) {
                 if let phonetic = dictWord?.phonetic, !phonetic.isEmpty {
@@ -493,7 +499,7 @@ struct NeoFlashcardView: View {
                 } label: {
                     Image(systemName: "speaker.wave.2")
                         .font(.subheadline)
-                        .foregroundStyle(Neo.blue)
+                        .foregroundStyle(.secondary)
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(NeoPressStyle())
@@ -536,51 +542,15 @@ struct NeoFlashcardView: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 22)
-        .background {
-            // New cards sit on a pale-blue band; reviews stay on the page.
-            if item.isNew {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Neo.paleBlue)
-            }
-        }
+        .padding(.horizontal, 24)
         .overlay(alignment: .topTrailing) {
             if style == .swipe {
                 openDetailButton(for: item)
             }
         }
-        .padding(.horizontal, 16)
         .contentShape(Rectangle())
         .onTapGesture { revealByTap() }
         .gesture(cardDrag(for: item))
-    }
-
-    private func badgeRow(for item: StudyItem) -> some View {
-        HStack {
-            Spacer()
-            if item.isNew {
-                Text("NEW")
-                    .font(.system(size: 11, weight: .bold))
-                    .tracking(1.6)
-                    .foregroundStyle(Neo.blue)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color(uiColor: .systemBackground)))
-                    .overlay(Capsule().stroke(Neo.blue.opacity(0.3), lineWidth: 0.7))
-                    .accessibilityLabel("New word")
-            } else {
-                Text("REVIEW")
-                    .font(.system(size: 11, weight: .semibold))
-                    .tracking(1.6)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .overlay(Capsule().stroke(Neo.hairline, lineWidth: 0.7))
-                    .accessibilityLabel("Review")
-            }
-            Spacer()
-        }
     }
 
     /// Small book button in the card corner — swipe style only, where the
@@ -591,9 +561,9 @@ struct NeoFlashcardView: View {
         } label: {
             Image(systemName: "book")
                 .font(.footnote.weight(.medium))
-                .foregroundStyle(Neo.blue)
+                .foregroundStyle(.secondary)
                 .frame(width: 30, height: 30)
-                .background(Circle().fill(Neo.paleBlue))
+                .overlay(Circle().stroke(Neo.hairline, lineWidth: 0.7))
         }
         .buttonStyle(NeoPressStyle())
         .accessibilityIdentifier("study.openDetail")
@@ -663,7 +633,7 @@ struct NeoFlashcardView: View {
                         postRevealControls
                     } else {
                         if item.isNew, !model.seededThisSession.contains(item.word) {
-                            seedPanel(for: item)
+                            seedBar(for: item)
                         } else if let seed = lastSeed, seed.word == item.word {
                             seededCapsule(seed.text)
                         }
@@ -716,7 +686,7 @@ struct NeoFlashcardView: View {
                     Text("I Don't Know")
                         .font(.system(size: 18, weight: .semibold))
                     Spacer()
-                    Image(systemName: "questionmark")
+                    Image(systemName: "xmark")
                         .font(.subheadline.weight(.medium))
                 }
                 .foregroundStyle(Neo.red)
@@ -750,13 +720,13 @@ struct NeoFlashcardView: View {
                 Image(systemName: easyFlash ? "sparkles" : "checkmark")
                     .font(.subheadline.weight(.medium))
             }
-            .foregroundStyle(easyFlash ? neoEasy : Neo.blue)
+            .foregroundStyle(easyFlash ? neoEasy : Color.blue)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(easyFlash ? neoEasy.opacity(0.12) : Neo.paleBlue)
+                    .fill(easyFlash ? neoEasy.opacity(0.12) : Color.blue.opacity(0.08))
             )
         }
         .buttonStyle(NeoPressStyle())
@@ -783,7 +753,7 @@ struct NeoFlashcardView: View {
     private var swipeHintRow: some View {
         HStack(spacing: 8) {
             swipeHintChip("arrow.left", "Again", Neo.red)
-            swipeHintChip("arrow.right", "Good", Neo.blue)
+            swipeHintChip("arrow.right", "Good", .blue)
             swipeHintChip("arrow.up", "Easy", neoEasy)
             swipeHintChip("arrow.down", "Hard", Neo.warm)
         }
@@ -811,11 +781,17 @@ struct NeoFlashcardView: View {
             HStack {
                 lockedCapsule(choice)
                 Spacer()
-                Button("Change answer") {
+                Button {
                     withAnimation { rechooseOpen.toggle() }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.caption2.weight(.semibold))
+                        Text("Change answer")
+                            .font(.footnote.weight(.medium))
+                    }
+                    .foregroundStyle(.secondary)
                 }
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.rechoose")
             }
@@ -869,13 +845,13 @@ struct NeoFlashcardView: View {
                 Image(systemName: "arrow.right")
                     .font(.subheadline.weight(.medium))
             }
-            .foregroundStyle(Neo.blue)
+            .foregroundStyle(Color.blue)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Neo.paleBlue)
+                    .fill(Color.blue.opacity(0.08))
             )
         }
         .buttonStyle(NeoPressStyle())
@@ -888,15 +864,19 @@ struct NeoFlashcardView: View {
             Button {
                 commitTapped(.hard)
             } label: {
-                Text("Hard — barely")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Neo.warm)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 40)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Neo.warm.opacity(0.10))
-                    )
+                HStack(spacing: 5) {
+                    Image(systemName: "tortoise")
+                        .font(.caption.weight(.medium))
+                    Text("Hard — barely")
+                        .font(.footnote.weight(.semibold))
+                }
+                .foregroundStyle(Neo.warm)
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Neo.warm.opacity(0.10))
+                )
             }
             .buttonStyle(NeoPressStyle())
             .accessibilityIdentifier("study.refineHard")
@@ -904,15 +884,19 @@ struct NeoFlashcardView: View {
             Button {
                 commitTapped(.easy)
             } label: {
-                Text("Easy — trivial")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(neoEasy)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 40)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(neoEasy.opacity(0.10))
-                    )
+                HStack(spacing: 5) {
+                    Image(systemName: "hare")
+                        .font(.caption.weight(.medium))
+                    Text("Easy — trivial")
+                        .font(.footnote.weight(.semibold))
+                }
+                .foregroundStyle(neoEasy)
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(neoEasy.opacity(0.10))
+                )
             }
             .buttonStyle(NeoPressStyle())
             .accessibilityIdentifier("study.refineEasy")
@@ -988,7 +972,7 @@ struct NeoFlashcardView: View {
         switch grade {
         case .again: return (Neo.red, Neo.red.opacity(0.08))
         case .hard: return (Neo.warm, Neo.warm.opacity(0.10))
-        case .good: return (Neo.blue, Neo.paleBlue)
+        case .good: return (Color.blue, Color.blue.opacity(0.08))
         case .easy: return (neoEasy, neoEasy.opacity(0.10))
         }
     }
@@ -998,59 +982,71 @@ struct NeoFlashcardView: View {
     private static let seedLabels = ["Not at all", "Barely", "A little",
                                      "Somewhat", "Well", "Very well"]
 
-    /// "How well do you know this word?" — the pale-blue seed panel on new
-    /// cards. One tap gives the scheduler a head start (rung 1–5); "Not at
-    /// all" opens the word page to learn it first.
-    private func seedPanel(for item: StudyItem) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    /// "How well do you know this word?" — one long segmented familiarity
+    /// bar on unseeded new cards: a single pale-blue track split into six
+    /// equal segments. One tap gives the scheduler a head start (rung 1–5);
+    /// "Not at all" opens the word page to learn it first.
+    private func seedBar(for item: StudyItem) -> some View {
+        VStack(spacing: 8) {
             Text("How well do you know this word?")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(Neo.blue)
-            seedPillRow(for: item, rungs: [0, 1, 2])
-            seedPillRow(for: item, rungs: [3, 4, 5])
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 0) {
+                ForEach(0..<6, id: \.self) { rung in
+                    seedSegment(rung, for: item)
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.blue.opacity(0.08))
+            )
+            .animation(.spring(duration: 0.3), value: seedTapSelection)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Neo.paleBlue)
-        )
-        .transition(.scale(scale: 0.92, anchor: .bottom).combined(with: .opacity))
+        .transition(.scale(scale: 0.95, anchor: .bottom).combined(with: .opacity))
     }
 
-    private func seedPillRow(for item: StudyItem, rungs: [Int]) -> some View {
-        HStack(spacing: 8) {
-            ForEach(rungs, id: \.self) { rung in
-                Button {
-                    seedTapped(rung, for: item)
-                } label: {
-                    Text(Self.seedLabels[rung])
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(rung == 0 ? Color.secondary : Neo.blue)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 34)
-                        .background(Capsule().fill(Color(uiColor: .systemBackground)))
-                        .overlay(Capsule().stroke(Neo.blue.opacity(0.22), lineWidth: 0.7))
+    private func seedSegment(_ rung: Int, for item: StudyItem) -> some View {
+        Button {
+            seedTapped(rung, for: item)
+        } label: {
+            Text(rung == 0 ? "Not at all" : "\(rung)")
+                .font(.system(size: 12, weight: .medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .foregroundStyle(seedTapSelection == rung ? Color.white : Color.secondary)
+                .padding(.horizontal, 2)
+                .frame(maxWidth: .infinity)
+                .frame(height: 36)
+                .background {
+                    if seedTapSelection == rung {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.blue)
+                    }
                 }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("study.seed.\(rung)")
-            }
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("study.seed.\(rung)")
     }
 
     private func seedTapped(_ rung: Int, for item: StudyItem) {
+        guard seedTapSelection == nil else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-            model.seedCurrentNewWord(rung: rung)
-            lastSeed = NeoSeedRecord(
-                word: item.word,
-                text: rung == 0 ? "Brand new — no head start"
-                                : "Seeded: \(Self.seedLabels[rung])")
-        }
-        if rung == 0 {
-            detailTarget = NeoDetailTarget(word: item.word)
+        seedTapSelection = rung
+        // Let the tapped segment fill read for a beat, then collapse the bar
+        // to its one-line caption with a single animated state change.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            guard model.session?.current?.word == item.word else { return }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                model.seedCurrentNewWord(rung: rung)
+                lastSeed = NeoSeedRecord(
+                    word: item.word,
+                    text: rung == 0 ? "Brand new — no head start"
+                                    : "Seeded · \(Self.seedLabels[rung])")
+            }
+            if rung == 0 {
+                detailTarget = NeoDetailTarget(word: item.word)
+            }
         }
     }
 
@@ -1058,16 +1054,13 @@ struct NeoFlashcardView: View {
         HStack(spacing: 6) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.caption)
-                .foregroundStyle(Neo.blue)
+                .foregroundStyle(.blue)
             Text(text)
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(Neo.paleBlue))
-        .transition(.scale(scale: 0.9).combined(with: .opacity))
         .frame(maxWidth: .infinity)
+        .transition(.scale(scale: 0.95).combined(with: .opacity))
     }
 }
 

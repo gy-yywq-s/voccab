@@ -1,6 +1,19 @@
 import SwiftUI
 import VocabKit
 
+/// A second-level separator for the footnote hints that hang under a settings
+/// row (voice status, algorithm summary): inset to the row's text indent and
+/// lighter than the full-width `NeoHairline`, so the hint reads as subordinate
+/// to its row rather than as a row of its own.
+struct NeoSubHairline: View {
+    var body: some View {
+        Rectangle()
+            .fill(Neo.hairline.opacity(0.45))
+            .frame(height: 0.5)
+            .padding(.leading, 40)
+    }
+}
+
 /// Settings — same sections (Word / Practice / About) styled after
 /// the Passage "Reading settings" reference: bold sans sub-headings, plain
 /// rows with hairlines, inline trailing values, native toggles, wheel sheet
@@ -32,29 +45,21 @@ struct NeoSettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 NeoSectionHeader(title: "Word")
                     .padding(.top, 20)
-                menuRow("Pronunciation", value: accent.label, icon: "waveform") {
-                    ForEach(PronunciationAccent.allCases, id: \.self) { option in
-                        Button(option.label) {
-                            accent = option
-                            env.settings.pronunciationAccent = option
-                        }
-                    }
+                NavigationLink {
+                    VoiceSettingsPage()
+                } label: {
+                    valueRow("Voice", value: env.settings.pronunciationSource.label,
+                             chevron: true, icon: "person.wave.2")
                 }
-                .accessibilityIdentifier("settings.pronunciation")
-                NeoHairline()
-                menuRow("Voice", value: pronunciationSource.label, icon: "person.wave.2") {
-                    ForEach(PronunciationSource.allCases, id: \.self) { option in
-                        Button(option.label) {
-                            pronunciationSource = option
-                            env.settings.pronunciationSource = option
-                        }
-                    }
-                }
+                .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.voice")
                 if !voiceStatus.isEmpty {
+                    NeoSubHairline()
                     Text(voiceStatus)
                         .font(.footnote)
                         .foregroundStyle(voiceStatus.hasPrefix("Recordings available") ? Color.green : .secondary)
+                        .padding(.leading, 40)
+                        .padding(.top, 8)
                         .padding(.bottom, 8)
                 }
                 NeoHairline()
@@ -108,10 +113,12 @@ struct NeoSettingsView: View {
                     }
                 }
                 .accessibilityIdentifier("settings.scheduler")
+                NeoSubHairline()
                 Text(scheduler.summary)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .padding(.top, 2)
+                    .padding(.leading, 40)
+                    .padding(.top, 8)
                     .padding(.bottom, 8)
                 NeoHairline()
                 NavigationLink {
@@ -125,18 +132,10 @@ struct NeoSettingsView: View {
                 NavigationLink {
                     PracticeInputPage()
                 } label: {
-                    valueRow("Practice Input", value: env.settings.answerStyle.label, chevron: true, icon: "hand.tap")
+                    valueRow("Practice Settings", value: env.settings.answerStyle.label, chevron: true, icon: "hand.tap")
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("settings.practiceInput")
-                NeoHairline()
-                NavigationLink {
-                    AlgorithmSettingsPage()
-                } label: {
-                    valueRow("Algorithm Settings", value: scheduler.label, chevron: true, icon: "slider.horizontal.3")
-                }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("settings.algSettings")
                 NeoHairline()
 
                 NeoSectionHeader(title: "Data")
@@ -179,7 +178,7 @@ struct NeoSettingsView: View {
             Text(switchPlan?.summary ?? "")
         }
         .alert("Switched to \(scheduler.label)", isPresented: $showReviewOffer) {
-            Button("Review Algorithm Settings") { goToAlgSettings = true }
+            Button("Review Practice Settings") { goToAlgSettings = true }
             Button("Done", role: .cancel) {}
         } message: {
             Text("You can adjust its settings anytime; anything the switch auto-converted is marked there this once.")
@@ -244,18 +243,12 @@ struct NeoSettingsView: View {
                 HStack(spacing: 5) {
                     Text(value)
                         .font(.body)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2.weight(.semibold))
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
                 }
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.7)
-                )
             }
-            .padding(.vertical, 9)
+            .padding(.vertical, 14)
             .contentShape(Rectangle())
         }
     }
@@ -285,7 +278,7 @@ struct NeoSettingsView: View {
                 Spacer()
                 Button("Done") { showGoalSheet = false }
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(Neo.blue)
+                    .foregroundStyle(Color.accentColor)
             }
             .padding(.horizontal, 20)
             .padding(.top, 18)
@@ -375,13 +368,13 @@ struct NeoImportWordsView: View {
                             Button(list.name) { mergeTarget = list }
                         }
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 5) {
                             Text(mergeTarget?.name ?? "New list")
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption)
+                            Image(systemName: "chevron.down")
+                                .font(.caption.weight(.semibold))
                         }
                         .font(Neo.bodyFont)
-                        .foregroundStyle(Neo.blue)
+                        .foregroundStyle(.secondary)
                     }
                     .accessibilityIdentifier("import.target")
                 }

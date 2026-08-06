@@ -468,8 +468,6 @@ struct NeoWordDetailView: View {
         switch tab {
         case .chinese:
             relatedContent
-        case .oxford:
-            oxfordContent
         case .english:
             englishContent
         case .synonyms:
@@ -486,12 +484,7 @@ struct NeoWordDetailView: View {
     private var websterContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let paragraphs = model.data.webster {
-                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
-                    Text(paragraph)
-                        .font(Neo.bodyFont)
-                        .lineSpacing(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                WebsterEntryView(paragraphs: paragraphs)
             } else {
                 Text("No Webster 1913 entry for this word.")
                     .font(.subheadline)
@@ -504,22 +497,7 @@ struct NeoWordDetailView: View {
     private var mobyContent: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let synonyms = model.data.mobySynonyms {
-                FlowLayout(spacing: 8) {
-                    ForEach(synonyms, id: \.self) { synonym in
-                        NavigationLink(value: Route.wordDetail(word: synonym, context: [])) {
-                            Text(synonym)
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(Neo.blue)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 7)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Neo.paleBlue)
-                                )
-                        }
-                        .buttonStyle(NeoPressStyle())
-                    }
-                }
+                ThesaurusParagraphsView(words: synonyms)
             } else {
                 Text("No Moby Thesaurus entry for this word.")
                     .font(.subheadline)
@@ -560,25 +538,6 @@ struct NeoWordDetailView: View {
             }
         }
         .accessibilityIdentifier("word.related")
-    }
-
-    private var oxfordContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let paragraphs = model.data.oxford {
-                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
-                    Text(paragraph)
-                        .font(Neo.bodyFont)
-                        .lineSpacing(3)
-                }
-            } else {
-                Text("No Oxford entry for this word")
-                    .font(.headline)
-                Text("This word isn't in the installed Oxford data.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .accessibilityIdentifier("word.oxford")
     }
 
     private var englishContent: some View {
@@ -625,32 +584,8 @@ struct NeoWordDetailView: View {
     }
 
     private var synonymsContent: some View {
-        let sections = model.data.synonymSections
-        return VStack(alignment: .leading, spacing: 16) {
-            if sections.isEmpty {
-                Text("No synonyms found.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(section.pos)
-                        .font(.headline)
-                    FlowLayout(spacing: 8) {
-                        ForEach(section.synonyms, id: \.self) { synonym in
-                            NavigationLink(value: Route.wordDetail(word: synonym, context: [])) {
-                                Text(synonym)
-                                    .font(.body)
-                                    .foregroundStyle(Neo.blue)
-                                    .padding(.vertical, 2)
-                            }
-                            .buttonStyle(NeoPressStyle())
-                        }
-                    }
-                }
-            }
-        }
-        .accessibilityIdentifier("word.synonyms")
+        SynonymSectionsView(sections: model.data.synonymSections)
+            .accessibilityIdentifier("word.synonyms")
     }
 
     private var appleContent: some View {

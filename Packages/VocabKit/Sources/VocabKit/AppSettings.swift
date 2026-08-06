@@ -87,11 +87,23 @@ public enum GraduationPolicy: String, CaseIterable, Codable, Sendable {
 public enum PronunciationSource: String, CaseIterable, Codable, Sendable {
     case system       // on-device text-to-speech
     case recorded     // human recordings (Wiktionary-sourced, fetched + cached)
+    case piper        // neural TTS (Piper en_US-libritts_r-medium, downloadable)
 
     public var label: String {
         switch self {
         case .system: return "System voice"
         case .recorded: return "Recorded (online)"
+        case .piper: return "Neural (Piper)"
+        }
+    }
+
+    /// Accents this engine can speak. Piper's LibriTTS-R model is US-only,
+    /// so the accent picker becomes a filter that disables what the current
+    /// engine cannot produce.
+    public var supportedAccents: [PronunciationAccent] {
+        switch self {
+        case .system, .recorded: return PronunciationAccent.allCases
+        case .piper: return [.american]
         }
     }
 }
@@ -99,7 +111,6 @@ public enum PronunciationSource: String, CaseIterable, Codable, Sendable {
 /// The dictionaries whose sections/tabs can be shown on the word page.
 public enum DictionarySource: String, CaseIterable, Codable, Sendable {
     case chinese      // ECDICT English-Chinese (header card content)
-    case oxford       // user-supplied Concise Oxford table
     case english      // WordNet English definitions
     case synonyms     // WordNet synonyms/thesaurus
     case webster      // GCIDE / Webster's 1913 (public domain)
@@ -109,7 +120,6 @@ public enum DictionarySource: String, CaseIterable, Codable, Sendable {
     public var label: String {
         switch self {
         case .chinese: return "English-Chinese"
-        case .oxford: return "Oxford"
         case .english: return "English definition"
         case .synonyms: return "Synonyms"
         case .webster: return "Webster 1913"
@@ -122,7 +132,6 @@ public enum DictionarySource: String, CaseIterable, Codable, Sendable {
     public var sourceNote: String {
         switch self {
         case .chinese: return "ECDICT — open English-Chinese dictionary with frequency data."
-        case .oxford: return "Concise Oxford (user-supplied data, 31k entries)."
         case .english: return "WordNet 3.1 — Princeton's lexical database."
         case .synonyms: return "WordNet synonym sets, grouped by part of speech."
         case .webster: return "GCIDE / Webster's 1913 — the classic unabridged dictionary, public domain."
@@ -132,7 +141,7 @@ public enum DictionarySource: String, CaseIterable, Codable, Sendable {
     }
 
     public var hasBundledData: Bool {
-        true  // Oxford data is installed in the bundled database.
+        true  // Every remaining source ships in the bundled databases.
     }
 }
 
@@ -269,10 +278,24 @@ public final class AppSettings {
         set { defaults.set(newValue, forKey: Key.recordExtendedData) }
     }
 
-    /// System TTS vs downloaded human recordings.
+    /// System TTS vs downloaded human recordings vs the Piper neural model.
     public var pronunciationSource: PronunciationSource {
         get { defaults.string(forKey: Key.pronunciationSource).flatMap(PronunciationSource.init) ?? .system }
         set { defaults.set(newValue.rawValue, forKey: Key.pronunciationSource) }
+    }
+
+    /// Piper speaker index (0…903 for LibriTTS-R medium).
+    public var piperSpeaker: Int {
+        get { defaults.object(forKey: "settings.piperSpeaker") as? Int ?? 0 }
+        set { defaults.set(newValue, forKey: "settings.piperSpeaker") }
+    }
+
+    /// Speech rate on the APP's scale: 1.0 is the default and corresponds to
+    /// 75% of the Piper model's native speed (the model reads fast). Range
+    /// 0.5…1.5. System TTS maps this onto AVSpeech's rate proportionally.
+    public var speechRate: Double {
+        get { defaults.object(forKey: "settings.speechRate") as? Double ?? 1.0 }
+        set { defaults.set(min(1.5, max(0.5, newValue)), forKey: "settings.speechRate") }
     }
 
     /// The memory-scheduling algorithm (user-selectable upgrade; defaults to
@@ -307,7 +330,7 @@ public final class AppSettings {
     public var enabledDictionaries: [DictionarySource] {
         get {
             guard let raw = defaults.stringArray(forKey: Key.enabledDictionaries) else {
-                return [.chinese, .oxford, .english, .synonyms]
+                return [.chinese, .english, .synonyms, .webster]
             }
             var sources = raw.compactMap(DictionarySource.init)
             // The definition provider is always present.

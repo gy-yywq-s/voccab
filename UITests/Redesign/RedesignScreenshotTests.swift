@@ -91,7 +91,7 @@ final class RedesignScreenshotTests: XCTestCase {
         // Word detail: "some"
         app.staticTexts["some"].firstMatch.waitTap()
         XCTAssertTrue(app.staticTexts["/sʌm/"].waitForExistence(timeout: 25)
-            || app.buttons["word.tab.Oxford"].waitForExistence(timeout: 25))
+            || app.buttons["word.tab.English"].waitForExistence(timeout: 25))
         snap("05-word-related__\(theme)")
 
         if full {
@@ -105,9 +105,9 @@ final class RedesignScreenshotTests: XCTestCase {
                 sleep(1)
                 snap("08-word-synonyms__\(theme)")
             }
-            if tapDictionaryTab(app, "Oxford") {
+            if tapDictionaryTab(app, "Webster 1913") {
                 sleep(1)
-                snap("09-word-oxford__\(theme)")
+                snap("09-word-webster__\(theme)")
             }
         }
 

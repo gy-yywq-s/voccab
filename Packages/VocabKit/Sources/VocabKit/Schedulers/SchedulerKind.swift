@@ -31,7 +31,7 @@ public enum SchedulerKind: String, CaseIterable, Codable, Sendable {
 
     public var summary: String {
         switch self {
-        case .circles: return "Fixed ladder: 1, 2, 4, 7, 15, 30 days. The original app's behavior."
+        case .circles: return "Fixed ladder: 1, 2, 4, 7, 15, 30 days."
         case .leitner: return "Five boxes with doubling intervals. Simple and predictable."
         case .memrise: return "Hour-scale fixed ladder: 4h, 12h, 24h, 6d… — same-day reinforcement before long-term spacing."
         case .pimsleur: return "Graduated-interval recall (1967): seconds to minutes to years. Built for rapid same-session cramming."

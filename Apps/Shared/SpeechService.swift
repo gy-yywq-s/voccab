@@ -11,20 +11,35 @@ final class SpeechService {
     private let synthesizer = AVSpeechSynthesizer()
     private var player: AVAudioPlayer?
 
+    /// App-scale speech rate (1.0 = default; see AppSettings.speechRate).
+    var rate: Double = 1.0
+
     func speak(_ text: String, accent: PronunciationAccent, source: PronunciationSource = .system) {
-        // Recordings exist for single words only; sentences always use TTS.
-        guard source == .recorded, !text.contains(" ") else {
-            speakTTS(text, accent: accent)
-            return
-        }
-        let word = text.lowercased()
-        Task { [weak self] in
-            let url = await Self.recordedAudio(for: word, accent: accent)
-            await MainActor.run {
-                guard let self else { return }
-                if let url, self.play(url) { return }
-                self.speakTTS(text, accent: accent)
+        switch source {
+        case .piper:
+            // Piper (LibriTTS-R) synthesizes from the downloadable model; the
+            // model resource isn't hosted yet, so until it is on-device this
+            // falls straight through to system TTS at the app rate.
+            if ResourceManager.downloadedURL(for: "tts.libritts-r-medium") != nil {
+                // Model present: inference wiring lands with the resource
+                // pipeline (sherpa-onnx). Fall back for now.
+                speakTTS(text, accent: .american)
+            } else {
+                speakTTS(text, accent: .american)
             }
+        case .recorded where !text.contains(" "):
+            // Recordings exist for single words only; sentences use TTS.
+            let word = text.lowercased()
+            Task { [weak self] in
+                let url = await Self.recordedAudio(for: word, accent: accent)
+                await MainActor.run {
+                    guard let self else { return }
+                    if let url, self.play(url) { return }
+                    self.speakTTS(text, accent: accent)
+                }
+            }
+        default:
+            speakTTS(text, accent: accent)
         }
     }
 
@@ -32,7 +47,7 @@ final class SpeechService {
         synthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: accent.voiceLanguage)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9 * Float(rate)
         synthesizer.speak(utterance)
     }
 

@@ -21,24 +21,12 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section("Word") {
-                Picker(selection: $accent) {
-                    ForEach(PronunciationAccent.allCases, id: \.self) { accent in
-                        Text(accent.label).tag(accent)
-                    }
-                } label: {
-                    Label("Pronunciation", systemImage: "waveform")
-                }
-                .onChange(of: accent) { env.settings.pronunciationAccent = accent }
-                .accessibilityIdentifier("settings.pronunciation")
-
-                Picker(selection: $pronunciationSource) {
-                    ForEach(PronunciationSource.allCases, id: \.self) { option in
-                        Text(option.label).tag(option)
-                    }
+                NavigationLink {
+                    VoiceSettingsPage()
                 } label: {
                     Label("Voice", systemImage: "person.wave.2")
+                        .badge(env.settings.pronunciationSource.label)
                 }
-                .onChange(of: pronunciationSource) { env.settings.pronunciationSource = pronunciationSource }
                 .accessibilityIdentifier("settings.voice")
 
                 if !voiceStatus.isEmpty {
@@ -84,8 +72,7 @@ struct SettingsView: View {
                 .onChange(of: order) { env.settings.studyOrder = order }
                 .accessibilityIdentifier("settings.studyOrder")
 
-                // Selectable memory algorithm; the default matches the
-                // original app's circles.
+                // Selectable memory algorithm; Memory Circles is the default.
                 Picker(selection: $scheduler) {
                     ForEach(SchedulerKind.allCases, id: \.self) { kind in
                         Text(kind.label).tag(kind)
@@ -121,7 +108,7 @@ struct SettingsView: View {
                 NavigationLink {
                     PracticeInputPage()
                 } label: {
-                    Label("Practice Input", systemImage: "hand.tap")
+                    Label("Practice Settings", systemImage: "hand.tap")
                         .badge(env.settings.answerStyle.label)
                 }
                 .accessibilityIdentifier("settings.practiceInput")

@@ -342,7 +342,7 @@ struct AlgorithmPreviewPage: View {
     static func character(_ kind: SchedulerKind) -> String {
         switch kind {
         case .circles:
-            return "Steady and predictable — the fixed 1·2·4·7·15·30 ladder the original app used. A miss sends you back to day one."
+            return "Steady and predictable — the classic fixed 1·2·4·7·15·30 ladder. A miss sends you back to day one."
         case .leitner:
             return "The classic card-box system: climb one box per success, drop to box one on a miss. Simple, forgiving intervals."
         case .memrise:

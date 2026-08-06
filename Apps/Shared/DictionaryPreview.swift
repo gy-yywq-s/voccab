@@ -247,12 +247,6 @@ struct DictionaryPreviewPage: View {
         case .chinese:
             let lines = env.dictionary?.lookup(term)?.translationLines ?? []
             text = lines.isEmpty ? nil : lines.prefix(3).joined(separator: "\n")
-        case .oxford:
-            if let paragraphs = env.dictionary?.oxfordEntry(for: term) {
-                text = paragraphs.prefix(2).joined(separator: "\n")
-            } else {
-                text = nil
-            }
         case .english:
             let senses = env.dictionary?.senses(for: term) ?? []
             text = senses.isEmpty ? nil : senses.prefix(2)

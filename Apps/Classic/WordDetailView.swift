@@ -375,8 +375,6 @@ struct WordDetailView: View {
         switch tab {
         case .chinese:
             relatedTab
-        case .oxford:
-            oxfordTab
         case .english:
             englishTab
         case .synonyms:
@@ -393,11 +391,7 @@ struct WordDetailView: View {
     private var websterTab: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let paragraphs = model.data.webster {
-                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
-                    Text(paragraph)
-                        .font(.body)
-                        .lineSpacing(3)
-                }
+                WebsterEntryView(paragraphs: paragraphs)
             } else {
                 Text("No Webster 1913 entry for this word.")
                     .font(.headline)
@@ -411,19 +405,7 @@ struct WordDetailView: View {
     private var mobyTab: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let synonyms = model.data.mobySynonyms {
-                FlowLayout(spacing: 8) {
-                    ForEach(synonyms, id: \.self) { synonym in
-                        NavigationLink(value: Route.wordDetail(word: synonym, context: [])) {
-                            Text(synonym)
-                                .font(.body)
-                                .foregroundStyle(.tint)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(Capsule().fill(ClassicTheme.wordChipBackground))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
+                ThesaurusParagraphsView(words: synonyms)
             } else {
                 Text("No Moby Thesaurus entry for this word.")
                     .font(.headline)
@@ -463,35 +445,6 @@ struct WordDetailView: View {
         }
         .padding(.top, 6)
         .accessibilityIdentifier("word.related")
-    }
-
-    private var oxfordTab: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let paragraphs = model.data.oxford {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(model.displayWord)
-                        .font(ClassicTheme.serifWord(size: 30))
-                    if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
-                        Text("| \(phonetic) |")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
-                    Text(paragraph)
-                        .font(.body)
-                        .lineSpacing(3)
-                }
-            } else {
-                Image(systemName: "text.book.closed")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.secondary)
-                Text("No Oxford entry for this word.")
-                    .font(.headline)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 12)
-        .accessibilityIdentifier("word.oxford")
     }
 
     private var englishTab: some View {
@@ -546,35 +499,10 @@ struct WordDetailView: View {
     }
 
     private var synonymsTab: some View {
-        let sections = model.data.synonymSections
-        return VStack(alignment: .leading, spacing: 18) {
-            if sections.isEmpty {
-                Text("No synonyms found.")
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 8)
-            }
-            ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(section.pos)
-                        .font(.title3.weight(.bold))
-                    FlowLayout(spacing: 8) {
-                        ForEach(section.synonyms, id: \.self) { synonym in
-                            NavigationLink(value: Route.wordDetail(word: synonym, context: [])) {
-                                Text(synonym)
-                                    .font(.body)
-                                    .foregroundStyle(.tint)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 7)
-                                    .background(Capsule().fill(ClassicTheme.wordChipBackground))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-            }
-        }
-        .padding(.top, 6)
-        .accessibilityIdentifier("word.synonyms")
+        SynonymSectionsView(sections: model.data.synonymSections)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 6)
+            .accessibilityIdentifier("word.synonyms")
     }
 
     private var appleTab: some View {
