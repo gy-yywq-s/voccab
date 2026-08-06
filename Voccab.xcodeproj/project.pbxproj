@@ -45,6 +45,7 @@
 		68F8B3082DB5455252D519A2 /* ScreenshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D453E5031921E9864229EE2 /* ScreenshotHelper.swift */; };
 		6A32362F6BC3D3683CEFF89B /* StudyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD92682A89AE8D8E98C7EE02 /* StudyViews.swift */; };
 		6A7067E734C171678F4A6332 /* PromoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2243D01A5745BAE8AE79EEFF /* PromoData.swift */; };
+		6E51BAA45C5A2BDF9C8B1761 /* OpenGlossViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59089FE959D520C4346C15D7 /* OpenGlossViews.swift */; };
 		6E56A8105CB9BE725B35C06C /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3C3C371AD56F164772C89B /* SpeechService.swift */; };
 		6F542ED6B8D80E9AF6DEB7FD /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = A02AB383CE18DDD2FE6EF544 /* VocabKit */; };
 		72E46FBF3F2F58E1A06F6DF8 /* VoiceSettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC099936F53562355C5A708 /* VoiceSettingsPage.swift */; };
@@ -68,6 +69,7 @@
 		B0606B2267121371E306FF2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */; };
 		B17E25EBECA1D54E156610CB /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D284B7596E89C58ECC5284E /* Routes.swift */; };
 		B430B39DB272D4291A3D9313 /* PracticeInputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */; };
+		B585D496C53506CF320FCBFC /* OpenGlossViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59089FE959D520C4346C15D7 /* OpenGlossViews.swift */; };
 		BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */; };
 		BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
 		C1727D699E572FA7522BC5E9 /* DictionaryRendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AC2DC67C4D18E46B3831A0 /* DictionaryRendering.swift */; };
@@ -138,6 +140,7 @@
 		44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = PromoAssets.xcassets; sourceTree = "<group>"; };
 		4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoSearchOverlay.swift; sourceTree = "<group>"; };
 		4D284B7596E89C58ECC5284E /* Routes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
+		59089FE959D520C4346C15D7 /* OpenGlossViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenGlossViews.swift; sourceTree = "<group>"; };
 		5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignScreenshotTests.swift; sourceTree = "<group>"; };
 		5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataToolsPage.swift; sourceTree = "<group>"; };
 		5F45381282F17308BFCD170A /* DraftPersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraftPersistence.swift; sourceTree = "<group>"; };
@@ -323,6 +326,7 @@
 				F69AC979915B5150FF744F4B /* DictionaryPreview.swift */,
 				15AC2DC67C4D18E46B3831A0 /* DictionaryRendering.swift */,
 				28CFD46EC84CB3794509ED2D /* ImportFlow.swift */,
+				59089FE959D520C4346C15D7 /* OpenGlossViews.swift */,
 				36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */,
 				DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */,
 				44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */,
@@ -615,6 +619,7 @@
 				AB4AA0CEA5861FB4D6F8854F /* NeoTheme.swift in Sources */,
 				D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */,
 				A35263C7302D5F0AAA9C5023 /* NeoWordListView.swift in Sources */,
+				B585D496C53506CF320FCBFC /* OpenGlossViews.swift in Sources */,
 				3B7652494C4F6A5D419BEDAA /* PageModels.swift in Sources */,
 				B430B39DB272D4291A3D9313 /* PracticeInputSettings.swift in Sources */,
 				0AB21D710E3BB436ABCD9364 /* PromoCarousel.swift in Sources */,
@@ -645,6 +650,7 @@
 				1FD072F6143A4EAA39C1A9E1 /* DictionaryRendering.swift in Sources */,
 				DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */,
 				7AF1639086E9F5C174CA7D81 /* ImportFlow.swift in Sources */,
+				6E51BAA45C5A2BDF9C8B1761 /* OpenGlossViews.swift in Sources */,
 				DC397606F9BA49B455C41206 /* PageModels.swift in Sources */,
 				D18A1EEAFC6D86A31C315ABE /* PracticeInputSettings.swift in Sources */,
 				38DF09E152DA33150577826A /* PromoCarousel.swift in Sources */,
