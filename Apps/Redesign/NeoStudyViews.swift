@@ -150,8 +150,8 @@ struct NeoStudyStartView: View {
     // MARK: Plan chooser
 
     /// Order override: quiet compact row above the plan card — secondary
-    /// label left, current value + chevrons right (native inline-value
-    /// control).
+    /// label left, current value + small chevron right (settings menuRow
+    /// style, no chrome).
     private var orderRow: some View {
         HStack {
             Text("Order")
@@ -176,16 +176,12 @@ struct NeoStudyStartView: View {
                 HStack(spacing: 5) {
                     Text(model.order.shortLabel)
                         .font(.body)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption2.weight(.semibold))
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.semibold))
                 }
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 12)
+                .foregroundStyle(.secondary)
                 .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Neo.hairline, lineWidth: 0.7)
-                )
+                .contentShape(Rectangle())
             }
             .accessibilityIdentifier("study.orderPicker")
         }
@@ -267,10 +263,7 @@ struct NeoStudyStartView: View {
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .stroke(Neo.hairline, lineWidth: 0.7)
-                    )
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.plan.customize")
