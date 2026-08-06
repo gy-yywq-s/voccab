@@ -354,6 +354,23 @@ public final class UserStore {
         save(state: s)
     }
 
+    /// Clears a word's learning state — schedule, ladder position, model
+    /// fields, and the Ebisu observer — so it studies as brand new again.
+    /// The note, list memberships, and the study log (history) are kept.
+    public func resetProgress(for word: String) {
+        var s = state(of: word)
+        s.timesStudied = 0
+        s.lastStudiedAt = nil
+        s.nextPlannedAt = nil
+        s.memoryCircle = 0
+        s.intervalDays = nil
+        s.easeFactor = nil
+        s.stability = nil
+        s.difficulty = nil
+        s.ebisuModel = nil
+        save(state: s)
+    }
+
     public func setNote(_ note: String, for word: String) {
         var s = state(of: word)
         s.note = note

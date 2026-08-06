@@ -270,6 +270,14 @@ final class WordDetailModel: ObservableObject {
         reload()
     }
 
+    /// Clears the word's learning state (schedule, models, recall observer);
+    /// note, lists, and history stay.
+    func resetProgress() {
+        env.userStore.resetProgress(for: displayWord)
+        env.touch()
+        reload()
+    }
+
     /// Ebisu-predicted recall probability for the word right now.
     var recall: Double? {
         data.state.predictedRecall()

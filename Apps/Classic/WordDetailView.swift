@@ -46,6 +46,7 @@ struct WordDetailView: View {
     @State private var noteText = ""
     @State private var showNewListPrompt = false
     @State private var newListName = ""
+    @State private var showResetConfirm = false
 
     private var visibleTabs: [DictionarySource] {
         var tabs: [DictionarySource] = [.chinese]  // header card is Chinese; "Related" is always first tab
@@ -83,6 +84,12 @@ struct WordDetailView: View {
             TextField("List name", text: $newListName)
             Button("Add") { model.addToNewList(named: newListName) }
             Button("Cancel", role: .cancel) {}
+        }
+        .alert("Reset progress?", isPresented: $showResetConfirm) {
+            Button("Reset", role: .destructive) { model.resetProgress() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The schedule, recall estimate, and algorithm state for this word start over as brand new. Your note, lists, and history stay.")
         }
     }
 
@@ -558,6 +565,12 @@ struct WordDetailView: View {
                 } label: {
                     Label("I Know This Word", systemImage: "square.and.pencil")
                 }
+                Button(role: .destructive) {
+                    showResetConfirm = true
+                } label: {
+                    Label("Reset Progress", systemImage: "arrow.counterclockwise")
+                }
+                .accessibilityIdentifier("word.resetProgress")
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
