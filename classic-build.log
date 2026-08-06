@@ -1,0 +1,124 @@
+/Users/runner/work/voccab/voccab/Apps/Shared/CameraLookup.swift:320:13: warning: expression is 'async' but is not marked with 'await'; this is an error in the Swift 6 language mode
+/Users/runner/work/voccab/voccab/Apps/Shared/ImportFlow.swift:94:49: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+/Users/runner/work/voccab/voccab/Apps/Shared/SpeechService.swift:39:31: warning: reference to captured var 'self' in concurrently-executing code; this is an error in the Swift 6 language mode
+--- tail ---
+    t =   205.48s     Wait for com.yywq.voccab.classic to idle
+    t =   205.49s     Find the Button (First Match)
+    t =   205.58s     Check for interrupting elements affecting "BackButton" Button
+    t =   205.72s     Synthesize event
+    t =   206.07s     Wait for com.yywq.voccab.classic to idle
+    t =   206.07s Waiting 25.0s for "home.import" Button to exist
+    t =   207.10s     Checking `Expect predicate `existsNoRetry == 1` for object "home.import" Button`
+    t =   207.10s         Checking existence of `"home.import" Button`
+    t =   207.25s Tap "home.import" Button
+    t =   207.25s     Wait for com.yywq.voccab.classic to idle
+    t =   207.26s     Find the "home.import" Button
+    t =   207.35s     Check for interrupting elements affecting "home.import" Button
+    t =   207.45s     Synthesize event
+    t =   207.81s     Wait for com.yywq.voccab.classic to idle
+    t =   209.06s Added attachment named '16-import__light.png'
+    t =   209.07s Waiting 25.0s for Button (First Match) to exist
+    t =   210.10s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =   210.10s         Checking existence of `Button (First Match)`
+    t =   210.15s Tap Button (First Match)
+    t =   210.15s     Wait for com.yywq.voccab.classic to idle
+    t =   210.16s     Find the Button (First Match)
+    t =   210.27s     Check for interrupting elements affecting "BackButton" Button
+    t =   210.38s     Synthesize event
+    t =   210.72s     Wait for com.yywq.voccab.classic to idle
+    t =   210.72s Waiting 25.0s for "home.search" Button to exist
+    t =   211.79s     Checking `Expect predicate `existsNoRetry == 1` for object "home.search" Button`
+    t =   211.80s         Checking existence of `"home.search" Button`
+    t =   212.10s Tap "home.search" Button
+    t =   212.10s     Wait for com.yywq.voccab.classic to idle
+    t =   212.11s     Find the "home.search" Button
+    t =   212.30s     Check for interrupting elements affecting "home.search" Button
+    t =   212.44s     Synthesize event
+    t =   212.81s     Wait for com.yywq.voccab.classic to idle
+    t =   217.71s Added attachment named '17-search-history__light.png'
+    t =   217.72s Waiting 5.0s for "search.field" TextField to exist
+    t =   218.76s     Checking `Expect predicate `existsNoRetry == 1` for object "search.field" TextField`
+    t =   218.76s         Checking existence of `"search.field" TextField`
+    t =   220.14s Tap "search.field" TextField
+    t =   220.14s     Wait for com.yywq.voccab.classic to idle
+    t =   220.15s     Find the "search.field" TextField
+    t =   220.73s     Check for interrupting elements affecting "search.field" TextField
+    t =   222.99s     Synthesize event
+    t =   224.63s     Wait for com.yywq.voccab.classic to idle
+    t =   224.64s Type 'cordage' into "search.field" TextField
+    t =   224.64s     Wait for com.yywq.voccab.classic to idle
+    t =   224.65s     Find the "search.field" TextField
+    t =   227.89s     Check for interrupting elements affecting "search.field" TextField
+    t =   228.30s     Synthesize event
+    t =   228.69s     Wait for com.yywq.voccab.classic to idle
+    t =   231.15s Added attachment named '18-search-results__light.png'
+    t =   231.17s Waiting 25.0s for "search.close" Button to exist
+    t =   232.23s     Checking `Expect predicate `existsNoRetry == 1` for object "search.close" Button`
+    t =   232.24s         Checking existence of `"search.close" Button`
+    t =   232.70s Tap "search.close" Button
+    t =   232.70s     Wait for com.yywq.voccab.classic to idle
+    t =   232.70s     Find the "search.close" Button
+    t =   233.26s     Check for interrupting elements affecting "search.close" Button
+    t =   233.70s     Synthesize event
+    t =   234.43s     Wait for com.yywq.voccab.classic to idle
+    t =   234.67s Tear Down
+Test Case '-[VoccabClassicUITests.ClassicScreenshotTests testLightModeWalkthrough]' passed (235.381 seconds).
+Test Case '-[VoccabClassicUITests.ClassicScreenshotTests testThreeButtonPractice]' started.
+    t =     0.00s Start Test at 2026-08-06 15:09:40.108
+    t =     0.25s Set Up
+    t =     0.26s Open com.yywq.voccab.classic
+    t =     0.26s     Launch com.yywq.voccab.classic
+    t =     0.26s         Terminate com.yywq.voccab.classic:10714
+    t =    12.22s         Setting up automation session
+    t =    14.84s         Wait for com.yywq.voccab.classic to idle
+    t =    17.94s Waiting 60.0s for "home.greeting" StaticText to exist
+    t =    19.01s     Checking `Expect predicate `existsNoRetry == 1` for object "home.greeting" StaticText`
+    t =    19.01s         Checking existence of `"home.greeting" StaticText`
+    t =    19.64s Waiting 30.0s for "home.list.SAT RW Vocab" Button to exist
+    t =    20.72s     Checking `Expect predicate `existsNoRetry == 1` for object "home.list.SAT RW Vocab" Button`
+    t =    20.72s         Checking existence of `"home.list.SAT RW Vocab" Button`
+    t =    20.80s Tap "home.list.SAT RW Vocab" Button
+    t =    20.80s     Wait for com.yywq.voccab.classic to idle
+    t =    20.80s     Find the "home.list.SAT RW Vocab" Button
+    t =    20.87s     Check for interrupting elements affecting "home.list.SAT RW Vocab" Button
+    t =    21.01s     Synthesize event
+    t =    21.33s     Wait for com.yywq.voccab.classic to idle
+    t =    22.12s Waiting 30.0s for "wordList.study" Button to exist
+    t =    23.14s     Checking `Expect predicate `existsNoRetry == 1` for object "wordList.study" Button`
+    t =    23.14s         Checking existence of `"wordList.study" Button`
+    t =    23.36s Tap "wordList.study" Button
+    t =    23.36s     Wait for com.yywq.voccab.classic to idle
+    t =    23.39s     Find the "wordList.study" Button
+    t =    23.49s     Check for interrupting elements affecting "wordList.study" Button
+    t =    23.59s     Synthesize event
+    t =    23.89s     Wait for com.yywq.voccab.classic to idle
+    t =    24.21s Waiting 30.0s for "study.plan.Mix" Button to exist
+    t =    25.25s     Checking `Expect predicate `existsNoRetry == 1` for object "study.plan.Mix" Button`
+    t =    25.25s         Checking existence of `"study.plan.Mix" Button`
+    t =    25.37s Tap "study.plan.Mix" Button
+    t =    25.37s     Wait for com.yywq.voccab.classic to idle
+    t =    25.37s     Find the "study.plan.Mix" Button
+    t =    25.44s     Check for interrupting elements affecting "study.plan.Mix" Button
+    t =    25.57s     Synthesize event
+    t =    25.88s     Wait for com.yywq.voccab.classic to idle
+    t =    26.02s Checking existence of `"study.grade.1" Button`
+    t =    26.10s Checking existence of `"Again" Button`
+    t =    26.32s Added attachment named '21-study-3buttons__light.png'
+    t =    26.33s Tear Down
+Test Case '-[VoccabClassicUITests.ClassicScreenshotTests testThreeButtonPractice]' passed (26.695 seconds).
+Test Suite 'ClassicScreenshotTests' passed at 2026-08-06 15:10:06.801.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 383.415 (383.419) seconds
+Test Suite 'VoccabClassicUITests.xctest' passed at 2026-08-06 15:10:06.802.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 383.415 (383.421) seconds
+Test Suite 'All tests' passed at 2026-08-06 15:10:06.803.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 383.415 (383.422) seconds
+2026-08-06 15:10:08.988 xcodebuild[2253:10034] [MT] IDETestOperationsObserverDebug: 689.034 elapsed -- Testing started completed.
+2026-08-06 15:10:08.990 xcodebuild[2253:10034] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-08-06 15:10:08.990 xcodebuild[2253:10034] [MT] IDETestOperationsObserverDebug: 689.034 sec, +689.034 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/runner/work/voccab/voccab/artifacts/Classic.xcresult
+
+** TEST SUCCEEDED **
+
+Testing started
