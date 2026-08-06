@@ -28,7 +28,7 @@ struct WorkspaceView: View {
                 ImportSheet(rows: store.rows) {
                     // The import wrote into the library; the draft stays put on
                     // purpose, so offer the clear rather than performing it.
-                    show(flash: "Imported. Use Draft ▸ Clear Draft when you are done with these rows.")
+                    show(flash: "Imported. The draft is unchanged — clear it from the Draft menu in the toolbar when you are done.")
                 }
                 .environmentObject(env)
             }
