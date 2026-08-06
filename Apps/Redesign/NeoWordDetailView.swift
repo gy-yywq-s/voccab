@@ -256,14 +256,15 @@ struct NeoWordDetailView: View {
         if !model.data.state.note.isEmpty {
             // Reading-first: primary-color text on a quiet warm block; the
             // small tracked label sits close so it reads as one unit.
+            // Sand gold lives HERE and only here — the one emphasized block.
             VStack(alignment: .leading, spacing: 6) {
                 Text("NOTE")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .tracking(1.4)
                     .foregroundStyle(Neo.warm)
                 Text(Formatting.tidy(model.data.state.note))
                     .font(Neo.bodyFont)
-                    .foregroundStyle(Neo.ink)
+                    .foregroundStyle(Neo.onSand)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -271,7 +272,7 @@ struct NeoWordDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Neo.warm.opacity(0.09))
+                    .fill(Neo.sand.opacity(0.45))
             )
             .padding(.top, 14)
         }
@@ -469,15 +470,14 @@ struct NeoWordDetailView: View {
                 } label: {
                     Text(label)
                         .font(.system(size: 13, weight: tab == source ? .medium : .regular, design: .rounded))
-                        .foregroundStyle(tab == source ? Neo.onSand : Neo.graphite)
+                        .foregroundStyle(tab == source ? Neo.blue : Neo.graphite)
                         .padding(.horizontal, 10)
                         .frame(maxWidth: .infinity)
                         .frame(height: 24)
                         .background {
                             if tab == source {
                                 RoundedRectangle(cornerRadius: 7, style: .continuous)
-                                    .fill(Neo.sand)
-                                    .shadow(color: .black.opacity(0.08), radius: 1.5, y: 0.5)
+                                    .fill(Neo.paleBlue)
                             }
                         }
                 }
@@ -488,7 +488,7 @@ struct NeoWordDetailView: View {
         .padding(2)
         .background(
             RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Neo.cardFill)
+                .fill(Neo.hairline.opacity(0.45))
         )
         .accessibilityIdentifier("word.tabs")
     }

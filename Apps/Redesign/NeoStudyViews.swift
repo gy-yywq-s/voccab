@@ -873,12 +873,12 @@ struct NeoFlashcardView: View {
                     Text("Hard — barely")
                         .font(.footnote.weight(.semibold))
                 }
-                .foregroundStyle(Neo.onSand)
+                .foregroundStyle(Neo.neutral)
                 .frame(maxWidth: .infinity)
                 .frame(height: 40)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Neo.sand)
+                        .fill(Neo.neutral.opacity(0.12))
                 )
             }
             .buttonStyle(NeoPressStyle())
@@ -974,8 +974,8 @@ struct NeoFlashcardView: View {
     private func gradeColors(_ grade: ReviewGrade) -> (tint: Color, fill: Color) {
         switch grade {
         case .again: return (Neo.red, Neo.red.opacity(0.08))
-        // Hard wears the palette's sand-gold card: solid fill, cocoa ink.
-        case .hard: return (Neo.onSand, Neo.sand)
+        // Hard is the burnt-gray neutral — gold stays reserved for notes.
+        case .hard: return (Neo.neutral, Neo.neutral.opacity(0.12))
         case .good: return (Neo.blue, Neo.paleBlue)
         case .easy: return (Neo.green, Neo.green.opacity(0.13))
         }

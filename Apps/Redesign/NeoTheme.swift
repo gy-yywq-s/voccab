@@ -22,9 +22,10 @@ enum Neo {
             alpha: alpha)
     }
 
-    // Grounds (Ge cream page, Cd bleached-cream card; cocoa world in dark).
-    static let page = dynamic(light: hex(0xF7E6D4), dark: hex(0x2C2222))
-    static let cardFill = dynamic(light: hex(0xFBFAE6), dark: hex(0x3B2F2F))
+    // Grounds — clean base white (Hf); cards read through their hairline
+    // edge, not a tinted fill. Cocoa world in dark.
+    static let page = dynamic(light: hex(0xFEFEFE), dark: hex(0x2C2222))
+    static let cardFill = dynamic(light: hex(0xFEFEFE), dark: hex(0x3B2F2F))
     /// Sand-gold emphasized surface (Gb) — Hard button, highlighted cards.
     static let sand = dynamic(light: hex(0xE7C58A), dark: hex(0xC9A76B))
     static let onSand = dynamic(light: hex(0x4B3535), dark: hex(0x2C2222))
@@ -88,6 +89,11 @@ struct NeoCard<Content: View>: View {
             .background(
                 RoundedRectangle(cornerRadius: Neo.cardRadius, style: .continuous)
                     .fill(Neo.cardFill)
+            )
+            // On the white page a card is drawn by its edge, not a tint.
+            .overlay(
+                RoundedRectangle(cornerRadius: Neo.cardRadius, style: .continuous)
+                    .stroke(Neo.hairline, lineWidth: 0.5)
             )
     }
 }
