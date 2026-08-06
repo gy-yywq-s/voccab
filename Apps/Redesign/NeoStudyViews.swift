@@ -220,8 +220,11 @@ struct NeoStudyStartView: View {
                 entered = true
             } label: {
                 // Title and count chips share one line, centered vertically;
-                // review counts wear green, new counts blue.
-                HStack(spacing: 12) {
+                // new counts wear blue, review counts green. Nothing in the
+                // row may wrap: the title is the only flexible element, so
+                // without a hard single line it is what breaks when the Mix
+                // row also has to fit Customize.
+                HStack(spacing: 10) {
                     Image(systemName: planSymbol(plan.mode))
                         .font(.body.weight(.medium))
                         .foregroundStyle(Neo.graphite)
@@ -229,9 +232,11 @@ struct NeoStudyStartView: View {
                     Text(plan.mode.rawValue)
                         .font(Neo.rowTitle)
                         .foregroundStyle(Neo.ink)
+                        .lineLimit(1)
+                        .fixedSize()
                     NeoChip(text: "\(plan.newCount) new")
                     NeoChip(text: "\(plan.reviewCount) review", tint: Neo.green)
-                    Spacer()
+                    Spacer(minLength: 4)
                     // The Mix row's width goes to Customize; only rows
                     // without a trailing control keep the nav chevron.
                     if plan.mode != .mix {
@@ -258,16 +263,16 @@ struct NeoStudyStartView: View {
                         showCustomize.toggle()
                     }
                 } label: {
-                    HStack(spacing: 4) {
-                        Text("Customize")
-                            .font(Neo.caption.weight(.medium))
-                        Image(systemName: showCustomize ? "chevron.up" : "chevron.down")
-                            .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(Neo.graphite)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
+                    // No chevron: the Mix row has to hold a title, two chips
+                    // and this control, and the arrow is what pushed it over.
+                    Text("Customize")
+                        .font(Neo.caption.weight(.medium))
+                        .foregroundStyle(showCustomize ? Neo.blue : Neo.graphite)
+                        .lineLimit(1)
+                        .fixedSize()
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(NeoPressStyle())
                 .accessibilityIdentifier("study.plan.customize")

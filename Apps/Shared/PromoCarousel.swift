@@ -14,7 +14,7 @@ struct PromoCarousel: View {
     var onWordTap: ((String) -> Void)? = nil
 
     @EnvironmentObject private var env: AppEnvironment
-    @State private var index = 0
+    @State private var index: Int? = 0
     // A 1s heartbeat + idle check instead of a fixed 10s timer, so the
     // auto-advance never fires mid-swipe and always waits a full 10s after
     // any manual interaction.
@@ -24,26 +24,29 @@ struct PromoCarousel: View {
     private var slides: [PromoSlideData] { PromoData.slides }
 
     var body: some View {
-        TabView(selection: $index) {
-            ForEach(slides) { slide in
-                Group {
-                    // Only the visible slide and its neighbors keep their
-                    // image decoded; the rest stay as flat placeholders.
-                    if isNear(slide.id) {
-                        PromoSlideView(
-                            slide: slide,
-                            dictWord: env.dictionary?.lookup(slide.word)
-                        )
-                    } else {
-                        Rectangle().fill(Color(uiColor: .secondarySystemFill))
-                    }
+        // A paging scroll view rather than a paged TabView: the TabView's
+        // interactive transition was being reset by this view's own
+        // heartbeat, so a swipe stopped tracking the finger and the slide
+        // change played as an animation instead. A scroll view owns its
+        // drag, so unrelated redraws can't disturb it.
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 0) {
+                ForEach(slides) { slide in
+                    PromoSlideView(
+                        slide: slide,
+                        dictWord: env.dictionary?.lookup(slide.word)
+                    )
+                    .containerRelativeFrame(.horizontal)
+                    .contentShape(Rectangle())
+                    .onTapGesture { onWordTap?(slide.word) }
+                    .id(slide.id)
                 }
-                .tag(slide.id)
-                .contentShape(Rectangle())
-                .onTapGesture { onWordTap?(slide.word) }
             }
+            .scrollTargetLayout()
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
+        .scrollPosition(id: $index)
+        .scrollTargetBehavior(.paging)
+        .scrollIndicators(.hidden)
         .aspectRatio(3.0 / 4.0, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay(
@@ -55,18 +58,12 @@ struct PromoCarousel: View {
         }
         .onReceive(ticker) { _ in
             guard !slides.isEmpty, Date().timeIntervalSince(lastChange) >= 10 else { return }
+            let next = ((index ?? 0) + 1) % slides.count
             withAnimation(.easeInOut(duration: 0.6)) {
-                index = (index + 1) % slides.count
+                index = next
             }
         }
         .accessibilityIdentifier("home.promoCarousel")
-    }
-
-    private func isNear(_ id: Int) -> Bool {
-        let count = slides.count
-        guard count > 0 else { return false }
-        let distance = abs(id - index)
-        return distance <= 2 || distance >= count - 2
     }
 }
 
