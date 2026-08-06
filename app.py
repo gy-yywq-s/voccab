@@ -86,7 +86,7 @@ def build_opengloss():
     import pyarrow.parquet as pq
 
     final = os.path.join(RESOURCES, OPENGLOSS_DB)
-    if os.path.exists(final):
+    if os.path.exists(final) or os.path.exists(final + ".gz"):
         state["opengloss"] = "ready"
         return
     # A redeploy restarts the worker, so record how far the build got and
@@ -301,6 +301,7 @@ def build_gzip():
         while chunk := inp.read(1 << 20):
             out.write(chunk)
     os.replace(final + ".part", final)
+    os.remove(src)          # the gzip is what clients fetch
     state["opengloss_gz"] = "ready"
 
 
