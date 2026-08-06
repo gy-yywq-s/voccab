@@ -55,7 +55,9 @@
 		840180061A8F2454D4A78466 /* NeoStudyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */; };
 		8A58B93ADA92E81A99376DD9 /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D284B7596E89C58ECC5284E /* Routes.swift */; };
 		8B798228919395568B524658 /* NeoHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA95486A578F7AA6F6355BF /* NeoHomeView.swift */; };
+		8BF59E2D5C4B57DBDB30C3BF /* libritts_r_speakers.json in Resources */ = {isa = PBXBuildFile; fileRef = 3DD8CFFFD146963B221C2E31 /* libritts_r_speakers.json */; };
 		8E73B10858A7BC604CFC34FC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB602BB69CE1BA53DD7CDB33 /* SettingsView.swift */; };
+		8ED04F57F7439E64BD58E713 /* libritts_r_speakers.json in Resources */ = {isa = PBXBuildFile; fileRef = 3DD8CFFFD146963B221C2E31 /* libritts_r_speakers.json */; };
 		8FD4ACD352AB136280F2B67E /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
 		908E3489DEFABD8B711906DC /* CameraLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7583571466DE107FC55B425 /* CameraLookup.swift */; };
 		979D11F5C221EE808B626745 /* WordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6A1557088B6FF576EDCA8E /* WordDetailView.swift */; };
@@ -68,6 +70,7 @@
 		AF62192035AAE841CC99845D /* DraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3AF6866728AF7BBFA1D7FDA /* DraftStore.swift */; };
 		B0606B2267121371E306FF2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */; };
 		B17E25EBECA1D54E156610CB /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D284B7596E89C58ECC5284E /* Routes.swift */; };
+		B1D611184B1A5E218A678625 /* libritts_r_speakers.json in Resources */ = {isa = PBXBuildFile; fileRef = 3DD8CFFFD146963B221C2E31 /* libritts_r_speakers.json */; };
 		B430B39DB272D4291A3D9313 /* PracticeInputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */; };
 		B585D496C53506CF320FCBFC /* OpenGlossViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59089FE959D520C4346C15D7 /* OpenGlossViews.swift */; };
 		BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */; };
@@ -135,6 +138,7 @@
 		3A3C309EBBA327053B439A9C /* MacDictionaryRendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDictionaryRendering.swift; sourceTree = "<group>"; };
 		3D685E6AF22AD5EF09B1D346 /* AlgorithmInfoPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmInfoPage.swift; sourceTree = "<group>"; };
 		3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */ = {isa = PBXFileReference; path = sat_rw_vocab.csv; sourceTree = "<group>"; };
+		3DD8CFFFD146963B221C2E31 /* libritts_r_speakers.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = libritts_r_speakers.json; sourceTree = "<group>"; };
 		3EA95486A578F7AA6F6355BF /* NeoHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeoHomeView.swift; sourceTree = "<group>"; };
 		3F77F5A790518E9798E7D9D4 /* VoccabMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoccabMacApp.swift; sourceTree = "<group>"; };
 		44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = PromoAssets.xcassets; sourceTree = "<group>"; };
@@ -369,6 +373,7 @@
 			children = (
 				3AA62595317366C9F0161A72 /* dict */,
 				C899E630DA23B6E80FFD2AC7 /* seed */,
+				D6364DBBC36B7C3A14823BE7 /* voices */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -379,6 +384,14 @@
 				3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */,
 			);
 			path = seed;
+			sourceTree = "<group>";
+		};
+		D6364DBBC36B7C3A14823BE7 /* voices */ = {
+			isa = PBXGroup;
+			children = (
+				3DD8CFFFD146963B221C2E31 /* libritts_r_speakers.json */,
+			);
+			path = voices;
 			sourceTree = "<group>";
 		};
 		DEDB0395FA0CD37ABE13E137 /* Classic */ = {
@@ -536,6 +549,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8BF59E2D5C4B57DBDB30C3BF /* libritts_r_speakers.json in Resources */,
 				AE65B2AE73AA699C192B960D /* sat_rw_vocab.csv in Resources */,
 				E2EEEE0FA509F701BFE05FDE /* voccab-dict.sqlite in Resources */,
 				E59D41F727CB68D6C5CD4638 /* voccab-extras.sqlite in Resources */,
@@ -548,6 +562,7 @@
 			files = (
 				B0606B2267121371E306FF2F /* Assets.xcassets in Resources */,
 				F7E9B445148768CC1FA9D1E1 /* PromoAssets.xcassets in Resources */,
+				8ED04F57F7439E64BD58E713 /* libritts_r_speakers.json in Resources */,
 				8FD4ACD352AB136280F2B67E /* sat_rw_vocab.csv in Resources */,
 				606BB16B2D82C8C1F3F658BA /* voccab-dict.sqlite in Resources */,
 				22FBAEBD03321C158895E4F1 /* voccab-extras.sqlite in Resources */,
@@ -560,6 +575,7 @@
 			files = (
 				0D30B572751D5FF896374C2A /* Assets.xcassets in Resources */,
 				4002A9F466C9A2A963D2AD4E /* PromoAssets.xcassets in Resources */,
+				B1D611184B1A5E218A678625 /* libritts_r_speakers.json in Resources */,
 				BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */,
 				DE9A63535FF802FED31CFA19 /* voccab-dict.sqlite in Resources */,
 				D25A922D1EFE1067E4833F46 /* voccab-extras.sqlite in Resources */,
