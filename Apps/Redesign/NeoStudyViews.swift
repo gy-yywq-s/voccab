@@ -232,9 +232,13 @@ struct NeoStudyStartView: View {
                     NeoChip(text: "\(plan.newCount) new")
                     NeoChip(text: "\(plan.reviewCount) review", tint: Neo.green)
                     Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Neo.faint)
+                    // The Mix row's width goes to Customize; only rows
+                    // without a trailing control keep the nav chevron.
+                    if plan.mode != .mix {
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Neo.faint)
+                    }
                 }
                 .padding(.vertical, 14)
                 .contentShape(Rectangle())

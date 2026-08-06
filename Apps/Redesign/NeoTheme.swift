@@ -108,6 +108,8 @@ struct NeoChip: View {
         Text(text)
             .font(.system(size: 12, weight: .medium, design: .rounded))
             .foregroundStyle(tint)
+            .lineLimit(1)
+            .fixedSize()  // a chip never wraps into a stacked pill
             .padding(.horizontal, 8)
             .padding(.vertical, 3.5)
             .background(Capsule().fill(tint.opacity(0.13)))
