@@ -246,9 +246,8 @@ struct ImportWordsView: View {
     @EnvironmentObject private var env: AppEnvironment
     @Environment(\.dismiss) private var dismiss
     @State private var showPicker = false
-    @State private var errorMessage: String?
-    @State private var importedList: WordList?
     @State private var mergeTarget: WordList?
+    @StateObject private var importRunner = ImportRunner()
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -327,23 +326,20 @@ struct ImportWordsView: View {
         .navigationBarTitleDisplayMode(.large)
         .fileImporter(
             isPresented: $showPicker,
-            allowedContentTypes: [.commaSeparatedText, .tabSeparatedText, .plainText, .text]
+            // .item so no file is greyed out in the picker — format problems
+            // are diagnosed (and usually repaired) after selection instead.
+            allowedContentTypes: [.item]
         ) { result in
-            handle(result)
-        }
-        .alert("Import failed", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
-        }
-        .alert("Imported", isPresented: .constant(importedList != nil)) {
-            Button("OK") {
-                importedList = nil
-                dismiss()
+            switch result {
+            case .failure(let error):
+                importRunner.failureReason = "Not imported. \(error.localizedDescription)"
+            case .success(let url):
+                importRunner.importFile(
+                    url: url, mergeInto: mergeTarget?.id,
+                    userStore: env.userStore) { env.touch() }
             }
-        } message: {
-            Text("Created list “\(importedList?.name ?? "")” with \(importedList?.wordCount ?? 0) words.\(CSVImport.lastMergedNoteCount > 0 ? "\nNotes merged on \(CSVImport.lastMergedNoteCount) existing word\(CSVImport.lastMergedNoteCount == 1 ? "" : "s")." : "")")
         }
+        .importFlowUI(importRunner) { dismiss() }
     }
 
     private var exampleTable: some View {
@@ -379,43 +375,15 @@ struct ImportWordsView: View {
         .accessibilityIdentifier("import.example")
     }
 
-    private func handle(_ result: Result<URL, Error>) {
-        switch result {
-        case .failure(let error):
-            errorMessage = error.localizedDescription
-        case .success(let url):
-            let secured = url.startAccessingSecurityScopedResource()
-            defer { if secured { url.stopAccessingSecurityScopedResource() } }
-            guard let data = try? Data(contentsOf: url), let text = CSVImport.decode(data) else {
-                errorMessage = "Could not read the file."
-                return
-            }
-            importText(text, listName: url.deletingPathExtension().lastPathComponent)
-        }
-    }
-
     private func importFromClipboard() {
         guard let text = UIPasteboard.general.string,
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "The clipboard is empty."
+            importRunner.failureReason = "Not imported. The clipboard is empty."
             return
         }
         let stamp = Date().formatted(date: .abbreviated, time: .shortened)
-        importText(text, listName: "Pasted \(stamp)")
-    }
-
-    private func importText(_ text: String, listName: String) {
-        do {
-            let rows = try CSVImport.parse(text)
-            importedList = CSVImport.importRows(
-                rows, listName: listName, userStore: env.userStore,
-                mergeInto: mergeTarget?.id)
-            if importedList == nil {
-                errorMessage = "Could not create a list for this import."
-            }
-            env.touch()
-        } catch {
-            errorMessage = "No words found. \(CSVImport.diagnose(text))"
-        }
+        importRunner.importText(
+            text, listName: "Pasted \(stamp)", mergeInto: mergeTarget?.id,
+            userStore: env.userStore) { env.touch() }
     }
 }
