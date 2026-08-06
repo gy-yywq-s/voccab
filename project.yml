@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.yywq.voccab
   deploymentTarget:
     iOS: "17.0"
+    macOS: "14.0"
   createIntermediateGroups: true
 
 packages:
@@ -68,6 +69,44 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.yywq.voccab.neo
         INFOPLIST_KEY_CFBundleDisplayName: Voccab Neo
 
+  # Native macOS front end: a note-taking workspace for collecting words.
+  # Sources are Apps/Mac only — Apps/Shared imports UIKit and must never be
+  # compiled here — plus the same bundled Data resources the iOS targets carry,
+  # since MacEnvironment resolves them through Bundle.main exactly as
+  # AppEnvironment does. VocabKit itself is pure Foundation and builds for
+  # macOS 14 (see Package.swift's platforms list).
+  VoccabMac:
+    type: application
+    platform: macOS
+    dependencies:
+      - package: VocabKit
+    info:
+      path: ${target_name}-Info.plist
+      properties:
+        # Required for an AppKit-hosted SwiftUI app; without it the app has no
+        # principal class to instantiate at launch.
+        NSPrincipalClass: NSApplication
+        NSHighResolutionCapable: true
+        LSMinimumSystemVersion: "14.0"
+        LSApplicationCategoryType: public.app-category.education
+        ITSAppUsesNonExemptEncryption: false
+    sources:
+      - path: Apps/Mac
+      - path: Data/dict/voccab-dict.sqlite
+        buildPhase: resources
+      - path: Data/dict/voccab-extras.sqlite
+        buildPhase: resources
+      - path: Data/seed/sat_rw_vocab.csv
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yywq.voccab.mac
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        INFOPLIST_KEY_CFBundleDisplayName: Voccab Workspace
+        # No entitlements file and no sandbox (the Xcode default): the draft
+        # lives in Application Support and exports land wherever the save panel
+        # is pointed.
+
   VoccabClassicUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -113,3 +152,8 @@ schemes:
         - VoccabRedesignUITests
       commandLineArguments:
         "-uitest": true
+  # Build-only; CI never names this scheme, so the iOS jobs are unaffected.
+  VoccabMac:
+    build:
+      targets:
+        VoccabMac: all
