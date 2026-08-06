@@ -89,7 +89,7 @@ final class ClassicScreenshotTests: XCTestCase {
                 tabs.buttons["Synonyms"].tap()
                 sleep(1)
                 snap("08-word-synonyms__\(theme)")
-                tabs.buttons["Webster 1913"].tap()
+                tabs.buttons["Webster"].tap()
                 sleep(1)
                 snap("09-word-webster__\(theme)")
             }
@@ -105,7 +105,8 @@ final class ClassicScreenshotTests: XCTestCase {
         // Flashcard
         app.buttons["study.plan.Mix"].waitTap()
         XCTAssertTrue(app.staticTexts["New Word"].waitForExistence(timeout: 25)
-            || app.staticTexts["Review"].waitForExistence(timeout: 25))
+            || app.staticTexts["Review"].waitForExistence(timeout: 10)
+            || app.staticTexts["I Know"].waitForExistence(timeout: 10))
         snap("11-study-card__\(theme)")
 
         if full {
