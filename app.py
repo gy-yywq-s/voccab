@@ -41,10 +41,16 @@ OPENGLOSS_SHARDS = [
 ]
 OPENGLOSS_DB = "opengloss.sqlite"
 
+# Prebuilt sherpa-onnx runtime, repackaged here without headers (see
+# build_frameworks) so Xcode can link it alongside sherpa-onnx itself.
+ORT_SOURCE = ("https://github.com/willwade/sherpa-onnx-spm/releases/download/"
+              "1.13.3/onnxruntime.xcframework.zip")
+ORT_REPACK = "onnxruntime-noheaders.xcframework.zip"
+
 MAX_SYNONYMS, MAX_ANTONYMS, MAX_EXAMPLES = 8, 4, 2
 MAX_COLLOCATIONS, MAX_FORMS = 24, 12
 
-state = {"piper": "pending", "opengloss": "pending", "detail": ""}
+state = {"frameworks": "pending", "piper": "pending", "opengloss": "pending", "detail": ""}
 app = Flask(__name__)
 
 
@@ -213,13 +219,81 @@ def build_piper():
     state["piper"] = "ready"
 
 
+def build_frameworks():
+    """Repackage the onnxruntime xcframework without its headers.
+
+    Both sherpa-onnx and onnxruntime ship a `Headers/module.modulemap`, and
+    Xcode copies every binary target's headers into one `include/`
+    directory — two files, one destination, build refused. Nothing in the
+    app imports onnxruntime directly (only sherpa-onnx's C API), so the
+    headers come out and the collision disappears. Symlinks are skipped:
+    each slice's Info.plist already points at the real `libonnxruntime.a`.
+    """
+    import shutil
+    import zipfile
+
+    final = os.path.join(RESOURCES, ORT_REPACK)
+    if os.path.exists(final):
+        state["frameworks"] = "ready"
+        return
+
+    state["frameworks"] = "fetching"
+    source = os.path.join(WORK, "onnxruntime-original.zip")
+    if not os.path.exists(source):
+        fetch(ORT_SOURCE, source)
+
+    state["frameworks"] = "repacking"
+    extracted = os.path.join(WORK, "ort")
+    shutil.rmtree(extracted, ignore_errors=True)
+    with zipfile.ZipFile(source) as zf:
+        zf.extractall(extracted)
+
+    root = None
+    for base, dirs, _ in os.walk(extracted):
+        for name in dirs:
+            if name.endswith(".xcframework"):
+                root = os.path.join(base, name)
+                break
+        if root:
+            break
+    if root is None:
+        raise RuntimeError("no .xcframework inside the onnxruntime archive")
+
+    import plistlib
+    plist_path = os.path.join(root, "Info.plist")
+    with open(plist_path, "rb") as f:
+        plist = plistlib.load(f)
+    for library in plist.get("AvailableLibraries", []):
+        library.pop("HeadersPath", None)
+    with open(plist_path, "wb") as f:
+        plistlib.dump(plist, f)
+    for base, dirs, _ in os.walk(root):
+        for name in list(dirs):
+            if name == "Headers":
+                shutil.rmtree(os.path.join(base, name), ignore_errors=True)
+                dirs.remove(name)
+
+    with zipfile.ZipFile(final + ".part", "w", zipfile.ZIP_DEFLATED) as out:
+        for base, _, files in os.walk(root):
+            for name in files:
+                path = os.path.join(base, name)
+                if os.path.islink(path):
+                    continue
+                out.write(path, os.path.relpath(path, os.path.dirname(root)))
+    os.replace(final + ".part", final)
+    shutil.rmtree(extracted, ignore_errors=True)
+    os.remove(source)
+    state["frameworks"] = "ready"
+
+
 def build_worker():
     try:
+        build_frameworks()
         build_piper()
         build_opengloss()
     except Exception as error:  # surfaced in the status JSON, not lost to logs
         state["detail"] = f"{type(error).__name__}: {error}"
-        for key in ("piper", "opengloss"):
+        for key in ("frameworks", "piper", "opengloss"):
             if state[key] != "ready":
                 state[key] = "failed"
 
