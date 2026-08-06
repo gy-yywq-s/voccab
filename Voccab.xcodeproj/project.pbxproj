@@ -15,10 +15,12 @@
 		12B485E7E562082A89A845A1 /* AlgorithmSettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FEDE2529CB443BFA900EC92 /* AlgorithmSettingsPage.swift */; };
 		1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DFA034A4C4765AD7697D786 /* NeoSettingsView.swift */; };
 		1F1E1A2C33A71F25A3D5C673 /* DataTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1B142BA308657220255187 /* DataTransfer.swift */; };
+		1FD072F6143A4EAA39C1A9E1 /* DictionaryRendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AC2DC67C4D18E46B3831A0 /* DictionaryRendering.swift */; };
 		22FBAEBD03321C158895E4F1 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
 		232FF4B3386D1556BA0003CB /* RedesignApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3033400849322EE17506565 /* RedesignApp.swift */; };
 		233B29C38CF6F0B79F12D5B4 /* AlgorithmInfoPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D685E6AF22AD5EF09B1D346 /* AlgorithmInfoPage.swift */; };
 		258FD4FDE479337CC0394788 /* ClassicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B09A07489A23C06DCABDAFB1 /* ClassicTheme.swift */; };
+		268DB064F39D316248BC2462 /* VoiceSettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC099936F53562355C5A708 /* VoiceSettingsPage.swift */; };
 		2FF3D41231EEBE5CE05EF264 /* DictionaryPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69AC979915B5150FF744F4B /* DictionaryPreview.swift */; };
 		316405FDF224695C9CDE6CFF /* CameraLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7583571466DE107FC55B425 /* CameraLookup.swift */; };
 		34C4E9CA1727496A0EE92D0C /* RedesignScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A407BD8920EABF6A65AD5D9 /* RedesignScreenshotTests.swift */; };
@@ -39,6 +41,7 @@
 		6A7067E734C171678F4A6332 /* PromoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2243D01A5745BAE8AE79EEFF /* PromoData.swift */; };
 		6E56A8105CB9BE725B35C06C /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3C3C371AD56F164772C89B /* SpeechService.swift */; };
 		6F542ED6B8D80E9AF6DEB7FD /* VocabKit in Frameworks */ = {isa = PBXBuildFile; productRef = A02AB383CE18DDD2FE6EF544 /* VocabKit */; };
+		72E46FBF3F2F58E1A06F6DF8 /* VoiceSettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC099936F53562355C5A708 /* VoiceSettingsPage.swift */; };
 		72FD1A052DEFB706B71FF215 /* DataToolsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */; };
 		7B89DF6CB6A79D68D598D67D /* PromoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2243D01A5745BAE8AE79EEFF /* PromoData.swift */; };
 		840180061A8F2454D4A78466 /* NeoStudyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D92F75F33C5E37AF4A0339 /* NeoStudyViews.swift */; };
@@ -56,6 +59,7 @@
 		B430B39DB272D4291A3D9313 /* PracticeInputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */; };
 		BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6A38FA139F884A40741C67 /* NeoSearchOverlay.swift */; };
 		BD3F336AADDF051CED120A50 /* sat_rw_vocab.csv in Resources */ = {isa = PBXBuildFile; fileRef = 3D861DF35AF24F3C58B00F6B /* sat_rw_vocab.csv */; };
+		C1727D699E572FA7522BC5E9 /* DictionaryRendering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15AC2DC67C4D18E46B3831A0 /* DictionaryRendering.swift */; };
 		D13A0B5428A260CD61459537 /* NeoWordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE9A2571DD20459B5C9B8CA1 /* NeoWordDetailView.swift */; };
 		D18A1EEAFC6D86A31C315ABE /* PracticeInputSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */; };
 		D25A922D1EFE1067E4833F46 /* voccab-extras.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E915D0BCA5A450B1A442C121 /* voccab-extras.sqlite */; };
@@ -93,6 +97,8 @@
 /* Begin PBXFileReference section */
 		033A82CA5BC2843F3C14BB07 /* AlgorithmPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmPreview.swift; sourceTree = "<group>"; };
 		0D2B56475AF4117F967B717F /* VoccabRedesignUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = VoccabRedesignUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0FC099936F53562355C5A708 /* VoiceSettingsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSettingsPage.swift; sourceTree = "<group>"; };
+		15AC2DC67C4D18E46B3831A0 /* DictionaryRendering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictionaryRendering.swift; sourceTree = "<group>"; };
 		1A1B142BA308657220255187 /* DataTransfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataTransfer.swift; sourceTree = "<group>"; };
 		1AA3A8ECE0EB8A23F373BB0B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1C678393EF9769CD300F762A /* AlgorithmSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmSwitch.swift; sourceTree = "<group>"; };
@@ -254,6 +260,7 @@
 				5DBD91E26EA44429D280D4B2 /* DataToolsPage.swift */,
 				1A1B142BA308657220255187 /* DataTransfer.swift */,
 				F69AC979915B5150FF744F4B /* DictionaryPreview.swift */,
+				15AC2DC67C4D18E46B3831A0 /* DictionaryRendering.swift */,
 				36F1CE4C636AD5C5B1D5F8D9 /* PageModels.swift */,
 				DD4FF8D209526447979B3B31 /* PracticeInputSettings.swift */,
 				44AB4DABED04A1225FA62AD9 /* PromoAssets.xcassets */,
@@ -262,6 +269,7 @@
 				4D284B7596E89C58ECC5284E /* Routes.swift */,
 				207DB7AE943E677C21167D87 /* SharedComponents.swift */,
 				FE3C3C371AD56F164772C89B /* SpeechService.swift */,
+				0FC099936F53562355C5A708 /* VoiceSettingsPage.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -486,6 +494,7 @@
 				ED3441C0306E731ADD838E78 /* DataToolsPage.swift in Sources */,
 				1F1E1A2C33A71F25A3D5C673 /* DataTransfer.swift in Sources */,
 				2FF3D41231EEBE5CE05EF264 /* DictionaryPreview.swift in Sources */,
+				C1727D699E572FA7522BC5E9 /* DictionaryRendering.swift in Sources */,
 				8B798228919395568B524658 /* NeoHomeView.swift in Sources */,
 				BB9AAF7EC0B146919441C6C7 /* NeoSearchOverlay.swift in Sources */,
 				1CE4A716CBC9283A6F5A1D51 /* NeoSettingsView.swift in Sources */,
@@ -501,6 +510,7 @@
 				B17E25EBECA1D54E156610CB /* Routes.swift in Sources */,
 				F1BD950D4CAF0DC2DFE82690 /* SharedComponents.swift in Sources */,
 				6E56A8105CB9BE725B35C06C /* SpeechService.swift in Sources */,
+				72E46FBF3F2F58E1A06F6DF8 /* VoiceSettingsPage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -519,6 +529,7 @@
 				72FD1A052DEFB706B71FF215 /* DataToolsPage.swift in Sources */,
 				F032D56D479EDA9E9D6FA89D /* DataTransfer.swift in Sources */,
 				F3018AD883473481A56EB7A7 /* DictionaryPreview.swift in Sources */,
+				1FD072F6143A4EAA39C1A9E1 /* DictionaryRendering.swift in Sources */,
 				DD76B0A75D08FAAFF8968A5E /* HomeView.swift in Sources */,
 				DC397606F9BA49B455C41206 /* PageModels.swift in Sources */,
 				D18A1EEAFC6D86A31C315ABE /* PracticeInputSettings.swift in Sources */,
@@ -530,6 +541,7 @@
 				504E8CCBEE6D953007C91BA8 /* SharedComponents.swift in Sources */,
 				A00058E3386B6BDD01EA8FDC /* SpeechService.swift in Sources */,
 				6A32362F6BC3D3683CEFF89B /* StudyViews.swift in Sources */,
+				268DB064F39D316248BC2462 /* VoiceSettingsPage.swift in Sources */,
 				979D11F5C221EE808B626745 /* WordDetailView.swift in Sources */,
 				59354C77DBE648756B0FEC7C /* WordListView.swift in Sources */,
 			);
