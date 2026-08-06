@@ -114,21 +114,25 @@ struct NeoWordDetailView: View {
             // beside the phonetic, and overflow wraps to a fresh full-width
             // line rather than stacking under the phonetic.
             FlowLayout(spacing: 8) {
-                if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
-                    Text("/\(phonetic)/")
-                        .font(.body)
-                        .foregroundStyle(Neo.graphite)
+                // Phonetic and speaker are one flow element so the icon
+                // centers on the phonetic's line instead of floating.
+                HStack(spacing: 6) {
+                    if let phonetic = model.data.dictWord?.phonetic, !phonetic.isEmpty {
+                        Text("/\(phonetic)/")
+                            .font(.body)
+                            .foregroundStyle(Neo.graphite)
+                    }
+                    Button {
+                        model.speak()
+                    } label: {
+                        Image(systemName: "speaker.wave.2")
+                            .font(.subheadline)
+                            .foregroundStyle(Neo.blue)
+                            .padding(4)
+                    }
+                    .buttonStyle(NeoPressStyle())
+                    .accessibilityIdentifier("word.speak")
                 }
-                Button {
-                    model.speak()
-                } label: {
-                    Image(systemName: "speaker.wave.2")
-                        .font(.subheadline)
-                        .foregroundStyle(Neo.blue)
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(NeoPressStyle())
-                .accessibilityIdentifier("word.speak")
 
                 // Inflected form: link straight to the base word.
                 if let base = model.data.dictWord?.baseForm {
