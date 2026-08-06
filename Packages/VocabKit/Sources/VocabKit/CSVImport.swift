@@ -207,13 +207,13 @@ public enum CSVImport {
         return rows
     }
 
-    /// Imports rows into a new list — or, when `mergeInto` is given, into an
-    /// existing list. Notes land on the word state either way.
-    @discardableResult
     /// Words whose existing notes were merged (not overwritten) during the
     /// last `importRows` call — read right after importing to report it.
     public private(set) static var lastMergedNoteCount = 0
 
+    /// Imports rows into a new list — or, when `mergeInto` is given, into an
+    /// existing list. Notes land on the word state either way.
+    @discardableResult
     public static func importRows(
         _ rows: [ImportedRow],
         listName: String,
